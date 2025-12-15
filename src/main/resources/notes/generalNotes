@@ -1,0 +1,232 @@
+# Role-Based Routing Diagram
+
+## How Users Get Routed After Login
+
+```
+User Submits Login Form
+         ↓
+Spring Security Authenticates
+         ↓
+CustomAuthenticationSuccessHandler.onAuthenticationSuccess()
+         ↓
+    Check User's Role
+         ↓
+    ┌────┴────┬─────────┬──────────┬───────────┬─────┐
+    │         │         │          │           │     │
+    ▼         ▼         ▼          ▼           ▼     ▼
+  ADMIN   FACILITATOR  CHARITY   LOCATION    USER  (fallback)
+                       PARTNER    ADMIN
+    │         │         │          │           │     │
+    ↓         ↓         ↓          ↓           ↓     ↓
+/admin/   /facilitator/ /charity-  /location- /user/ /home
+dashboard  dashboard   partner/   admin/    dashboard
+                      dashboard  dashboard
+```
+
+## Role to URL Mapping
+
+| Role | Username (test) | Password | Dashboard URL | Navbar Color |
+|------|----------------|----------|---------------|--------------|
+| ADMIN | admin | admin123 | /admin/dashboard | Purple |
+| FACILITATOR | facilitator | test123 | /facilitator/dashboard | Purple |
+| CHARITY_PARTNER | charity | test123 | /charity-partner/dashboard | Green |
+| LOCATION_ADMIN | location | test123 | /location-admin/dashboard | Pink |
+| USER | user | test123 | /user/dashboard | Purple |
+
+## Security Configuration
+
+### URL Access Control
+```java
+// In SecurityConfig.java
+
+.requestMatchers("/admin/**").hasRole("ADMIN")
+    → Only ADMIN can access /admin/*
+
+.requestMatchers("/facilitator/**").hasRole("FACILITATOR")
+    → Only FACILITATOR can access /facilitator/*
+
+.requestMatchers("/charity-partner/**").hasRole("CHARITY_PARTNER")
+    → Only CHARITY_PARTNER can access /charity-partner/*
+
+.requestMatchers("/location-admin/**").hasRole("LOCATION_ADMIN")
+    → Only LOCATION_ADMIN can access /location-admin/*
+
+.requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "LOCATION_ADMIN")
+    → Any authenticated user can access /user/*
+```
+
+## Custom Success Handler Flow
+
+```java
+@Component
+public class CustomAuthenticationSuccessHandler {
+
+    @Override
+    public void onAuthenticationSuccess(Authentication auth) {
+        Set<String> roles = getRoles(auth);
+
+        if (roles.contains("ROLE_ADMIN"))
+            redirect("/admin/dashboard");
+        else if (roles.contains("ROLE_FACILITATOR"))
+            redirect("/facilitator/dashboard");
+        else if (roles.contains("ROLE_CHARITY_PARTNER"))
+            redirect("/charity-partner/dashboard");
+        else if (roles.contains("ROLE_LOCATION_ADMIN"))
+            redirect("/location-admin/dashboard");
+        else if (roles.contains("ROLE_USER"))
+            redirect("/user/dashboard");
+        else
+            redirect("/home");
+    }
+}
+```
+
+## Controller Mapping
+
+```
+FacilitatorController.java
+    @RequestMapping("/facilitator")
+    @GetMapping("/dashboard")
+    → Returns: "facilitator/dashboard"
+    → Renders: templates/facilitator/dashboard.html
+
+CharityPartnerController.java
+    @RequestMapping("/charity-partner")
+    @GetMapping("/dashboard")
+    → Returns: "charity-partner/dashboard"
+    → Renders: templates/charity-partner/dashboard.html
+
+LocationAdminController.java
+    @RequestMapping("/location-admin")
+    @GetMapping("/dashboard")
+    → Returns: "location-admin/dashboard"
+    → Renders: templates/location-admin/dashboard.html
+```
+
+## Complete Login Flow
+
+```
+1. User: facilitator / test123
+   ↓
+2. POST /login
+   ↓
+3. Spring Security authenticates
+   ↓
+4. Loads user from database
+   ↓
+5. Verifies password with BCrypt
+   ↓
+6. Password matches!
+   ↓
+7. CustomAuthenticationSuccessHandler.onAuthenticationSuccess()
+   ↓
+8. Gets user's roles: [ROLE_FACILITATOR]
+   ↓
+9. Checks: roles.contains("ROLE_FACILITATOR")? → YES!
+   ↓
+10. Redirects to: /facilitator/dashboard
+   ↓
+11. FacilitatorController.dashboard() handles request
+   ↓
+12. Returns: "facilitator/dashboard"
+   ↓
+13. Thymeleaf renders: templates/facilitator/dashboard.html
+   ↓
+14. User sees: Facilitator Dashboard (purple gradient)
+```
+
+## Priority Order
+
+If a user has MULTIPLE roles, they're redirected in this priority:
+
+1. ADMIN (highest priority)
+2. FACILITATOR
+3. CHARITY_PARTNER
+4. LOCATION_ADMIN
+5. USER (lowest priority)
+
+Example:
+- User has both ADMIN and FACILITATOR roles
+- CustomAuthenticationSuccessHandler checks ADMIN first
+- Redirects to `/admin/dashboard`
+
+## Adding More Pages
+
+To add more pages for a role:
+
+### Example: Add "Reports" page for Facilitator
+
+1. **Add Controller Method:**
+```java
+@Controller
+@RequestMapping("/facilitator")
+public class FacilitatorController {
+
+    @GetMapping("/reports")
+    public String reports(Model model) {
+        return "facilitator/reports";
+    }
+}
+```
+
+2. **Create HTML Template:**
+```
+templates/facilitator/reports.html
+```
+
+3. **Access URL:**
+```
+http://localhost:8080/facilitator/reports
+```
+
+4. **Link from Dashboard:**
+```html
+<a href="/facilitator/reports">View Reports</a>
+```
+
+## Security Testing
+
+Test access control by trying to access pages you shouldn't have access to:
+
+### Test 1: Facilitator tries to access Admin page
+```
+Login as: facilitator / test123
+Try to access: http://localhost:8080/admin/users
+Result: Should show "Access Denied" page (403)
+```
+
+### Test 2: User tries to access Facilitator page
+```
+Login as: user / test123
+Try to access: http://localhost:8080/facilitator/dashboard
+Result: Should show "Access Denied" page (403)
+```
+
+### Test 3: Not logged in tries to access any protected page
+```
+Logout (or open incognito window)
+Try to access: http://localhost:8080/facilitator/dashboard
+Result: Should redirect to login page
+```
+
+## Quick Reference
+
+**File Locations:**
+- Success Handler: `config/CustomAuthenticationSuccessHandler.java`
+- Security Config: `config/SecurityConfig.java`
+- Controllers: `controller/*Controller.java`
+- Templates: `templates/{role}/dashboard.html`
+
+**Database Tables:**
+- Roles: `roles` table
+- Users: `users` table
+- Mapping: `user_roles` table
+
+**Test URLs:**
+- Admin: http://localhost:8080/admin/dashboard
+- Facilitator: http://localhost:8080/facilitator/dashboard
+- Charity: http://localhost:8080/charity-partner/dashboard
+- Location: http://localhost:8080/location-admin/dashboard
+- User: http://localhost:8080/user/dashboard
+
+That's the complete routing flow! 🎯

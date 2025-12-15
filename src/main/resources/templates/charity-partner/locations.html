@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Locations - Charity Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .sidebar .nav-link { color: rgba(255,255,255,0.8); padding: 0.75rem 1rem; margin: 0.2rem 0; border-radius: 0.5rem; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
+        .main-content { background-color: #f8f9fa; min-height: 100vh; }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: inherit;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+        .location-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .location-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stat-card { border-left: 4px solid #6f42c1; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse py-3">
+            <div class="text-center mb-4">
+                <i class="fas fa-hands-helping text-white fa-3x mb-2"></i>
+                <h6 class="text-white" th:text="${charity?.charityName} ?: 'Charity Partner'">Charity Name</h6>
+                <small class="text-white-50">Charity Partner Portal</small>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/dashboard}">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/referrals}">
+                        <i class="fas fa-users me-2"></i> Referrals
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/documents}">
+                        <i class="fas fa-file-alt me-2"></i> Documents
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/invites}">
+                        <i class="fas fa-envelope me-2"></i> Invites
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/charity-partner/locations}">
+                        <i class="fas fa-map-marker-alt me-2"></i> Locations
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/profile}">
+                        <i class="fas fa-building me-2"></i> Profile
+                    </a>
+                </li>
+                <li class="nav-item mt-4">
+                    <form th:action="@{/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="logout-btn">
+                            <i class="fas fa-sign-out-alt me-2"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/dashboard}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Locations</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2"><i class="fas fa-building me-2"></i>Our Locations</h1>
+                    <p class="text-muted mb-0" th:if="${charity != null}">
+                        Managing locations for <strong th:text="${charity.charityName}">Charity Name</strong>
+                    </p>
+                </div>
+                <a th:href="@{/charity-partner/locations/new}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i> Add New Location
+                </a>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i><span th:text="${success}">Success</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}">Error</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-building fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0" th:text="${totalLocations} ?: 0">0</h3>
+                                    <small class="text-muted">Total Locations</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0" th:text="${activeLocations} ?: 0">0</h3>
+                                    <small class="text-muted">Active Locations</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-pause-circle fa-2x text-secondary"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0" th:text="${totalLocations != null and activeLocations != null ? totalLocations - activeLocations : 0}">0</h3>
+                                    <small class="text-muted">Inactive Locations</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <form id="filterForm" th:action="@{/charity-partner/locations}" method="get" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" onchange="document.getElementById('filterForm').submit();">
+                                <option value="">All</option>
+                                <option value="active" th:selected="${selectedStatus != null and selectedStatus == 'active'}">Active</option>
+                                <option value="inactive" th:selected="${selectedStatus != null and selectedStatus == 'inactive'}">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search"
+                                   th:value="${search}" placeholder="Location name, city, zip...">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-1"></i> Search
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <a th:href="@{/charity-partner/locations}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-times me-1"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Count -->
+            <p class="text-muted mb-3">
+                Showing <strong th:text="${locations != null ? locations.size() : 0}">0</strong> location(s)
+            </p>
+
+            <!-- Locations Grid -->
+            <div th:if="${locations == null or locations.isEmpty()}" class="text-center py-5">
+                <i class="fas fa-building fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Locations Yet</h4>
+                <p class="text-muted">Add your first location to help people find your services.</p>
+                <a th:href="@{/charity-partner/locations/new}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i> Add First Location
+                </a>
+            </div>
+
+            <div th:unless="${locations == null or locations.isEmpty()}" class="row g-4">
+                <div th:each="loc : ${locations}" class="col-md-6 col-lg-4">
+                    <div class="card location-card h-100 shadow-sm">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold" th:text="${loc.locationName}">Location Name</h6>
+                            <span th:if="${loc.isActive}" class="badge bg-success">Active</span>
+                            <span th:unless="${loc.isActive}" class="badge bg-secondary">Inactive</span>
+                        </div>
+                        <div class="card-body">
+                            <!-- Address -->
+                            <p class="small text-muted mb-2">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                <span th:if="${loc.address != null or loc.city != null}">
+                                    <span th:text="${loc.address}">Address</span>
+                                    <span th:if="${loc.city != null}">, <span th:text="${loc.city}">City</span></span>
+                                    <span th:if="${loc.state != null}">, <span th:text="${loc.state}">State</span></span>
+                                    <span th:if="${loc.zipCode != null}"> <span th:text="${loc.zipCode}">12345</span></span>
+                                </span>
+                                <span th:if="${loc.address == null and loc.city == null}">No address specified</span>
+                            </p>
+
+                            <!-- Capacity -->
+                            <div class="mb-2">
+                                <span class="text-muted small">
+                                    <i class="fas fa-bed me-1"></i> Capacity:
+                                    <strong th:text="${loc.capacity} ?: 'Not set'">10</strong>
+                                </span>
+                            </div>
+
+                            <!-- Phone -->
+                            <div th:if="${loc.phone != null}" class="mb-2">
+                                <span class="text-muted small">
+                                    <i class="fas fa-phone me-1"></i>
+                                    <span th:text="${loc.phone}">(555) 123-4567</span>
+                                </span>
+                            </div>
+
+                            <!-- Hours -->
+                            <div th:if="${loc.hoursOfOperation != null}" class="mb-2">
+                                <span class="text-muted small">
+                                    <i class="fas fa-clock me-1"></i>
+                                    <span th:text="${loc.hoursOfOperation}">Mon-Fri 9am-5pm</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <div class="d-flex gap-2">
+                                <a th:href="@{/charity-partner/locations/{id}(id=${loc.id})}"
+                                   class="btn btn-sm btn-outline-primary flex-fill">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a th:href="@{/charity-partner/locations/{id}/edit(id=${loc.id})}"
+                                   class="btn btn-sm btn-outline-secondary flex-fill">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <form th:action="@{/charity-partner/locations/{id}/toggle-status(id=${loc.id})}"
+                                      method="post" class="d-inline">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                                    <button type="submit"
+                                            th:class="${loc.isActive ? 'btn btn-sm btn-outline-warning' : 'btn btn-sm btn-outline-success'}"
+                                            th:title="${loc.isActive ? 'Deactivate' : 'Activate'}">
+                                        <i th:class="${loc.isActive ? 'fas fa-pause' : 'fas fa-play'}"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

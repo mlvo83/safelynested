@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit} ? 'Edit Charity - Admin' : 'Create Charity - Admin'">Charity Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h3 {
+            color: #667eea;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        h3:first-of-type {
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .required::after {
+            content: ' *';
+            color: #dc3545;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="number"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .form-check label {
+            margin-bottom: 0;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Spring Security App - Admin</div>
+    <a th:href="@{/admin/charities}" class="nav-link">← Back to Charities</a>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <h1 th:text="${isEdit} ? 'Edit Charity' : 'Create New Charity'">Create New Charity</h1>
+
+        <div th:if="${error}" class="alert alert-danger">
+            <span th:text="${error}">Error message</span>
+        </div>
+
+        <form th:action="${isEdit} ? @{/admin/charities/edit/{id}(id=${charity.id})} : @{/admin/charities/new}"
+              th:object="${charity}" method="post">
+
+            <!-- Organization Information -->
+            <h3>Organization Information</h3>
+
+            <div class="form-group">
+                <label for="charityName" class="required">Charity Name</label>
+                <input type="text" id="charityName" th:field="*{charityName}" required
+                       placeholder="Enter charity name">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="organizationType">Organization Type</label>
+                    <select id="organizationType" th:field="*{organizationType}">
+                        <option value="">Select type...</option>
+                        <option value="Non-profit">Non-profit</option>
+                        <option value="501(c)(3)">501(c)(3)</option>
+                        <option value="Religious">Religious Organization</option>
+                        <option value="Government">Government Agency</option>
+                        <option value="Community">Community Organization</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="einTaxId">EIN / Tax ID</label>
+                    <input type="text" id="einTaxId" th:field="*{einTaxId}" placeholder="12-3456789">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" th:field="*{description}" rows="3"
+                          placeholder="Brief description of the organization"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="missionStatement">Mission Statement</label>
+                <textarea id="missionStatement" th:field="*{missionStatement}" rows="3"
+                          placeholder="Organization's mission"></textarea>
+            </div>
+
+            <!-- Contact Information -->
+            <h3>Contact Information</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="contactName">Contact Name</label>
+                    <input type="text" id="contactName" th:field="*{contactName}" placeholder="Primary contact person">
+                </div>
+                <div class="form-group">
+                    <label for="contactEmail" class="required">Contact Email</label>
+                    <input type="email" id="contactEmail" th:field="*{contactEmail}" required
+                           placeholder="email@example.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="contactPhone">Contact Phone</label>
+                <input type="tel" id="contactPhone" th:field="*{contactPhone}" placeholder="(555) 123-4567">
+            </div>
+
+            <!-- Address -->
+            <h3>Address</h3>
+
+            <div class="form-group">
+                <label for="address">Street Address</label>
+                <input type="text" id="address" th:field="*{address}" placeholder="123 Main Street">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="city">City</label>
+                    <input type="text" id="city" th:field="*{city}" placeholder="City">
+                </div>
+                <div class="form-group">
+                    <label for="state">State</label>
+                    <input type="text" id="state" th:field="*{state}" placeholder="State">
+                </div>
+                <div class="form-group">
+                    <label for="zipCode">Zip Code</label>
+                    <input type="text" id="zipCode" th:field="*{zipCode}" placeholder="12345">
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <h3>Settings</h3>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="maxReferralsPerMonth">Max Referrals Per Month</label>
+                    <input type="number" id="maxReferralsPerMonth" th:field="*{maxReferralsPerMonth}"
+                           min="1" placeholder="50">
+                    <div class="help-text">Maximum number of referrals this charity can create per month</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="allowedZipCodes">Allowed Zip Codes</label>
+                <textarea id="allowedZipCodes" th:field="*{allowedZipCodes}" rows="2"
+                          placeholder="12345, 67890, 11111"></textarea>
+                <div class="help-text">Comma-separated list of zip codes the charity serves</div>
+            </div>
+
+            <div class="form-group">
+                <div class="form-check">
+                    <input type="checkbox" id="isActive" th:field="*{isActive}">
+                    <label for="isActive">Charity is Active</label>
+                </div>
+            </div>
+
+            <!-- Admin Notes (only for edit) -->
+            <div th:if="${isEdit}">
+                <h3>Admin Notes</h3>
+                <div class="form-group">
+                    <label for="adminNotes">Internal Notes</label>
+                    <textarea id="adminNotes" th:field="*{adminNotes}" rows="3"
+                              placeholder="Notes visible only to administrators"></textarea>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <a th:href="@{/admin/charities}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary"
+                        th:text="${isEdit} ? 'Update Charity' : 'Create Charity'">Create Charity</button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Charity Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .sidebar .nav-link { color: rgba(255,255,255,0.8); padding: 0.75rem 1rem; margin: 0.2rem 0; border-radius: 0.5rem; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
+        .main-content { background-color: #f8f9fa; min-height: 100vh; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse py-3">
+            <div class="text-center mb-4">
+                <i class="fas fa-hands-helping text-white fa-3x mb-2"></i>
+                <h6 class="text-white">Charity Partner Portal</h6>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/dashboard"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/referrals"><i class="fas fa-users me-2"></i> Referrals</a></li>
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/documents"><i class="fas fa-file-alt me-2"></i> Documents</a></li>
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/invites"><i class="fas fa-envelope me-2"></i> Invites</a></li>
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/locations"><i class="fas fa-map-marker-alt me-2"></i> Locations</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/charity-partner/profile"><i class="fas fa-building me-2"></i> Profile</a></li>
+                <li class="nav-item mt-4"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item"><a href="/charity-partner/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/charity-partner/profile">Profile</a></li>
+                            <li class="breadcrumb-item active">Edit</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2"><i class="fas fa-edit me-2"></i> Edit Profile</h1>
+                </div>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}">Error</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <form action="/charity-partner/profile/edit" method="post" th:object="${charity}">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- Organization Info -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-building me-2"></i> Organization Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label for="charityName" class="form-label">Organization Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="charityName" th:field="*{charityName}" required>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="organizationType" class="form-label">Organization Type</label>
+                                        <select class="form-select" id="organizationType" th:field="*{organizationType}">
+                                            <option value="">Select type...</option>
+                                            <option value="Non-profit">Non-profit</option>
+                                            <option value="501(c)(3)">501(c)(3)</option>
+                                            <option value="Religious">Religious Organization</option>
+                                            <option value="Government">Government Agency</option>
+                                            <option value="Community">Community Organization</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="einTaxId" class="form-label">EIN / Tax ID</label>
+                                    <input type="text" class="form-control" id="einTaxId" th:field="*{einTaxId}"
+                                           placeholder="12-3456789">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" th:field="*{description}" rows="3"
+                                              placeholder="Brief description of your organization"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="missionStatement" class="form-label">Mission Statement</label>
+                                    <textarea class="form-control" id="missionStatement" th:field="*{missionStatement}" rows="3"
+                                              placeholder="Your organization's mission"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-address-card me-2"></i> Contact Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="contactName" class="form-label">Contact Name</label>
+                                        <input type="text" class="form-control" id="contactName" th:field="*{contactName}"
+                                               placeholder="Primary contact person">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="contactEmail" class="form-label">Contact Email <span class="text-danger">*</span></label>
+                                        <input type="email" class="form-control" id="contactEmail" th:field="*{contactEmail}" required
+                                               placeholder="email@example.com">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="contactPhone" class="form-label">Contact Phone</label>
+                                    <input type="tel" class="form-control" id="contactPhone" th:field="*{contactPhone}"
+                                           placeholder="(555) 123-4567">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i> Address</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Street Address</label>
+                                    <input type="text" class="form-control" id="address" th:field="*{address}"
+                                           placeholder="123 Main Street">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5 mb-3">
+                                        <label for="city" class="form-label">City</label>
+                                        <input type="text" class="form-control" id="city" th:field="*{city}">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="state" class="form-label">State</label>
+                                        <input type="text" class="form-control" id="state" th:field="*{state}">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="zipCode" class="form-label">Zip Code</label>
+                                        <input type="text" class="form-control" id="zipCode" th:field="*{zipCode}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- Settings -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-cog me-2"></i> Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="allowedZipCodes" class="form-label">Allowed Zip Codes</label>
+                                    <textarea class="form-control" id="allowedZipCodes" th:field="*{allowedZipCodes}" rows="2"
+                                              placeholder="12345, 67890, 11111"></textarea>
+                                    <small class="text-muted">Comma-separated list of zip codes your organization serves</small>
+                                </div>
+                                <div class="alert alert-info small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <strong>Note:</strong> Monthly referral limits and verification status are managed by administrators.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status (Read-only) -->
+                        <div class="card shadow-sm mb-4">
+                            <div class="card-header bg-white">
+                                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <span class="text-muted small">Verification Status</span>
+                                    <p class="mb-0">
+                                            <span th:if="${charity.isVerified}" class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i> Verified
+                                            </span>
+                                        <span th:unless="${charity.isVerified}" class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock me-1"></i> Pending
+                                            </span>
+                                    </p>
+                                </div>
+                                <div class="mb-3">
+                                    <span class="text-muted small">Account Status</span>
+                                    <p class="mb-0">
+                                        <span th:if="${charity.isActive}" class="badge bg-success">Active</span>
+                                        <span th:unless="${charity.isActive}" class="badge bg-secondary">Inactive</span>
+                                    </p>
+                                </div>
+                                <div>
+                                    <span class="text-muted small">Monthly Referral Limit</span>
+                                    <p class="mb-0" th:text="${charity.maxReferralsPerMonth} ?: 'Unlimited'">50</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save Changes
+                                    </button>
+                                    <a href="/charity-partner/profile" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i> Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

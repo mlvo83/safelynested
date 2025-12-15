@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Document - Charity Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar { min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .sidebar .nav-link { color: rgba(255,255,255,0.8); padding: 0.75rem 1rem; margin: 0.2rem 0; border-radius: 0.5rem; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
+        .main-content { background-color: #f8f9fa; min-height: 100vh; }
+        .upload-zone { border: 2px dashed #dee2e6; border-radius: 0.5rem; padding: 3rem; text-align: center; transition: all 0.3s; }
+        .upload-zone:hover, .upload-zone.dragover { border-color: #667eea; background-color: #f8f9ff; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse py-3">
+            <div class="text-center mb-4">
+                <i class="fas fa-hands-helping text-white fa-3x mb-2"></i>
+                <h6 class="text-white">Charity Partner Portal</h6>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/dashboard"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/referrals"><i class="fas fa-users me-2"></i> Referrals</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/charity-partner/documents"><i class="fas fa-file-alt me-2"></i> Documents</a></li>
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/invites"><i class="fas fa-envelope me-2"></i> Invites</a></li>
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/locations"><i class="fas fa-map-marker-alt me-2"></i> Locations</a></li>
+                <li class="nav-item"><a class="nav-link" href="/charity-partner/profile"><i class="fas fa-building me-2"></i> Profile</a></li>
+                <li class="nav-item mt-4"><a class="nav-link" href="/logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item"><a href="/charity-partner/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/charity-partner/documents">Documents</a></li>
+                            <li class="breadcrumb-item active">Upload</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2"><i class="fas fa-upload me-2"></i> Upload Document</h1>
+                </div>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}">Error</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <form action="/charity-partner/documents/upload" method="post" enctype="multipart/form-data">
+
+                                <!-- File Upload Zone -->
+                                <div class="upload-zone mb-4" id="uploadZone">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                    <p class="mb-2">Drag and drop a file here, or click to browse</p>
+                                    <input type="file" name="file" id="fileInput" class="d-none" required
+                                           accept=".pdf,.jpg,.jpeg,.png,.gif,.doc,.docx">
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click();">
+                                        <i class="fas fa-folder-open me-1"></i> Browse Files
+                                    </button>
+                                    <p class="small text-muted mt-2 mb-0">Allowed: PDF, JPG, PNG, GIF, DOC, DOCX (Max 10MB)</p>
+                                    <p class="text-primary mt-2 mb-0" id="selectedFile" style="display:none;"></p>
+                                </div>
+
+                                <!-- Document Type -->
+                                <div class="mb-3">
+                                    <label for="documentType" class="form-label">Document Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="documentType" name="documentType" required>
+                                        <option value="">Select document type...</option>
+                                        <option th:each="type : ${documentTypes}"
+                                                th:value="${type.name()}"
+                                                th:text="${type.displayName}">Type</option>
+                                    </select>
+                                </div>
+
+                                <!-- Associated Referral -->
+                                <div class="mb-3">
+                                    <label for="referralId" class="form-label">Associated Referral (Optional)</label>
+                                    <select class="form-select" id="referralId" name="referralId">
+                                        <option value="">No specific referral (General document)</option>
+                                        <option th:each="ref : ${referrals}"
+                                                th:value="${ref.id}"
+                                                th:text="${ref.referralNumber + ' - ' + ref.participantName}"
+                                                th:selected="${selectedReferralId != null and selectedReferralId == ref.id}">REF-001</option>
+                                    </select>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="mb-4">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3"
+                                              placeholder="Add notes about this document..."></textarea>
+                                </div>
+
+                                <!-- Submit -->
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-upload me-1"></i> Upload Document
+                                    </button>
+                                    <a href="/charity-partner/documents" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-1"></i> Cancel
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i> Upload Tips</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="small mb-0">
+                                <li class="mb-2">Use clear, legible scans or photos</li>
+                                <li class="mb-2">Make sure all text is readable</li>
+                                <li class="mb-2">Include all pages of multi-page documents</li>
+                                <li class="mb-2">Redact sensitive information if needed</li>
+                                <li>Files are securely stored and encrypted</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // File input display
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        var fileName = e.target.files[0]?.name;
+        if (fileName) {
+            document.getElementById('selectedFile').textContent = 'Selected: ' + fileName;
+            document.getElementById('selectedFile').style.display = 'block';
+        }
+    });
+
+    // Drag and drop
+    var zone = document.getElementById('uploadZone');
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+    zone.addEventListener('dragleave', function(e) { e.preventDefault(); zone.classList.remove('dragover'); });
+    zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+        document.getElementById('fileInput').files = e.dataTransfer.files;
+        document.getElementById('selectedFile').textContent = 'Selected: ' + e.dataTransfer.files[0]?.name;
+        document.getElementById('selectedFile').style.display = 'block';
+    });
+</script>
+</body>
+</html>

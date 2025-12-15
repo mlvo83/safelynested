@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - Spring Security App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+    }
+
+    .navbar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-brand {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .navbar-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .welcome-card {
+      background: white;
+      border-radius: 10px;
+      padding: 40px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .welcome-card h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .welcome-card p {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .card h3 {
+      color: #667eea;
+      margin-bottom: 15px;
+    }
+
+    .card p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .card-link {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+
+    .card-link:hover {
+      transform: translateY(-2px);
+    }
+
+    .admin-only {
+      border-left: 4px solid #667eea;
+    }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="navbar-brand">Spring Security App</div>
+  <div class="navbar-right">
+    <div class="user-info">
+      <span th:text="${username}">User</span>
+      <span class="badge" th:text="${isAdmin} ? 'ADMIN' : 'USER'">USER</span>
+    </div>
+    <form th:action="@{/logout}" method="post" style="margin: 0;">
+      <button type="submit" class="logout-btn">Logout</button>
+    </form>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="welcome-card">
+    <h1>Welcome to Your Dashboard</h1>
+    <p>You are successfully logged in to the application</p>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <h3>Your Profile</h3>
+      <p>View and manage your personal profile information and settings.</p>
+      <a href="#" class="card-link">View Profile</a>
+    </div>
+
+    <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
+      <h3>User Management</h3>
+      <p>Create new users, assign roles, and manage all user accounts in the system.</p>
+      <a th:href="@{/admin/users}" class="card-link">Manage Users</a>
+    </div>
+
+    <div class="card">
+      <h3>Documentation</h3>
+      <p>Learn more about the features and capabilities of this application.</p>
+      <a href="#" class="card-link">Read Docs</a>
+    </div>
+    <div class="card">
+      <h3 class="card-title">Charity Management</h3>
+      <p class="card-description">Create charities and manage partner organizations in the system.</p>
+      <a th:href="@{/admin/charities}" class="btn">Manage Charities</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

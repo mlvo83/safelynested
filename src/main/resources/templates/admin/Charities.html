@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charity Management - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .charity-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .charity-contact {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Spring Security App - Admin</div>
+    <a th:href="@{/home}" class="nav-link">← Back to Home</a>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1>Charity Management</h1>
+        <a th:href="@{/admin/charities/new}" class="btn btn-primary">+ Create New Charity</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success">
+        <span th:text="${success}">Success message</span>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}">Error message</span>
+    </div>
+
+    <div class="card">
+        <table th:if="${charities != null and !charities.empty}">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Charity Name</th>
+                <th>Contact</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Verified</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="charity : ${charities}">
+                <td th:text="${charity.id}">1</td>
+                <td>
+                    <div class="charity-name" th:text="${charity.charityName}">Charity Name</div>
+                    <div class="charity-contact" th:if="${charity.organizationType}" th:text="${charity.organizationType}">Non-profit</div>
+                </td>
+                <td>
+                    <div th:if="${charity.contactName}" th:text="${charity.contactName}">John Doe</div>
+                    <div class="charity-contact" th:if="${charity.contactEmail}" th:text="${charity.contactEmail}">email@example.com</div>
+                    <div class="charity-contact" th:if="${charity.contactPhone}" th:text="${charity.contactPhone}">555-1234</div>
+                </td>
+                <td>
+                    <span th:if="${charity.city}" th:text="${charity.city + ', ' + (charity.state ?: '')}">City, State</span>
+                    <span th:unless="${charity.city}" class="charity-contact">No location</span>
+                </td>
+                <td>
+                    <span th:if="${charity.isActive}" class="badge badge-success">Active</span>
+                    <span th:unless="${charity.isActive}" class="badge badge-secondary">Inactive</span>
+                </td>
+                <td>
+                    <span th:if="${charity.isVerified}" class="badge badge-success">Verified</span>
+                    <span th:unless="${charity.isVerified}" class="badge badge-warning">Pending</span>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                        <a th:href="@{/admin/charities/edit/{id}(id=${charity.id})}" class="btn btn-primary btn-sm">Edit</a>
+
+                        <form th:unless="${charity.isVerified}"
+                              th:action="@{/admin/charities/verify/{id}(id=${charity.id})}"
+                              method="post" style="margin: 0;">
+                            <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                        </form>
+
+                        <form th:action="@{/admin/charities/toggle-active/{id}(id=${charity.id})}"
+                              method="post" style="margin: 0;">
+                            <button type="submit" class="btn btn-warning btn-sm"
+                                    th:text="${charity.isActive} ? 'Deactivate' : 'Activate'">Toggle</button>
+                        </form>
+
+                        <form th:action="@{/admin/charities/delete/{id}(id=${charity.id})}"
+                              method="post"
+                              onsubmit="return confirm('Are you sure you want to delete this charity? This will affect all associated users.');"
+                              style="margin: 0;">
+                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${charities == null or charities.empty}" class="empty-state">
+            <h3>No Charities Found</h3>
+            <p>Create your first charity organization to get started.</p>
+            <a th:href="@{/admin/charities/new}" class="btn btn-primary" style="margin-top: 20px;">+ Create New Charity</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

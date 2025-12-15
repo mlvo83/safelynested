@@ -1,0 +1,373 @@
+package com.learning.learning.service;
+
+import com.learning.learning.dto.BookingDto;
+import com.learning.learning.entity.Booking;
+import com.learning.learning.entity.Location;
+import com.learning.learning.entity.Referral;
+import com.learning.learning.entity.User;
+import com.learning.learning.repository.BookingRepository;
+import com.learning.learning.repository.LocationRepository;
+import com.learning.learning.repository.ReferralRepository;
+import com.learning.learning.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+@Service
+public class BookingService {
+
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private ReferralRepository referralRepository;
+
+    @Autowired
+    private LocationRepository locationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    /**
+     * Create a new booking
+     */
+    @Transactional
+    public Booking createBooking(BookingDto bookingDto, String username) {
+        // Validate referral
+        Referral referral = referralRepository.findById(bookingDto.getReferralId())
+                .orElseThrow(() -> new RuntimeException("Referral not found"));
+
+        if (referral.getStatus() != Referral.ReferralStatus.APPROVED) {
+            throw new RuntimeException("Can only create bookings for approved referrals");
+        }
+
+        // Validate location
+        Location location = locationRepository.findById(bookingDto.getLocationId())
+                .orElseThrow(() -> new RuntimeException("Location not found"));
+
+        // Get user
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Validate dates
+        if (bookingDto.getCheckOutDate().isBefore(bookingDto.getCheckInDate())) {
+            throw new RuntimeException("Check-out date must be after check-in date");
+        }
+
+        // Calculate nights
+        int nights = (int) ChronoUnit.DAYS.between(bookingDto.getCheckInDate(), bookingDto.getCheckOutDate());
+        if (nights < 1) {
+            throw new RuntimeException("Booking must be for at least 1 night");
+        }
+
+        // Calculate cost if not provided
+        BigDecimal cost = bookingDto.getCost();
+        if (cost == null && location.getNightlyRate() != null) {
+            cost = location.getNightlyRate().multiply(BigDecimal.valueOf(nights));
+        }
+
+        // Create booking
+        Booking booking = new Booking();
+        booking.setReferral(referral);
+        booking.setLocation(location);
+        booking.setAssignedBy(user);
+        booking.setBookedByUser(user);
+
+        // Copy participant info from referral (for historical record)
+        booking.setParticipantName(referral.getParticipantName());
+        booking.setParticipantPhone(referral.getParticipantPhone());
+        booking.setParticipantEmail(referral.getParticipantEmail());
+
+        // Copy location info (for historical record)
+        booking.setLocationName(location.getLocationName());
+        booking.setLocationAddress(location.getAddress());
+
+        // Set dates
+        booking.setCheckInDate(bookingDto.getCheckInDate());
+        booking.setCheckOutDate(bookingDto.getCheckOutDate());
+        booking.setCheckInTime(bookingDto.getCheckInTime());
+        booking.setCheckOutTime(bookingDto.getCheckOutTime());
+        booking.setNights(nights);
+        booking.setNumberOfNights(nights);
+
+        // Set payment info
+        booking.setCost(cost);
+        booking.setPaymentMethod(bookingDto.getPaymentMethod());
+
+        // Set payment status
+        if (bookingDto.getPaymentStatus() != null && !bookingDto.getPaymentStatus().isEmpty()) {
+            booking.setPaymentStatus(Booking.PaymentStatus.valueOf(bookingDto.getPaymentStatus()));
+        } else {
+            booking.setPaymentStatus(Booking.PaymentStatus.PENDING);
+        }
+
+        booking.setPaidBy(bookingDto.getPaidBy());
+
+        // Set booking status
+        if (bookingDto.getBookingStatus() != null && !bookingDto.getBookingStatus().isEmpty()) {
+            booking.setBookingStatus(Booking.BookingStatus.valueOf(bookingDto.getBookingStatus()));
+        } else {
+            booking.setBookingStatus(Booking.BookingStatus.PENDING);
+        }
+
+        // Set notes
+        booking.setSpecialInstructions(bookingDto.getSpecialInstructions());
+        booking.setNotes(bookingDto.getNotes());
+        booking.setExternalBookingReference(bookingDto.getExternalBookingReference());
+        booking.setExpiresAt(bookingDto.getExpiresAt());
+
+        // Save booking
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // If confirmation code wasn't generated by trigger, generate it manually
+        if (savedBooking.getConfirmationCode() == null) {
+            String confirmationCode = generateConfirmationCode(savedBooking.getId());
+            savedBooking.setConfirmationCode(confirmationCode);
+            savedBooking.setConfirmationNumber(confirmationCode);
+            savedBooking = bookingRepository.save(savedBooking);
+        }
+
+        return savedBooking;
+    }
+
+    /**
+     * Get all bookings - uses native query to avoid lazy loading issues
+     */
+    @Transactional(readOnly = true)
+    public List<Booking> getAllBookings() {
+        List<Booking> bookings = bookingRepository.findAllByOrderByCreatedAtDesc();
+        // Initialize lazy associations safely
+        bookings.forEach(this::initializeBookingSafely);
+        return bookings;
+    }
+
+    /**
+     * Safely initialize a booking's lazy associations
+     */
+    private void initializeBookingSafely(Booking booking) {
+        // Ensure participant info is available (from copied fields or referral)
+        if (booking.getParticipantName() == null) {
+            try {
+                if (booking.getReferral() != null) {
+                    booking.setParticipantName(booking.getReferral().getParticipantName());
+                    booking.setParticipantPhone(booking.getReferral().getParticipantPhone());
+                    booking.setParticipantEmail(booking.getReferral().getParticipantEmail());
+                }
+            } catch (Exception e) {
+                // Referral might be deleted - that's okay, we handle it
+                if (booking.getParticipantName() == null) {
+                    booking.setParticipantName("(Referral Deleted)");
+                }
+            }
+        }
+
+        // Ensure location info is available
+        if (booking.getLocationName() == null) {
+            try {
+                if (booking.getLocation() != null) {
+                    booking.setLocationName(booking.getLocation().getLocationName());
+                    booking.setLocationAddress(booking.getLocation().getAddress());
+                }
+            } catch (Exception e) {
+                if (booking.getLocationName() == null) {
+                    booking.setLocationName("(Location Deleted)");
+                }
+            }
+        }
+    }
+
+    /**
+     * Get bookings by user
+     */
+    @Transactional(readOnly = true)
+    public List<Booking> getBookingsByUser(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        List<Booking> bookings = bookingRepository.findByAssignedByOrderByCreatedAtDesc(user);
+        bookings.forEach(this::initializeBookingSafely);
+        return bookings;
+    }
+
+    /**
+     * Get booking by ID
+     */
+    @Transactional(readOnly = true)
+    public Booking getBookingById(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        initializeBookingSafely(booking);
+        return booking;
+    }
+
+    /**
+     * Get booking by confirmation code
+     */
+    @Transactional(readOnly = true)
+    public Booking getBookingByConfirmationCode(String confirmationCode) {
+        Booking booking = bookingRepository.findByConfirmationCode(confirmationCode)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+        initializeBookingSafely(booking);
+        return booking;
+    }
+
+    /**
+     * Update booking status
+     */
+    @Transactional
+    public Booking updateBookingStatus(Long bookingId, Booking.BookingStatus status, String notes) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        booking.setBookingStatus(status);
+
+        // Update actual check-in/out times based on status
+        if (status == Booking.BookingStatus.CHECKED_IN && booking.getActualCheckIn() == null) {
+            booking.setActualCheckIn(LocalDateTime.now());
+        } else if (status == Booking.BookingStatus.CHECKED_OUT && booking.getActualCheckOut() == null) {
+            booking.setActualCheckOut(LocalDateTime.now());
+        } else if (status == Booking.BookingStatus.COMPLETED && booking.getActualCheckOut() == null) {
+            booking.setActualCheckOut(LocalDateTime.now());
+        }
+
+        if (notes != null && !notes.isEmpty()) {
+            String existingNotes = booking.getAdminNotes() != null ? booking.getAdminNotes() + "\n\n" : "";
+            booking.setAdminNotes(existingNotes + LocalDateTime.now() + ": " + notes);
+        }
+
+        return bookingRepository.save(booking);
+    }
+
+    /**
+     * Update payment status
+     */
+    @Transactional
+    public Booking updatePaymentStatus(Long bookingId, Booking.PaymentStatus status, String notes) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        booking.setPaymentStatus(status);
+
+        if (notes != null && !notes.isEmpty()) {
+            String existingNotes = booking.getAdminNotes() != null ? booking.getAdminNotes() + "\n\n" : "";
+            booking.setAdminNotes(existingNotes + LocalDateTime.now() + ": Payment - " + notes);
+        }
+
+        return bookingRepository.save(booking);
+    }
+
+    /**
+     * Cancel a booking
+     */
+    @Transactional
+    public Booking cancelBooking(Long bookingId, String reason) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        booking.setBookingStatus(Booking.BookingStatus.CANCELLED);
+
+        String existingNotes = booking.getAdminNotes() != null ? booking.getAdminNotes() + "\n\n" : "";
+        booking.setAdminNotes(existingNotes + LocalDateTime.now() + ": CANCELLED - " + reason);
+
+        return bookingRepository.save(booking);
+    }
+
+    /**
+     * Check in guest
+     */
+    @Transactional
+    public Booking checkIn(Long bookingId, String notes) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        booking.setBookingStatus(Booking.BookingStatus.CHECKED_IN);
+        booking.setActualCheckIn(LocalDateTime.now());
+
+        if (notes != null && !notes.isEmpty()) {
+            String existingNotes = booking.getAdminNotes() != null ? booking.getAdminNotes() + "\n\n" : "";
+            booking.setAdminNotes(existingNotes + LocalDateTime.now() + ": Check-in - " + notes);
+        }
+
+        return bookingRepository.save(booking);
+    }
+
+    /**
+     * Check out guest
+     */
+    @Transactional
+    public Booking checkOut(Long bookingId, String notes) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        booking.setBookingStatus(Booking.BookingStatus.CHECKED_OUT);
+        booking.setActualCheckOut(LocalDateTime.now());
+
+        if (notes != null && !notes.isEmpty()) {
+            String existingNotes = booking.getAdminNotes() != null ? booking.getAdminNotes() + "\n\n" : "";
+            booking.setAdminNotes(existingNotes + LocalDateTime.now() + ": Check-out - " + notes);
+        }
+
+        return bookingRepository.save(booking);
+    }
+
+    /**
+     * Get statistics
+     */
+    public BookingStatistics getStatistics() {
+        BookingStatistics stats = new BookingStatistics();
+        stats.setPending(bookingRepository.countByBookingStatus(Booking.BookingStatus.PENDING));
+        stats.setConfirmed(bookingRepository.countByBookingStatus(Booking.BookingStatus.CONFIRMED));
+        stats.setCheckedIn(bookingRepository.countByBookingStatus(Booking.BookingStatus.CHECKED_IN));
+        stats.setCompleted(bookingRepository.countByBookingStatus(Booking.BookingStatus.COMPLETED));
+        stats.setCancelled(bookingRepository.countByBookingStatus(Booking.BookingStatus.CANCELLED));
+        stats.setTotal(bookingRepository.count());
+        return stats;
+    }
+
+    /**
+     * Generate confirmation code
+     */
+    private String generateConfirmationCode(Long bookingId) {
+        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return "CONF-" + date + "-" + String.format("%06d", bookingId);
+    }
+
+    // Inner class for statistics
+    public static class BookingStatistics {
+        private Long pending;
+        private Long confirmed;
+        private Long checkedIn;
+        private Long completed;
+        private Long cancelled;
+        private Long total;
+
+        // Getters and setters
+        public Long getPending() { return pending; }
+        public void setPending(Long pending) { this.pending = pending; }
+
+        public Long getConfirmed() { return confirmed; }
+        public void setConfirmed(Long confirmed) { this.confirmed = confirmed; }
+
+        public Long getCheckedIn() { return checkedIn; }
+        public void setCheckedIn(Long checkedIn) { this.checkedIn = checkedIn; }
+
+        public Long getCompleted() { return completed; }
+        public void setCompleted(Long completed) { this.completed = completed; }
+
+        public Long getCancelled() { return cancelled; }
+        public void setCancelled(Long cancelled) { this.cancelled = cancelled; }
+
+        public Long getTotal() { return total; }
+        public void setTotal(Long total) { this.total = total; }
+
+        // For backwards compatibility
+        public Long getScheduled() { return pending + confirmed; }
+        public void setScheduled(Long scheduled) {} // No-op for compatibility
+    }
+}

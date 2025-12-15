@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Select Your Preferred Location - SafelyNested</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px 0;
+    }
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+    .header-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    .header-section h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+    .content-section {
+      padding: 2rem;
+    }
+    .welcome-message {
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid #667eea;
+    }
+    .location-card {
+      border: 2px solid #e9ecef;
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .location-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+      transform: translateY(-2px);
+    }
+    .location-card.selected {
+      border-color: #667eea;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+    .location-card input[type="radio"] {
+      display: none;
+    }
+    .location-card .check-icon {
+      display: none;
+      color: #667eea;
+    }
+    .location-card.selected .check-icon {
+      display: inline-block;
+    }
+    .location-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .location-details {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .location-features {
+      margin-top: 0.5rem;
+    }
+    .feature-badge {
+      display: inline-block;
+      background: #e9ecef;
+      color: #495057;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .submit-section {
+      background: #f8f9fa;
+      padding: 1.5rem 2rem;
+      border-top: 1px solid #e9ecef;
+    }
+    .btn-confirm {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      padding: 0.75rem 2rem;
+      font-size: 1.1rem;
+      border-radius: 30px;
+    }
+    .btn-confirm:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    .charity-logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      font-size: 2rem;
+      color: #667eea;
+    }
+    .no-locations {
+      text-align: center;
+      padding: 3rem;
+      color: #666;
+    }
+    .notes-section {
+      margin-top: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="main-card">
+        <!-- Header -->
+        <div class="header-section">
+          <div class="charity-logo">
+            <i class="fas fa-hands-helping"></i>
+          </div>
+          <h1 th:text="${charity.charityName}">Charity Name</h1>
+          <p class="mb-0 opacity-75">Welcome to SafelyNested</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content-section">
+          <!-- Alert Messages -->
+          <div th:if="${error}" class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <span th:text="${error}">Error message</span>
+          </div>
+
+          <!-- Welcome Message -->
+          <div class="welcome-message">
+            <h5 class="mb-2">
+              <i class="fas fa-heart text-danger me-2"></i>
+              Hello, <span th:text="${invite.recipientName}">Guest</span>!
+            </h5>
+            <p class="mb-0">
+              <span th:text="${charity.charityName}">The Charity</span> has invited you to
+              select a preferred location for your stay. Please review the available
+              options below and choose the one that best fits your needs.
+            </p>
+          </div>
+
+          <!-- Location Selection Form -->
+          <form th:action="@{/referral/invite/{token}/select-location(token=${invite.inviteToken})}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <h5 class="mb-3">
+              <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+              Available Locations
+            </h5>
+
+            <!-- No Locations Available -->
+            <div th:if="${locations == null or locations.isEmpty()}" class="no-locations">
+              <i class="fas fa-building fa-3x text-muted mb-3"></i>
+              <h5>No Locations Currently Available</h5>
+              <p class="text-muted">
+                Please contact <span th:text="${charity.charityName}">the charity</span>
+                for more information about available options.
+              </p>
+            </div>
+
+            <!-- Location Cards -->
+            <div th:if="${locations != null and !locations.isEmpty()}">
+              <div th:each="loc, iterStat : ${locations}" class="location-card"
+                   th:id="'location-card-' + ${loc.id}"
+                   onclick="selectLocation(this)">
+                <input type="radio" name="locationId" th:id="'location-' + ${loc.id}"
+                       th:value="${loc.id}" required>
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <div class="location-name">
+                      <i class="fas fa-check-circle check-icon me-2"></i>
+                      <span th:text="${loc.locationName}">Location Name</span>
+                    </div>
+                    <div class="location-details mt-2">
+                      <p class="mb-1" th:if="${loc.address != null}">
+                        <i class="fas fa-map-marker-alt me-2 text-muted"></i>
+                        <span th:text="${loc.address}">123 Main St</span>
+                        <span th:if="${loc.city != null}">, <span th:text="${loc.city}">City</span></span>
+                        <span th:if="${loc.state != null}">, <span th:text="${loc.state}">State</span></span>
+                        <span th:if="${loc.zipCode != null}"> <span th:text="${loc.zipCode}">12345</span></span>
+                      </p>
+                      <p class="mb-1" th:if="${loc.phone != null}">
+                        <i class="fas fa-phone me-2 text-muted"></i>
+                        <span th:text="${loc.phone}">(555) 123-4567</span>
+                      </p>
+                      <p class="mb-1" th:if="${loc.hoursOfOperation != null}">
+                        <i class="fas fa-clock me-2 text-muted"></i>
+                        <span th:text="${loc.hoursOfOperation}">Mon-Fri 9am-5pm</span>
+                      </p>
+                    </div>
+                    <div class="location-features" th:if="${loc.servicesOffered != null}">
+                                            <span class="feature-badge">
+                                                <i class="fas fa-concierge-bell me-1"></i>
+                                                Services Available
+                                            </span>
+                    </div>
+                    <div th:if="${loc.capacity != null}" class="mt-2">
+                                            <span class="feature-badge">
+                                                <i class="fas fa-bed me-1"></i>
+                                                Capacity: <span th:text="${loc.capacity}">10</span>
+                                            </span>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0" th:if="${loc.description != null}"
+                       th:text="${loc.description}">
+                      Description of the location...
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes Section -->
+              <div class="notes-section">
+                <label for="participantNotes" class="form-label">
+                  <i class="fas fa-sticky-note me-2"></i>
+                  Additional Notes (Optional)
+                </label>
+                <textarea class="form-control" id="participantNotes" name="participantNotes"
+                          rows="3" placeholder="Any special requirements or preferences..."></textarea>
+                <small class="text-muted">
+                  Share any specific needs or preferences that might help the charity assist you better.
+                </small>
+              </div>
+            </div>
+
+            <!-- Submit Section -->
+            <div class="submit-section" th:if="${locations != null and !locations.isEmpty()}">
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-confirm btn-lg" id="submitBtn" disabled>
+                  <i class="fas fa-check me-2"></i>
+                  Confirm My Selection
+                </button>
+              </div>
+              <p class="text-center text-muted small mt-3 mb-0">
+                <i class="fas fa-lock me-1"></i>
+                Your selection is secure and will be shared only with
+                <span th:text="${charity.charityName}">the charity</span>.
+              </p>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center mt-4 text-white-50">
+        <p class="small mb-0">
+          <i class="fas fa-shield-alt me-1"></i>
+          Powered by SafelyNested - Connecting people with care
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function selectLocation(card) {
+    // Remove selection from all cards
+    document.querySelectorAll('.location-card').forEach(c => {
+      c.classList.remove('selected');
+    });
+
+    // Select this card
+    card.classList.add('selected');
+
+    // Check the radio button
+    const radio = card.querySelector('input[type="radio"]');
+    radio.checked = true;
+
+    // Enable submit button
+    document.getElementById('submitBtn').disabled = false;
+  }
+
+  // Handle keyboard accessibility
+  document.querySelectorAll('.location-card').forEach(card => {
+    card.setAttribute('tabindex', '0');
+    card.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectLocation(this);
+      }
+    });
+  });
+</script>
+</body>
+</html>

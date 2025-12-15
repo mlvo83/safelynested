@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Booking - Facilitator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .referral-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .referral-info h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .referral-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+        }
+
+        .form-section h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        label .required {
+            color: #dc3545;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 5px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-box {
+            background: #e0e7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-box p {
+            color: #333;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .calc-nights {
+            background: #d1fae5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #065f46;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Facilitator Portal</div>
+    <a th:href="@{/facilitator/referrals}" class="nav-link">← Back to Referrals</a>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <h1>Create New Booking</h1>
+        <p class="subtitle">Schedule accommodation for an approved referral</p>
+
+        <div class="referral-info">
+            <h3>Referral Information</h3>
+            <p><strong>Referral #:</strong> <span th:text="${referral.referralNumber}">REF-001</span></p>
+            <p><strong>Participant:</strong> <span th:text="${referral.participantName}">John Doe</span></p>
+            <p><strong>Contact:</strong> <span th:text="${referral.participantEmail}">email@example.com</span> | <span
+                    th:text="${referral.participantPhone}">555-0101</span></p>
+            <p><strong>Needs:</strong> <span th:text="${referral.needsDescription}">Description</span></p>
+        </div>
+
+        <form th:action="@{/facilitator/bookings/new}" th:object="${bookingDto}" method="post">
+            <input type="hidden" th:field="*{referralId}">
+
+            <!-- Location Section -->
+            <div class="form-section">
+                <h3>📍 Location Details</h3>
+
+                <div class="form-group">
+                    <label for="locationId">Location <span class="required">*</span></label>
+                    <select id="locationId" th:field="*{locationId}" required>
+                        <option value="">Select a location</option>
+                        <option th:each="location : ${locations}"
+                                th:value="${location.id}"
+                                th:text="${location.locationName + ' - ' + location.city + ', ' + location.state}">
+                            Location Name
+                        </option>
+                    </select>
+                    <div class="error" th:if="${#fields.hasErrors('locationId')}" th:errors="*{locationId}">Location
+                        error
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dates Section -->
+            <div class="form-section">
+                <h3>📅 Stay Dates</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="checkInDate">Check-in Date <span class="required">*</span></label>
+                        <input type="date" id="checkInDate" th:field="*{checkInDate}" required
+                               onchange="calculateNights()">
+                        <div class="error" th:if="${#fields.hasErrors('checkInDate')}" th:errors="*{checkInDate}">Date
+                            error
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="checkOutDate">Check-out Date <span class="required">*</span></label>
+                        <input type="date" id="checkOutDate" th:field="*{checkOutDate}" required
+                               onchange="calculateNights()">
+                        <div class="error" th:if="${#fields.hasErrors('checkOutDate')}" th:errors="*{checkOutDate}">Date
+                            error
+                        </div>
+                    </div>
+                </div>
+
+                <div id="nightsCalc" class="calc-nights"></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="checkInTime">Preferred Check-in Time</label>
+                        <input type="datetime-local" id="checkInTime" th:field="*{checkInTime}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="checkOutTime">Preferred Check-out Time</label>
+                        <input type="datetime-local" id="checkOutTime" th:field="*{checkOutTime}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="form-section">
+                <h3>💳 Payment Information</h3>
+
+                <div class="form-row-3">
+                    <div class="form-group">
+                        <label for="cost">Total Cost ($)</label>
+                        <input type="number" step="0.01" id="cost" th:field="*{cost}" placeholder="0.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="paymentStatus">Payment Status</label>
+                        <select id="paymentStatus" th:field="*{paymentStatus}">
+                            <option value="">Select status</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="PAID">Paid</option>
+                            <option value="PARTIALLY_PAID">Partially Paid</option>
+                            <option value="PROGRAM_FUNDED">Program Funded</option>
+                            <option value="WAIVED">Waived</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="paymentMethod">Payment Method</label>
+                        <select id="paymentMethod" th:field="*{paymentMethod}">
+                            <option value="">Select method</option>
+                            <option value="PROGRAM_FUNDED">Program Funded</option>
+                            <option value="CREDIT_CARD">Credit Card</option>
+                            <option value="CASH">Cash</option>
+                            <option value="CHECK">Check</option>
+                            <option value="GRANT">Grant</option>
+                            <option value="VOUCHER">Voucher</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="paidBy">Paid By (Person/Organization)</label>
+                    <input type="text" id="paidBy" th:field="*{paidBy}"
+                           placeholder="e.g., Hope Foundation, Program Budget">
+                </div>
+            </div>
+
+            <!-- Status Section -->
+            <div class="form-section">
+                <h3>📋 Booking Status</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bookingStatus">Initial Status</label>
+                        <select id="bookingStatus" th:field="*{bookingStatus}">
+                            <option value="PENDING">Pending (Awaiting Confirmation)</option>
+                            <option value="CONFIRMED">Confirmed</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expiresAt">Booking Expires At (Optional)</label>
+                        <input type="datetime-local" id="expiresAt" th:field="*{expiresAt}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="form-section">
+                <h3>📝 Instructions & Notes</h3>
+
+                <div class="form-group">
+                    <label for="specialInstructions">Special Instructions</label>
+                    <textarea id="specialInstructions" th:field="*{specialInstructions}" rows="3"
+                              placeholder="e.g., Ground floor room needed, Near elevator, Quiet room preferred"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">General Notes</label>
+                    <textarea id="notes" th:field="*{notes}" rows="3"
+                              placeholder="Add any additional notes about this booking..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="externalBookingReference">External Reference # (Optional)</label>
+                    <input type="text" id="externalBookingReference" th:field="*{externalBookingReference}"
+                           placeholder="External system booking reference or confirmation number">
+                </div>
+            </div>
+
+            <div class="info-box">
+                <p><strong>Note:</strong> A confirmation code will be automatically generated when the booking is
+                    created. The participant will receive booking details after creation.</p>
+            </div>
+
+            <div class="button-group">
+                <a th:href="@{/facilitator/referrals}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Create Booking</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Calculate nights between check-in and check-out
+    function calculateNights() {
+        const checkIn = document.getElementById('checkInDate').value;
+        const checkOut = document.getElementById('checkOutDate').value;
+
+        if (checkIn && checkOut) {
+            const date1 = new Date(checkIn);
+            const date2 = new Date(checkOut);
+            const diffTime = date2 - date1;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            const nightsDiv = document.getElementById('nightsCalc');
+            if (diffDays > 0) {
+                nightsDiv.style.display = 'block';
+                nightsDiv.innerHTML = `✓ <strong>${diffDays} night${diffDays > 1 ? 's' : ''}</strong> (${checkIn} to ${checkOut})`;
+            } else if (diffDays === 0) {
+                nightsDiv.style.display = 'block';
+                nightsDiv.style.background = '#fef3c7';
+                nightsDiv.style.color = '#92400e';
+                nightsDiv.innerHTML = `⚠ Check-out date must be after check-in date`;
+            } else {
+                nightsDiv.style.display = 'block';
+                nightsDiv.style.background = '#fee2e2';
+                nightsDiv.style.color = '#991b1b';
+                nightsDiv.innerHTML = `❌ Invalid dates - check-out is before check-in`;
+            }
+        }
+    }
+
+    // Set minimum date to today
+    document.addEventListener('DOMContentLoaded', function () {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('checkInDate').setAttribute('min', today);
+        document.getElementById('checkOutDate').setAttribute('min', today);
+    });
+</script>
+</body>
+</html>

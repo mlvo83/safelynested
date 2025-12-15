@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invite Error - SafelyNested</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+        }
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .error-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .error-icon {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3rem;
+            color: #dc3545;
+        }
+        .content-section {
+            padding: 2rem;
+            text-align: center;
+        }
+        .help-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .btn-contact {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 30px;
+            padding: 0.75rem 2rem;
+        }
+        .btn-contact:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="main-card">
+                <!-- Error Header -->
+                <div class="error-header">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h2 class="mb-2">Oops!</h2>
+                    <p class="mb-0 opacity-75">Something went wrong</p>
+                </div>
+
+                <!-- Content -->
+                <div class="content-section">
+                    <p class="lead text-muted" th:text="${error}">
+                        An error occurred while processing your invite.
+                    </p>
+
+                    <div class="help-section">
+                        <h5 class="mb-3">
+                            <i class="fas fa-life-ring me-2 text-primary"></i>
+                            Need Help?
+                        </h5>
+                        <p class="text-muted" th:if="${charityName}">
+                            Please contact <strong th:text="${charityName}">the charity</strong>
+                            to request a new invite or get assistance.
+                        </p>
+                        <p class="text-muted" th:unless="${charityName}">
+                            Please contact the charity that sent you this invite
+                            for further assistance.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SafelyNested Footer -->
+            <div class="text-center mt-4 text-white-50">
+                <p class="small mb-0">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Powered by SafelyNested - Connecting people with care
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

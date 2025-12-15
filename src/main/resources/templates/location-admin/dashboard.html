@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Admin Dashboard - SafelyNested</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar { min-height: 100vh; background: linear-gradient(135deg, #20c997 0%, #17a2b8 100%); }
+        .sidebar .nav-link { color: rgba(255,255,255,0.8); padding: 0.75rem 1rem; margin: 0.2rem 0; border-radius: 0.5rem; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,0.2); color: white; }
+        .main-content { background-color: #f8f9fa; min-height: 100vh; }
+        .stat-card { border: none; border-radius: 15px; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: inherit;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.2); color: white; }
+        .charity-badge { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse py-3">
+            <div class="text-center mb-4">
+                <i class="fas fa-map-marked-alt text-white fa-3x mb-2"></i>
+                <h6 class="text-white">Location Admin</h6>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/location-admin/dashboard}">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/location-admin/locations}">
+                        <i class="fas fa-building me-2"></i> All Locations
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/location-admin/locations/new}">
+                        <i class="fas fa-plus-circle me-2"></i> Add Location
+                    </a>
+                </li>
+                <li class="nav-item mt-4">
+                    <form th:action="@{/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="logout-btn">
+                            <i class="fas fa-sign-out-alt me-2"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-tachometer-alt me-2"></i>Location Admin Dashboard</h1>
+                <a th:href="@{/location-admin/locations/new}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i> Add New Location
+                </a>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i><span th:text="${success}">Success</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}">Error</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon bg-primary bg-opacity-10 me-3">
+                                <i class="fas fa-building fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-0" th:text="${totalLocations}">0</h3>
+                                <small class="text-muted">Total Locations</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon bg-success bg-opacity-10 me-3">
+                                <i class="fas fa-check-circle fa-2x text-success"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-0" th:text="${activeLocations}">0</h3>
+                                <small class="text-muted">Active Locations</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="stat-icon bg-info bg-opacity-10 me-3">
+                                <i class="fas fa-bed fa-2x text-info"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-0" th:text="${totalCapacity}">0</h3>
+                                <small class="text-muted">Total Capacity</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Locations by Charity -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Locations by Charity</h5>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${locationsPerCharity.isEmpty()}" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <p>No charities registered yet</p>
+                            </div>
+                            <div th:unless="${locationsPerCharity.isEmpty()}">
+                                <div th:each="entry : ${locationsPerCharity}" class="d-flex justify-content-between align-items-center mb-3">
+                                    <span th:text="${entry.key}">Charity Name</span>
+                                    <span class="badge bg-primary rounded-pill" th:text="${entry.value}">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a th:href="@{/location-admin/locations}" class="btn btn-outline-primary btn-sm">
+                                View All Locations <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-3">
+                                <a th:href="@{/location-admin/locations/new}" class="btn btn-success btn-lg">
+                                    <i class="fas fa-plus-circle me-2"></i> Add New Location
+                                </a>
+                                <a th:href="@{/location-admin/locations(status='active')}" class="btn btn-outline-success">
+                                    <i class="fas fa-check-circle me-2"></i> View Active Locations
+                                </a>
+                                <a th:href="@{/location-admin/locations(status='inactive')}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-pause-circle me-2"></i> View Inactive Locations
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Locations -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Locations</h5>
+                    <a th:href="@{/location-admin/locations}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div th:if="${recentLocations.isEmpty()}" class="text-center py-5">
+                        <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No locations yet</p>
+                        <a th:href="@{/location-admin/locations/new}" class="btn btn-primary">Add First Location</a>
+                    </div>
+                    <div th:unless="${recentLocations.isEmpty()}" class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Location</th>
+                                <th>Charity</th>
+                                <th>City/State</th>
+                                <th>Capacity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="location : ${recentLocations}">
+                                <td>
+                                    <a th:href="@{/location-admin/locations/{id}(id=${location.id})}"
+                                       th:text="${location.locationName}" class="fw-bold text-decoration-none">
+                                        Location Name
+                                    </a>
+                                </td>
+                                <td>
+                                        <span class="badge bg-info charity-badge"
+                                              th:text="${location.charity?.charityName} ?: 'Unknown'">Charity</span>
+                                </td>
+                                <td>
+                                        <span th:if="${location.city != null and location.state != null}"
+                                              th:text="${location.city + ', ' + location.state}">City, State</span>
+                                    <span th:if="${location.city == null or location.state == null}"
+                                          class="text-muted">Not specified</span>
+                                </td>
+                                <td>
+                                    <span th:text="${location.capacity} ?: 'N/A'">10</span>
+                                </td>
+                                <td>
+                                    <span th:if="${location.isActive}" class="badge bg-success">Active</span>
+                                    <span th:unless="${location.isActive}" class="badge bg-secondary">Inactive</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/location-admin/locations/{id}/edit(id=${location.id})}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

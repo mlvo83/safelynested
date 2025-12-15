@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookings - Facilitator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-confirmed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-checked_in {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .badge-checked_out {
+            background: #fce7f3;
+            color: #9f1239;
+        }
+
+        .badge-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-no_show {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .payment-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+
+        .payment-paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .payment-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .payment-program_funded {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-view {
+            background: #667eea;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .deleted-record {
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Facilitator Portal</div>
+    <a th:href="@{/facilitator/dashboard}" class="nav-link">← Back to Dashboard</a>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1>Bookings Management</h1>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}">Success</div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}">Error</div>
+
+    <div class="card">
+        <table th:if="${bookings != null && !bookings.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Confirmation Code</th>
+                <th>Participant</th>
+                <th>Location</th>
+                <th>Check-in / Check-out</th>
+                <th>Nights</th>
+                <th>Cost</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="booking : ${bookings}">
+                <td>
+                    <strong th:text="${booking.confirmationCode}">CONF-20241215-000001</strong><br>
+                    <small style="color: #666;" th:text="'ID: ' + ${booking.id}">ID: 1</small>
+                </td>
+                <td>
+                    <!-- SAFE: Use helper method that handles missing referral -->
+                    <strong th:text="${booking.displayParticipantName} ?: 'Unknown'">John Doe</strong>
+                </td>
+                <td>
+                    <!-- SAFE: Use helper method that handles missing location -->
+                    <span th:text="${booking.displayLocationName} ?: 'Unknown'">Downtown Center</span>
+                    <br>
+                    <small style="color: #666;" th:if="${booking.locationAddress != null}" th:text="${booking.locationAddress}">123 Main St</small>
+                </td>
+                <td>
+                    <strong th:text="${#temporals.format(booking.checkInDate, 'MMM dd, yyyy')}">Dec 01, 2024</strong><br>
+                    <small style="color: #666;">to</small><br>
+                    <strong th:text="${#temporals.format(booking.checkOutDate, 'MMM dd, yyyy')}">Dec 08, 2024</strong>
+                </td>
+                <td>
+                    <strong th:text="${booking.nights} ?: 1">7</strong> night<span th:if="${booking.nights != 1}">s</span>
+                </td>
+                <td>
+                    <span th:if="${booking.cost != null}">
+                        <strong th:text="'$' + ${#numbers.formatDecimal(booking.cost, 1, 2)}">$525.00</strong>
+                        <br>
+                        <span th:if="${booking.paymentStatus != null}"
+                              th:class="'payment-badge payment-' + ${#strings.toLowerCase(booking.paymentStatus)}"
+                              th:text="${#strings.replace(booking.paymentStatus, '_', ' ')}">PAID</span>
+                    </span>
+                    <span th:if="${booking.cost == null}" style="color: #999;">Free</span>
+                </td>
+                <td>
+                    <span th:if="${booking.bookingStatus != null}"
+                          th:class="'badge badge-' + ${#strings.toLowerCase(booking.bookingStatus)}"
+                          th:text="${#strings.replace(booking.bookingStatus, '_', ' ')}">CONFIRMED</span>
+                    <span th:if="${booking.bookingStatus == null}" class="badge badge-pending">PENDING</span>
+                </td>
+                <td>
+                    <a th:href="@{/facilitator/bookings/{id}(id=${booking.id})}" class="btn btn-view">View</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${bookings == null || bookings.isEmpty()}" class="empty-state">
+            <h3>No Bookings Yet</h3>
+            <p>Create bookings from approved referrals to get started.</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

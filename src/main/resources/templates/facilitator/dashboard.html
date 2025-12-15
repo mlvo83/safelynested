@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facilitator Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .welcome-card h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card.pending .number { color: #f59e0b; }
+        .stat-card.approved .number { color: #10b981; }
+        .stat-card.rejected .number { color: #ef4444; }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .card-link:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Facilitator Portal</div>
+    <div class="navbar-right">
+        <div class="user-info">
+            <span th:text="${username}">User</span>
+            <span class="badge">FACILITATOR</span>
+        </div>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="welcome-card">
+        <h1>Welcome, Facilitator!</h1>
+        <p>Manage referrals and bookings from your dashboard</p>
+    </div>
+
+    <h2 style="margin-bottom: 20px; color: #333;">Referral Statistics</h2>
+    <div class="stats-grid">
+        <div class="stat-card pending">
+            <h3>Pending Referrals</h3>
+            <div class="number" th:text="${referralStats.pending}">0</div>
+        </div>
+        <div class="stat-card approved">
+            <h3>Approved Referrals</h3>
+            <div class="number" th:text="${referralStats.approved}">0</div>
+        </div>
+        <div class="stat-card rejected">
+            <h3>Rejected Referrals</h3>
+            <div class="number" th:text="${referralStats.rejected}">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Total Referrals</h3>
+            <div class="number" th:text="${referralStats.total}">0</div>
+        </div>
+    </div>
+
+    <h2 style="margin: 40px 0 20px; color: #333;">Booking Statistics</h2>
+    <div class="stats-grid">
+        <div class="stat-card pending">
+            <h3>Scheduled Bookings</h3>
+            <div class="number" th:text="${bookingStats.scheduled}">0</div>
+        </div>
+        <div class="stat-card approved">
+            <h3>Completed Bookings</h3>
+            <div class="number" th:text="${bookingStats.completed}">0</div>
+        </div>
+        <div class="stat-card rejected">
+            <h3>Cancelled Bookings</h3>
+            <div class="number" th:text="${bookingStats.cancelled}">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>Total Bookings</h3>
+            <div class="number" th:text="${bookingStats.total}">0</div>
+        </div>
+    </div>
+
+    <h2 style="margin: 40px 0 20px; color: #333;">Quick Actions</h2>
+    <div class="cards-grid">
+        <div class="card">
+            <h3>📋 View All Referrals</h3>
+            <p>Review all referrals from charity partners. Approve or reject referrals based on criteria.</p>
+            <a th:href="@{/facilitator/referrals}" class="card-link">View Referrals</a>
+        </div>
+
+        <div class="card">
+            <h3>📅 Manage Bookings</h3>
+            <p>Process bookings for approved referrals. View and manage your booking schedule.</p>
+            <a th:href="@{/facilitator/bookings}" class="card-link">View Bookings</a>
+        </div>
+
+        <div class="card">
+            <h3>⏳ Pending Referrals</h3>
+            <p>Quick access to pending referrals that need your review and decision.</p>
+            <a th:href="@{/facilitator/referrals?status=PENDING}" class="card-link">Review Pending</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

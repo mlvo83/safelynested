@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Referrals - Charity Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: inherit;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .stat-card {
+            border-left: 4px solid #6f42c1;
+        }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-completed { background: #dbeafe; color: #1e40af; }
+        .badge-cancelled { background: #f3f4f6; color: #6b7280; }
+        .badge-urgent { background: #fee2e2; color: #991b1b; }
+        .badge-high { background: #fed7aa; color: #9a3412; }
+        .badge-medium { background: #fef3c7; color: #92400e; }
+        .badge-low { background: #e0e7ff; color: #3730a3; }
+        .referral-row:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse py-3">
+            <div class="text-center mb-4">
+                <i class="fas fa-hands-helping text-white fa-3x mb-2"></i>
+                <h6 class="text-white" th:text="${charity?.charityName} ?: 'Charity Partner'">Charity Name</h6>
+                <small class="text-white-50">Charity Partner Portal</small>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/dashboard}">
+                        <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/charity-partner/referrals}">
+                        <i class="fas fa-users me-2"></i> Referrals
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/documents}">
+                        <i class="fas fa-file-alt me-2"></i> Documents
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/invites}">
+                        <i class="fas fa-envelope me-2"></i> Invites
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/locations}">
+                        <i class="fas fa-map-marker-alt me-2"></i> Locations
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/charity-partner/profile}">
+                        <i class="fas fa-building me-2"></i> Profile
+                    </a>
+                </li>
+                <li class="nav-item mt-4">
+                    <form th:action="@{/logout}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="logout-btn">
+                            <i class="fas fa-sign-out-alt me-2"></i> Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">
+                    <i class="fas fa-file-alt text-purple me-2"></i>Our Referrals
+                </h1>
+                <a th:href="@{/charity-partner/referrals/new}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> New Referral
+                </a>
+            </div>
+
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${success}">Success message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${error}">Error message</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="card mb-4">
+                <div class="card-body py-2">
+                    <div class="d-flex flex-wrap gap-2">
+                        <a th:href="@{/charity-partner/referrals}"
+                           th:class="${currentStatus == null} ? 'btn btn-primary btn-sm' : 'btn btn-outline-secondary btn-sm'">
+                            All
+                        </a>
+                        <a th:href="@{/charity-partner/referrals(status='PENDING')}"
+                           th:class="${currentStatus == 'PENDING'} ? 'btn btn-warning btn-sm' : 'btn btn-outline-secondary btn-sm'">
+                            <i class="fas fa-clock me-1"></i> Pending
+                        </a>
+                        <a th:href="@{/charity-partner/referrals(status='APPROVED')}"
+                           th:class="${currentStatus == 'APPROVED'} ? 'btn btn-success btn-sm' : 'btn btn-outline-secondary btn-sm'">
+                            <i class="fas fa-check me-1"></i> Approved
+                        </a>
+                        <a th:href="@{/charity-partner/referrals(status='REJECTED')}"
+                           th:class="${currentStatus == 'REJECTED'} ? 'btn btn-danger btn-sm' : 'btn btn-outline-secondary btn-sm'">
+                            <i class="fas fa-times me-1"></i> Rejected
+                        </a>
+                        <a th:href="@{/charity-partner/referrals(status='COMPLETED')}"
+                           th:class="${currentStatus == 'COMPLETED'} ? 'btn btn-info btn-sm' : 'btn btn-outline-secondary btn-sm'">
+                            <i class="fas fa-check-double me-1"></i> Completed
+                        </a>
+                        <a th:href="@{/charity-partner/referrals(status='CANCELLED')}"
+                           th:class="${currentStatus == 'CANCELLED'} ? 'btn btn-secondary btn-sm' : 'btn btn-outline-secondary btn-sm'">
+                            <i class="fas fa-ban me-1"></i> Cancelled
+                        </a>
+
+                        <!-- Search -->
+                        <form th:action="@{/charity-partner/referrals}" method="get" class="d-flex ms-auto">
+                            <input type="text" name="search" class="form-control form-control-sm"
+                                   placeholder="Search by name or ref#..."
+                                   th:value="${searchTerm}" style="width: 200px;">
+                            <button type="submit" class="btn btn-outline-primary btn-sm ms-2">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referrals Table -->
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div th:if="${referrals != null and !referrals.isEmpty()}" class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Ref #</th>
+                                <th>Participant</th>
+                                <th>Urgency</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="ref : ${referrals}" class="referral-row">
+                                <td>
+                                    <code th:text="${ref.referralNumber}">REF-12345</code>
+                                </td>
+                                <td>
+                                    <strong th:text="${ref.participantName}">John Doe</strong>
+                                    <br>
+                                    <small class="text-muted" th:if="${ref.participantEmail}" th:text="${ref.participantEmail}">email@example.com</small>
+                                </td>
+                                <td>
+                                        <span th:if="${ref.urgencyLevel != null}"
+                                              th:class="'badge badge-' + ${#strings.toLowerCase(ref.urgencyLevel.name())}"
+                                              th:text="${ref.urgencyLevel}">MEDIUM</span>
+                                    <span th:if="${ref.urgencyLevel == null}" class="text-muted">-</span>
+                                </td>
+                                <td>
+                                        <span th:class="'badge badge-' + ${#strings.toLowerCase(ref.status.name())}"
+                                              th:text="${ref.status}">PENDING</span>
+                                </td>
+                                <td>
+                                    <span th:text="${#temporals.format(ref.createdAt, 'MMM dd, yyyy')}">Jan 01, 2024</span>
+                                    <br>
+                                    <small class="text-muted" th:text="${#temporals.format(ref.createdAt, 'h:mm a')}">10:30 AM</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a th:href="@{/charity-partner/referrals/{id}(id=${ref.id})}"
+                                           class="btn btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <!-- Edit button - only for PENDING referrals -->
+                                        <a th:if="${ref.status.name() == 'PENDING'}"
+                                           th:href="@{/charity-partner/referrals/{id}/edit(id=${ref.id})}"
+                                           class="btn btn-outline-secondary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <!-- Cancel button - not for COMPLETED or CANCELLED -->
+                                        <button th:if="${ref.status.name() != 'COMPLETED' and ref.status.name() != 'CANCELLED'}"
+                                                type="button" class="btn btn-outline-danger"
+                                                title="Cancel Referral"
+                                                th:data-id="${ref.id}"
+                                                th:data-name="${ref.participantName}"
+                                                onclick="showCancelModal(this.getAttribute('data-id'), this.getAttribute('data-name'))">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                        <!-- Send Invite - only for APPROVED referrals -->
+                                        <a th:if="${ref.status.name() == 'APPROVED'}"
+                                           th:href="@{/charity-partner/invites/send(referralId=${ref.id})}"
+                                           class="btn btn-outline-success" title="Send Invite">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div th:if="${referrals == null or referrals.isEmpty()}" class="text-center py-5">
+                        <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Referrals Found</h4>
+                        <p class="text-muted" th:if="${currentStatus != null}">
+                            No referrals with status "<span th:text="${currentStatus}">PENDING</span>".
+                        </p>
+                        <p class="text-muted" th:if="${searchTerm != null and !searchTerm.isEmpty()}">
+                            No referrals matching "<span th:text="${searchTerm}">search</span>".
+                        </p>
+                        <p class="text-muted" th:if="${currentStatus == null and (searchTerm == null or searchTerm.isEmpty())}">
+                            You haven't created any referrals yet.
+                        </p>
+                        <a th:href="@{/charity-partner/referrals/new}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-1"></i> Create Your First Referral
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card mt-4 border-info">
+                <div class="card-body">
+                    <h6 class="card-title text-info">
+                        <i class="fas fa-info-circle me-2"></i>Referral Workflow
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <span class="badge badge-pending me-1">PENDING</span>
+                            <small class="text-muted">Awaiting facilitator review</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge badge-approved me-1">APPROVED</span>
+                            <small class="text-muted">Ready to send invite</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge badge-completed me-1">COMPLETED</span>
+                            <small class="text-muted">Booking confirmed</small>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="badge badge-rejected me-1">REJECTED</span>
+                            <small class="text-muted">Not approved</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-ban me-2"></i>Cancel Referral
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="cancelForm" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel the referral for <strong id="cancelParticipantName">participant</strong>?</p>
+                    <p class="text-muted small">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> No, Keep It
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban me-1"></i> Yes, Cancel Referral
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function showCancelModal(referralId, participantName) {
+        const form = document.getElementById('cancelForm');
+        form.action = '/charity-partner/referrals/' + referralId + '/cancel';
+        document.getElementById('cancelParticipantName').textContent = participantName;
+
+        const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+        modal.show();
+    }
+</script>
+</body>
+</html>

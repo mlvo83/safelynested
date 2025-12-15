@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selection Confirmed - SafelyNested</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+        }
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .success-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 3rem;
+            color: #28a745;
+            animation: scaleIn 0.5s ease-out;
+        }
+        @keyframes scaleIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .content-section {
+            padding: 2rem;
+        }
+        .confirmation-details {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+        .detail-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        .detail-content h6 {
+            margin-bottom: 0.25rem;
+            color: #333;
+        }
+        .detail-content p {
+            margin-bottom: 0;
+            color: #666;
+        }
+        .next-steps {
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            padding: 1.5rem;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        .next-steps h5 {
+            color: #667eea;
+        }
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        .btn-change {
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 30px;
+        }
+        .btn-change:hover {
+            background: #667eea;
+            color: white;
+        }
+        .footer-note {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="main-card">
+                <!-- Success Header -->
+                <div class="success-header">
+                    <div class="success-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2 class="mb-2">Selection Confirmed!</h2>
+                    <p class="mb-0 opacity-75">
+                        Thank you, <span th:text="${invite.recipientName}">Guest</span>.
+                        Your location preference has been saved.
+                    </p>
+                </div>
+
+                <!-- Content -->
+                <div class="content-section">
+                    <!-- Confirmation Details -->
+                    <div class="confirmation-details">
+                        <h5 class="mb-3">
+                            <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                            Your Selected Location
+                        </h5>
+
+                        <div class="detail-row">
+                            <div class="detail-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h6 th:text="${location.locationName}">Location Name</h6>
+                                <p>
+                                    <span th:if="${location.address}" th:text="${location.address}">123 Main St</span>
+                                    <span th:if="${location.city}">, <span th:text="${location.city}">City</span></span>
+                                    <span th:if="${location.state}">, <span th:text="${location.state}">State</span></span>
+                                    <span th:if="${location.zipCode}"> <span th:text="${location.zipCode}">12345</span></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="detail-row" th:if="${location.phone}">
+                            <div class="detail-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h6>Phone</h6>
+                                <p th:text="${location.phone}">(555) 123-4567</p>
+                            </div>
+                        </div>
+
+                        <div class="detail-row" th:if="${location.hoursOfOperation}">
+                            <div class="detail-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h6>Hours of Operation</h6>
+                                <p th:text="${location.hoursOfOperation}">Mon-Fri 9am-5pm</p>
+                            </div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-icon">
+                                <i class="fas fa-hands-helping"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h6>Charity</h6>
+                                <p th:text="${charity.charityName}">Charity Name</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Participant Notes -->
+                    <div class="confirmation-details" th:if="${invite.participantNotes != null and !invite.participantNotes.isEmpty()}">
+                        <h5 class="mb-3">
+                            <i class="fas fa-sticky-note me-2 text-warning"></i>
+                            Your Notes
+                        </h5>
+                        <p class="mb-0 text-muted" th:text="${invite.participantNotes}">Notes...</p>
+                    </div>
+
+                    <!-- Next Steps -->
+                    <div class="next-steps">
+                        <h5 class="mb-3">
+                            <i class="fas fa-tasks me-2"></i>
+                            What Happens Next?
+                        </h5>
+
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div>
+                                <strong>Notification Sent</strong>
+                                <p class="text-muted small mb-0">
+                                    <span th:text="${charity.charityName}">The charity</span> has been notified of your selection.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div>
+                                <strong>Review & Confirmation</strong>
+                                <p class="text-muted small mb-0">
+                                    A representative will review your request and contact you soon.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div>
+                                <strong>Check-In Instructions</strong>
+                                <p class="text-muted small mb-0">
+                                    You'll receive details about when and how to arrive at your selected location.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Change Selection Button -->
+                    <div class="text-center mt-4">
+                        <p class="text-muted small mb-2">
+                            Need to make changes? You can update your selection within 24 hours.
+                        </p>
+                        <a th:href="@{/referral/invite/{token}/change(token=${invite.inviteToken})}" class="btn btn-change">
+                            <i class="fas fa-edit me-2"></i>
+                            Change Selection
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="footer-note">
+                    <p class="mb-0 text-muted small">
+                        <i class="fas fa-envelope me-1"></i>
+                        Questions? Contact <span th:text="${charity.charityName}">the charity</span> directly for assistance.
+                    </p>
+                </div>
+            </div>
+
+            <!-- SafelyNested Footer -->
+            <div class="text-center mt-4 text-white-50">
+                <p class="small mb-0">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Powered by SafelyNested - Connecting people with care
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
