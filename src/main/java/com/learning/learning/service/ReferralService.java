@@ -1,7 +1,9 @@
 package com.learning.learning.service;
 
 import com.learning.learning.dto.ReferralDto;
+import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Referral;
+import com.learning.learning.entity.ReferralInvite;
 import com.learning.learning.entity.User;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.repository.UserRepository;
@@ -136,6 +138,81 @@ public class ReferralService {
 
         // Send notification emails (async - won't block the rejection)
         sendRejectionNotifications(savedReferral, reason);
+
+        return savedReferral;
+    }
+
+    // ========================================
+    // INVITE TO REFERRAL CREATION
+    // ========================================
+
+    /**
+     * Create a new referral from a completed invite.
+     * This is called when a participant selects a location via an invite link.
+     *
+     * @param invite The completed invite with selected location
+     * @param selectedLocation The location selected by the participant
+     * @return The created referral
+     */
+    @Transactional
+    public Referral createReferralFromInvite(ReferralInvite invite, CharityLocation selectedLocation) {
+        logger.info("Creating referral from invite {} for participant {}",
+                invite.getId(), invite.getRecipientName());
+
+        Referral referral = new Referral();
+        referral.setReferralNumber(generateReferralNumber());
+        referral.setParticipantName(invite.getRecipientName());
+        referral.setParticipantEmail(invite.getRecipientEmail());
+        referral.setParticipantPhone(invite.getRecipientPhone());
+        referral.setCharity(invite.getCharity());
+        referral.setReferredByUser(invite.getCreatedBy());
+        referral.setReferredByCharity(invite.getCharity().getCharityName());
+        referral.setUrgencyLevel(Referral.UrgencyLevel.MEDIUM);
+        referral.setStatus(Referral.ReferralStatus.PENDING);
+        referral.setSelectedLocation(selectedLocation);
+        referral.setLocationSelectedAt(LocalDateTime.now());
+        referral.setAllowedZipCodes(invite.getAllowedZipCodes());
+
+        // Add participant notes as needs description if provided
+        if (invite.getParticipantNotes() != null && !invite.getParticipantNotes().isEmpty()) {
+            referral.setNeedsDescription("Participant notes: " + invite.getParticipantNotes());
+        }
+
+        Referral savedReferral = referralRepository.save(referral);
+        logger.info("Created referral {} from invite {}", savedReferral.getReferralNumber(), invite.getId());
+
+        return savedReferral;
+    }
+
+    /**
+     * Update an existing referral with the selected location from a completed invite.
+     * This is called when an invite was linked to an existing referral.
+     *
+     * @param referral The existing referral to update
+     * @param selectedLocation The location selected by the participant
+     * @param participantNotes Optional notes from the participant
+     * @return The updated referral
+     */
+    @Transactional
+    public Referral updateReferralWithLocationSelection(Referral referral, CharityLocation selectedLocation, String participantNotes) {
+        logger.info("Updating referral {} with selected location {}",
+                referral.getReferralNumber(), selectedLocation.getLocationName());
+
+        referral.setSelectedLocation(selectedLocation);
+        referral.setLocationSelectedAt(LocalDateTime.now());
+
+        // Append participant notes to needs description if provided
+        if (participantNotes != null && !participantNotes.isEmpty()) {
+            String existingDescription = referral.getNeedsDescription();
+            if (existingDescription != null && !existingDescription.isEmpty()) {
+                referral.setNeedsDescription(existingDescription + "\n\nParticipant notes: " + participantNotes);
+            } else {
+                referral.setNeedsDescription("Participant notes: " + participantNotes);
+            }
+        }
+
+        Referral savedReferral = referralRepository.save(referral);
+        logger.info("Updated referral {} with location selection", savedReferral.getReferralNumber());
 
         return savedReferral;
     }

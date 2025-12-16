@@ -147,6 +147,24 @@
 
                 <!-- Content -->
                 <div class="content-section">
+                    <!-- Referral Number -->
+                    <div class="confirmation-details" th:if="${referral != null}">
+                        <h5 class="mb-3">
+                            <i class="fas fa-file-alt me-2 text-success"></i>
+                            Your Referral
+                        </h5>
+                        <div class="detail-row">
+                            <div class="detail-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                                <i class="fas fa-hashtag"></i>
+                            </div>
+                            <div class="detail-content">
+                                <h6>Referral Number</h6>
+                                <p class="fw-bold" th:text="${referral.referralNumber}">REF-2025-001</p>
+                                <small class="text-muted">Please save this number for your records</small>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Confirmation Details -->
                     <div class="confirmation-details">
                         <h5 class="mb-3">
@@ -219,9 +237,9 @@
                         <div class="step-item">
                             <div class="step-number">1</div>
                             <div>
-                                <strong>Notification Sent</strong>
+                                <strong>Referral Submitted</strong>
                                 <p class="text-muted small mb-0">
-                                    <span th:text="${charity.charityName}">The charity</span> has been notified of your selection.
+                                    Your referral has been automatically submitted for review.
                                 </p>
                             </div>
                         </div>
@@ -229,9 +247,9 @@
                         <div class="step-item">
                             <div class="step-number">2</div>
                             <div>
-                                <strong>Review & Confirmation</strong>
+                                <strong>Facilitator Review</strong>
                                 <p class="text-muted small mb-0">
-                                    A representative will review your request and contact you soon.
+                                    A facilitator will review and approve your referral shortly.
                                 </p>
                             </div>
                         </div>
@@ -239,9 +257,9 @@
                         <div class="step-item">
                             <div class="step-number">3</div>
                             <div>
-                                <strong>Check-In Instructions</strong>
+                                <strong>Booking Confirmation</strong>
                                 <p class="text-muted small mb-0">
-                                    You'll receive details about when and how to arrive at your selected location.
+                                    Once approved, you'll receive check-in details for your selected location.
                                 </p>
                             </div>
                         </div>
