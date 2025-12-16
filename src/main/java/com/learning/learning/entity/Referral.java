@@ -72,6 +72,14 @@ public class Referral {
     @Column(name = "allowed_zip_codes", columnDefinition = "TEXT")
     private String allowedZipCodes; // Comma-separated list
 
+    // Selected location by participant
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "selected_location_id")
+    private CharityLocation selectedLocation;
+
+    @Column(name = "location_selected_at")
+    private LocalDateTime locationSelectedAt;
+
     // Approval tracking
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;

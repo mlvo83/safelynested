@@ -2,9 +2,11 @@ package com.learning.learning.controller;
 
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.CharityLocation;
+import com.learning.learning.entity.Referral;
 import com.learning.learning.entity.ReferralInvite;
 import com.learning.learning.repository.CharityLocationRepository;
 import com.learning.learning.repository.ReferralInviteRepository;
+import com.learning.learning.service.ReferralService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,9 @@ public class PublicInviteController {
 
     @Autowired
     private CharityLocationRepository locationRepository;
+
+    @Autowired
+    private ReferralService referralService;
 
     /**
      * Display the invite acceptance page with available locations
@@ -182,9 +187,30 @@ public class PublicInviteController {
         invite.setStatus(ReferralInvite.InviteStatus.COMPLETED);
         invite.setCompletedAt(LocalDateTime.now());
 
+        // Create or update referral based on whether invite was linked to one
+        Referral referral;
+        if (invite.getReferral() != null) {
+            // Invite was linked to an existing referral - update it with location selection
+            referral = referralService.updateReferralWithLocationSelection(
+                    invite.getReferral(),
+                    location,
+                    participantNotes
+            );
+            logger.info("Updated existing referral {} with location selection from invite {}",
+                    referral.getReferralNumber(), invite.getId());
+        } else {
+            // Invite was NOT linked to a referral - create a new one
+            referral = referralService.createReferralFromInvite(invite, location);
+            // Link the new referral to the invite
+            invite.setReferral(referral);
+            logger.info("Created new referral {} from invite {}",
+                    referral.getReferralNumber(), invite.getId());
+        }
+
         inviteRepository.save(invite);
 
-        logger.info("Invite {} completed with location {} selected", invite.getId(), location.getLocationName());
+        logger.info("Invite {} completed with location {} selected, referral {} submitted to facilitator",
+                invite.getId(), location.getLocationName(), referral.getReferralNumber());
 
         return "redirect:/referral/invite/" + token + "/confirmation";
     }
@@ -217,6 +243,7 @@ public class PublicInviteController {
         model.addAttribute("invite", invite);
         model.addAttribute("location", invite.getSelectedLocation());
         model.addAttribute("charity", charity);
+        model.addAttribute("referral", invite.getReferral());
 
         return "public/invite-confirmation";
     }
