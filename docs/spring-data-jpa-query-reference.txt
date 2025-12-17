@@ -1,0 +1,144 @@
+================================================================================
+SPRING DATA JPA - QUERY METHODS REFERENCE
+================================================================================
+
+This document explains the two ways to create queries in Spring Data JPA
+repositories.
+
+================================================================================
+1. METHOD NAME QUERY DERIVATION (No @Query annotation)
+================================================================================
+
+Spring Data JPA automatically generates SQL queries based on the method name.
+It parses the method name and creates the query for you.
+
+EXAMPLES:
+---------
+List<Booking> findByBookingStatus(Booking.BookingStatus status);
+  -> SELECT * FROM bookings WHERE booking_status = ?
+
+List<Booking> findByCheckInDateBetween(LocalDate startDate, LocalDate endDate);
+  -> SELECT * FROM bookings WHERE check_in_date BETWEEN ? AND ?
+
+List<Booking> findByAssignedByOrderByCreatedAtDesc(User user);
+  -> SELECT * FROM bookings WHERE assigned_by = ? ORDER BY created_at DESC
+
+Long countByBookingStatus(Booking.BookingStatus status);
+  -> SELECT COUNT(*) FROM bookings WHERE booking_status = ?
+
+
+KEYWORDS SPRING RECOGNIZES:
+---------------------------
+- findBy, getBy, queryBy    -> Start a SELECT query
+- countBy                   -> Start a COUNT query
+- deleteBy                  -> Start a DELETE query
+- And, Or                   -> Combine conditions
+- Between                   -> BETWEEN clause
+- LessThan, GreaterThan     -> < and > comparisons
+- LessThanEqual, GreaterThanEqual -> <= and >= comparisons
+- Like, NotLike             -> LIKE clause
+- IsNull, IsNotNull         -> NULL checks
+- In, NotIn                 -> IN clause
+- True, False               -> Boolean checks
+- OrderBy...Asc/Desc        -> ORDER BY clause
+
+
+METHOD NAME BREAKDOWN:
+----------------------
+Example: findByLocationAndBookingStatusOrderByCreatedAtDesc
+
+  find        -> SELECT *
+  By          -> WHERE
+  Location    -> location_id = ?
+  And         -> AND
+  BookingStatus -> booking_status = ?
+  OrderBy     -> ORDER BY
+  CreatedAt   -> created_at
+  Desc        -> DESC
+
+
+================================================================================
+2. CUSTOM @Query ANNOTATION (JPQL or Native SQL)
+================================================================================
+
+When the query logic is too complex for method name derivation, you write
+the query yourself using @Query.
+
+EXAMPLE:
+--------
+@Query("SELECT b FROM Booking b WHERE b.checkInDate <= :date AND b.checkOutDate >= :date")
+List<Booking> findActiveBookingsOnDate(LocalDate date);
+
+This finds bookings where a given date falls between check-in and check-out.
+You can't express this with just a method name because you need to compare
+one parameter (:date) against two different fields.
+
+
+JPQL vs NATIVE SQL:
+-------------------
+JPQL (default) - uses entity/class names:
+  @Query("SELECT b FROM Booking b WHERE b.referral.charity.id = :charityId")
+
+Native SQL - uses actual table/column names:
+  @Query(value = "SELECT * FROM bookings WHERE referral_id = ?", nativeQuery = true)
+
+
+================================================================================
+WHEN TO USE EACH APPROACH
+================================================================================
+
+USE METHOD NAME DERIVATION WHEN:
+--------------------------------
+- Simple conditions (equals, between, less than)
+- Single table queries
+- Standard ordering
+- The method name is readable and not too long
+
+USE @Query WHEN:
+----------------
+- Complex logic (joins, subqueries)
+- Multiple conditions that can't be expressed in method name
+- Custom calculations or comparisons
+- Comparing one parameter against multiple fields
+- The method name would be too long/unreadable
+
+
+================================================================================
+IMPORTANT: REPOSITORY TYPE DETERMINES THE TABLE
+================================================================================
+
+The repository interface type determines which table is queried:
+
+  BookingRepository   -> queries the 'bookings' table
+  ReferralRepository  -> queries the 'referrals' table
+  LocationRepository  -> queries the 'locations' table
+  UserRepository      -> queries the 'users' table
+
+EXAMPLE:
+--------
+In BookingRepository:
+
+  List<Booking> findByLocation(Location location);
+
+  This means: "Find BOOKINGS where the location matches"
+  SQL: SELECT * FROM bookings WHERE location_id = ?
+
+  It does NOT query the locations table!
+  The Location parameter is used to get its ID for the WHERE clause.
+
+
+================================================================================
+QUICK REFERENCE TABLE
+================================================================================
+
+Method in BookingRepository          | Generated SQL (simplified)
+-------------------------------------|----------------------------------------
+findByConfirmationCode(code)         | SELECT * FROM bookings WHERE confirmation_code = ?
+findByReferral(referral)             | SELECT * FROM bookings WHERE referral_id = ?
+findByLocation(location)             | SELECT * FROM bookings WHERE location_id = ?
+findByBookingStatus(status)          | SELECT * FROM bookings WHERE booking_status = ?
+findByCheckInDateBetween(start,end)  | SELECT * FROM bookings WHERE check_in_date BETWEEN ? AND ?
+findAllByOrderByCreatedAtDesc()      | SELECT * FROM bookings ORDER BY created_at DESC
+countByBookingStatus(status)         | SELECT COUNT(*) FROM bookings WHERE booking_status = ?
+
+================================================================================

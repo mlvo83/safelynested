@@ -58,10 +58,10 @@ public class SecurityConfig {
                         // Role-based access control
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/facilitator/**").hasRole("FACILITATOR")
-                        .requestMatchers("/charity-partner/**").hasRole("CHARITY_PARTNER")
-                        .requestMatchers("/location-admin/**").hasRole("LOCATION_ADMIN")
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "LOCATION_ADMIN")
+                        .requestMatchers("/charity-facilitator/**").hasRole("CHARITY_FACILITATOR")
+                        .requestMatchers("/charity-partner/**").hasAnyRole("CHARITY_PARTNER", "CHARITY_FACILITATOR")
                         .requestMatchers("/location-admin/**").hasAnyRole("ADMIN", "LOCATION_ADMIN")
+                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "CHARITY_FACILITATOR", "LOCATION_ADMIN")
                         // Home page requires authentication
                         .requestMatchers("/", "/home").authenticated()
 

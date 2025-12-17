@@ -52,4 +52,17 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b WHERE b.location.id = :locationId AND b.checkInDate <= :checkOutDate AND b.checkOutDate >= :checkInDate AND b.bookingStatus NOT IN ('CANCELLED', 'NO_SHOW')")
     List<Booking> findOverlappingBookings(Long locationId, LocalDate checkInDate, LocalDate checkOutDate);
+
+    // Charity-specific queries for Charity Facilitator
+    @Query("SELECT b FROM Booking b WHERE b.referral.charity.id = :charityId ORDER BY b.createdAt DESC")
+    List<Booking> findByCharityIdOrderByCreatedAtDesc(Long charityId);
+
+    @Query("SELECT b FROM Booking b WHERE b.referral.charity.id = :charityId AND b.bookingStatus = :status ORDER BY b.createdAt DESC")
+    List<Booking> findByCharityIdAndStatusOrderByCreatedAtDesc(Long charityId, Booking.BookingStatus status);
+
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.referral.charity.id = :charityId")
+    Long countByCharityId(Long charityId);
+
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.referral.charity.id = :charityId AND b.bookingStatus = :status")
+    Long countByCharityIdAndStatus(Long charityId, Booking.BookingStatus status);
 }

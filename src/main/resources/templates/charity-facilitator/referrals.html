@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referrals - Charity Facilitator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover { background: rgba(255, 255, 255, 0.2); }
+
+        .container { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 { color: #333; }
+
+        .charity-badge {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-tab {
+            padding: 10px 20px;
+            border: none;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: #666;
+        }
+
+        .filter-tab:hover { background: #d1fae5; }
+        .filter-tab.active { background: #059669; color: white; }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        tr:hover { background: #f8f9fa; }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-approved { background: #d1fae5; color: #065f46; }
+        .badge-rejected { background: #fee2e2; color: #991b1b; }
+        .badge-completed { background: #dbeafe; color: #1e40af; }
+        .badge-cancelled { background: #f3f4f6; color: #6b7280; }
+        .badge-urgent { background: #fee2e2; color: #991b1b; }
+        .badge-high { background: #fed7aa; color: #9a3412; }
+        .badge-medium { background: #fef3c7; color: #92400e; }
+        .badge-low { background: #e0e7ff; color: #3730a3; }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover { transform: translateY(-2px); }
+
+        .btn-view {
+            background: #059669;
+            color: white;
+        }
+
+        .btn-approve {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-reject {
+            background: #ef4444;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 500px;
+            max-width: 90%;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Charity Facilitator Portal</div>
+    <div class="nav-links">
+        <a th:href="@{/charity-facilitator/dashboard}" class="nav-link">Dashboard</a>
+        <a th:href="@{/charity-facilitator/referrals}" class="nav-link">Referrals</a>
+        <a th:href="@{/charity-facilitator/bookings}" class="nav-link">Bookings</a>
+        <a th:href="@{/charity-partner/dashboard}" class="nav-link">Charity View</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1>Referrals Management</h1>
+        <span class="charity-badge" th:text="${charity.charityName}">Charity Name</span>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success">
+        <span th:text="${success}">Success message</span>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}">Error message</span>
+    </div>
+
+    <div class="filter-tabs">
+        <a th:href="@{/charity-facilitator/referrals}"
+           th:class="${selectedStatus == null} ? 'filter-tab active' : 'filter-tab'">
+            All Referrals
+        </a>
+        <a th:href="@{/charity-facilitator/referrals(status='PENDING')}"
+           th:class="${selectedStatus == 'PENDING'} ? 'filter-tab active' : 'filter-tab'">
+            Pending
+        </a>
+        <a th:href="@{/charity-facilitator/referrals(status='APPROVED')}"
+           th:class="${selectedStatus == 'APPROVED'} ? 'filter-tab active' : 'filter-tab'">
+            Approved
+        </a>
+        <a th:href="@{/charity-facilitator/referrals(status='REJECTED')}"
+           th:class="${selectedStatus == 'REJECTED'} ? 'filter-tab active' : 'filter-tab'">
+            Rejected
+        </a>
+    </div>
+
+    <div class="card">
+        <table th:if="${referrals != null && !referrals.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Ref #</th>
+                <th>Participant</th>
+                <th>Urgency</th>
+                <th>Status</th>
+                <th>Selected Location</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="referral : ${referrals}">
+                <td th:text="${referral.referralNumber}">REF-001</td>
+                <td>
+                    <strong th:text="${referral.participantName}">John Doe</strong><br>
+                    <small th:text="${referral.participantEmail}">email@example.com</small>
+                </td>
+                <td>
+                    <span th:class="'badge badge-' + ${#strings.toLowerCase(referral.urgencyLevel)}"
+                          th:text="${referral.urgencyLevel}">MEDIUM</span>
+                </td>
+                <td>
+                    <span th:class="'badge badge-' + ${#strings.toLowerCase(referral.status)}"
+                          th:text="${referral.status}">PENDING</span>
+                </td>
+                <td>
+                    <span th:if="${referral.selectedLocation != null}" th:text="${referral.selectedLocation.locationName}">Location</span>
+                    <span th:if="${referral.selectedLocation == null}" class="text-muted">Not selected</span>
+                </td>
+                <td th:text="${#temporals.format(referral.createdAt, 'yyyy-MM-dd')}">2024-01-01</td>
+                <td>
+                    <div class="action-buttons">
+                        <a th:href="@{/charity-facilitator/referrals/{id}(id=${referral.id})}"
+                           class="btn btn-view">View</a>
+
+                        <button th:if="${referral.status.name() == 'PENDING'}"
+                                th:data-id="${referral.id}"
+                                onclick="showApproveModal(this.getAttribute('data-id'))"
+                                class="btn btn-approve">Approve</button>
+
+                        <button th:if="${referral.status.name() == 'PENDING'}"
+                                th:data-id="${referral.id}"
+                                onclick="showRejectModal(this.getAttribute('data-id'))"
+                                class="btn btn-reject">Reject</button>
+
+                        <a th:if="${referral.status.name() == 'APPROVED'}"
+                           th:href="@{/charity-facilitator/bookings/new(referralId=${referral.id})}"
+                           class="btn btn-approve">Create Booking</a>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${referrals == null || referrals.isEmpty()}" class="empty-state">
+            <h3>No Referrals Found</h3>
+            <p>There are no referrals matching your criteria for this charity.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Modal -->
+<div id="approveModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Approve Referral</h2>
+        </div>
+        <form id="approveForm" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="form-group">
+                <label for="approveNotes">Notes (Optional)</label>
+                <textarea id="approveNotes" name="notes" rows="4"
+                          placeholder="Add any notes about this approval..."></textarea>
+            </div>
+            <div class="button-group">
+                <button type="button" onclick="closeModal('approveModal')" class="btn btn-cancel">Cancel</button>
+                <button type="submit" class="btn btn-approve">Confirm Approval</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="rejectModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Reject Referral</h2>
+        </div>
+        <form id="rejectForm" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="form-group">
+                <label for="rejectReason">Reason for Rejection *</label>
+                <textarea id="rejectReason" name="reason" rows="4"
+                          placeholder="Please provide a reason for rejection..." required></textarea>
+            </div>
+            <div class="button-group">
+                <button type="button" onclick="closeModal('rejectModal')" class="btn btn-cancel">Cancel</button>
+                <button type="submit" class="btn btn-reject">Confirm Rejection</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showApproveModal(referralId) {
+        const form = document.getElementById('approveForm');
+        form.action = '/charity-facilitator/referrals/' + referralId + '/approve';
+        document.getElementById('approveModal').style.display = 'block';
+    }
+
+    function showRejectModal(referralId) {
+        const form = document.getElementById('rejectForm');
+        form.action = '/charity-facilitator/referrals/' + referralId + '/reject';
+        document.getElementById('rejectModal').style.display = 'block';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>

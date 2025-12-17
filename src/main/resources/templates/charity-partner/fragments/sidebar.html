@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- Sidebar Fragment -->
+<nav th:fragment="sidebar(activePage)" class="col-md-3 col-lg-2 d-md-block sidebar collapse py-3">
+    <div class="text-center mb-4">
+        <i class="fas fa-hands-helping text-white fa-3x mb-2"></i>
+        <h6 class="text-white" th:text="${charity?.charityName} ?: 'Charity Partner'">Charity Name</h6>
+        <small class="text-white-50">Charity Partner Portal</small>
+    </div>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a th:class="${activePage == 'dashboard'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/dashboard}">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'referrals'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/referrals}">
+                <i class="fas fa-users me-2"></i> Referrals
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'documents'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/documents}">
+                <i class="fas fa-file-alt me-2"></i> Documents
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'invites'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/invites}">
+                <i class="fas fa-envelope me-2"></i> Invites
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'locations'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/locations}">
+                <i class="fas fa-map-marker-alt me-2"></i> Locations
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'profile'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/profile}">
+                <i class="fas fa-building me-2"></i> Profile
+            </a>
+        </li>
+        <li class="nav-item mt-3" sec:authorize="hasRole('CHARITY_FACILITATOR')">
+            <a class="nav-link" th:href="@{/charity-facilitator/dashboard}" style="background: rgba(5, 150, 105, 0.3); border-left: 3px solid #10b981;">
+                <i class="fas fa-user-shield me-2"></i> Facilitator Dashboard
+            </a>
+        </li>
+        <li class="nav-item mt-4">
+            <form th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </button>
+            </form>
+        </li>
+    </ul>
+</nav>
+
+<!-- Sidebar Styles Fragment -->
+<th:block th:fragment="sidebar-styles">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: inherit;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+    </style>
+</th:block>
+
+</html>
