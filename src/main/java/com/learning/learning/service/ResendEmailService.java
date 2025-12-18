@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -49,6 +51,8 @@ public class    ResendEmailService {
             return false;
         }
 
+        logger.info("Sending HTML email via Resend to: {}, from: {}", to, fromEmail);
+
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -70,13 +74,19 @@ public class    ResendEmailService {
             );
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                logger.info("Email sent successfully via Resend to: {}", to);
+                logger.info("Email sent successfully via Resend to: {}, response: {}", to, response.getBody());
                 return true;
             } else {
-                logger.error("Resend API returned non-success status: {}", response.getStatusCode());
+                logger.error("Resend API returned non-success status: {}, body: {}", response.getStatusCode(), response.getBody());
                 return false;
             }
 
+        } catch (HttpClientErrorException e) {
+            logger.error("Resend API client error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
+            return false;
+        } catch (HttpServerErrorException e) {
+            logger.error("Resend API server error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
+            return false;
         } catch (Exception e) {
             logger.error("Failed to send email via Resend to: {} - Error: {}", to, e.getMessage(), e);
             return false;
@@ -91,6 +101,8 @@ public class    ResendEmailService {
             logger.warn("Resend API key not configured - skipping email to: {}", to);
             return false;
         }
+
+        logger.info("Sending plain text email via Resend to: {}, from: {}", to, fromEmail);
 
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -113,13 +125,19 @@ public class    ResendEmailService {
             );
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                logger.info("Plain text email sent via Resend to: {}", to);
+                logger.info("Plain text email sent via Resend to: {}, response: {}", to, response.getBody());
                 return true;
             } else {
-                logger.error("Resend API returned non-success status: {}", response.getStatusCode());
+                logger.error("Resend API returned non-success status: {}, body: {}", response.getStatusCode(), response.getBody());
                 return false;
             }
 
+        } catch (HttpClientErrorException e) {
+            logger.error("Resend API client error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
+            return false;
+        } catch (HttpServerErrorException e) {
+            logger.error("Resend API server error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
+            return false;
         } catch (Exception e) {
             logger.error("Failed to send email via Resend to: {} - Error: {}", to, e.getMessage(), e);
             return false;
