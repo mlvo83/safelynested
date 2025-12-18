@@ -16,6 +16,10 @@ import jakarta.mail.internet.MimeMessage;
 /**
  * Service for sending email notifications asynchronously
  * Separated from ReferralService to allow @Async to work properly
+ *
+ * Supports two email backends:
+ * - Resend API (for cloud deployments like Render that block SMTP)
+ * - SMTP via JavaMailSender (for local development)
  */
 @Service
 public class EmailService {
@@ -25,6 +29,9 @@ public class EmailService {
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
+    @Autowired
+    private ResendEmailService resendEmailService;
+
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
@@ -32,10 +39,17 @@ public class EmailService {
     private String fromEmail;
 
     /**
-     * Check if email service is configured
+     * Check if email service is configured (either Resend or SMTP)
      */
     public boolean isEmailConfigured() {
-        return mailSender != null;
+        return resendEmailService.isConfigured() || mailSender != null;
+    }
+
+    /**
+     * Check if we should use Resend (preferred for cloud deployments)
+     */
+    private boolean useResend() {
+        return resendEmailService.isConfigured();
     }
 
     /**
@@ -77,8 +91,19 @@ public class EmailService {
      * Send approval email to participant
      */
     public void sendParticipantApprovalEmail(Referral referral) {
+        String to = referral.getParticipantEmail();
+        String subject = "Good News! Your Referral Has Been Approved - SafelyNested";
+        String htmlContent = buildParticipantApprovalEmailHtml(referral);
+
+        // Try Resend first (for cloud deployments)
+        if (useResend()) {
+            resendEmailService.sendHtmlEmail(to, subject, htmlContent);
+            return;
+        }
+
+        // Fall back to SMTP
         if (mailSender == null) {
-            logger.warn("Mail sender not configured - skipping participant approval email");
+            logger.warn("No email service configured - skipping participant approval email");
             return;
         }
 
@@ -87,19 +112,17 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setFrom(fromEmail);
-            helper.setTo(referral.getParticipantEmail());
-            helper.setSubject("Good News! Your Referral Has Been Approved - SafelyNested");
-
-            String htmlContent = buildParticipantApprovalEmailHtml(referral);
+            helper.setTo(to);
+            helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            logger.info("Approval email sent to participant: {}", referral.getParticipantEmail());
+            logger.info("Approval email sent to participant: {}", to);
 
         } catch (MessagingException e) {
-            logger.error("Failed to send approval email to participant: {}", referral.getParticipantEmail(), e);
+            logger.error("Failed to send approval email to participant: {}", to, e);
         } catch (Exception e) {
-            logger.error("Unexpected error sending email to participant: {}", referral.getParticipantEmail(), e);
+            logger.error("Unexpected error sending email to participant: {}", to, e);
         }
     }
 
@@ -107,8 +130,19 @@ public class EmailService {
      * Send approval notification to charity partner
      */
     public void sendCharityPartnerApprovalEmail(Referral referral) {
+        String to = referral.getReferredByUser().getEmail();
+        String subject = "Referral Approved: " + referral.getReferralNumber() + " - SafelyNested";
+        String htmlContent = buildCharityPartnerApprovalEmailHtml(referral);
+
+        // Try Resend first (for cloud deployments)
+        if (useResend()) {
+            resendEmailService.sendHtmlEmail(to, subject, htmlContent);
+            return;
+        }
+
+        // Fall back to SMTP
         if (mailSender == null) {
-            logger.warn("Mail sender not configured - skipping charity partner approval email");
+            logger.warn("No email service configured - skipping charity partner approval email");
             return;
         }
 
@@ -117,21 +151,17 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setFrom(fromEmail);
-            helper.setTo(referral.getReferredByUser().getEmail());
-            helper.setSubject("Referral Approved: " + referral.getReferralNumber() + " - SafelyNested");
-
-            String htmlContent = buildCharityPartnerApprovalEmailHtml(referral);
+            helper.setTo(to);
+            helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            logger.info("Approval notification sent to charity partner: {}", referral.getReferredByUser().getEmail());
+            logger.info("Approval notification sent to charity partner: {}", to);
 
         } catch (MessagingException e) {
-            logger.error("Failed to send approval notification to charity partner: {}",
-                    referral.getReferredByUser().getEmail(), e);
+            logger.error("Failed to send approval notification to charity partner: {}", to, e);
         } catch (Exception e) {
-            logger.error("Unexpected error sending email to charity partner: {}",
-                    referral.getReferredByUser().getEmail(), e);
+            logger.error("Unexpected error sending email to charity partner: {}", to, e);
         }
     }
 
@@ -139,8 +169,19 @@ public class EmailService {
      * Send rejection notification to charity partner
      */
     public void sendCharityPartnerRejectionEmail(Referral referral, String reason) {
+        String to = referral.getReferredByUser().getEmail();
+        String subject = "Referral Update: " + referral.getReferralNumber() + " - SafelyNested";
+        String htmlContent = buildCharityPartnerRejectionEmailHtml(referral, reason);
+
+        // Try Resend first (for cloud deployments)
+        if (useResend()) {
+            resendEmailService.sendHtmlEmail(to, subject, htmlContent);
+            return;
+        }
+
+        // Fall back to SMTP
         if (mailSender == null) {
-            logger.warn("Mail sender not configured - skipping charity partner rejection email");
+            logger.warn("No email service configured - skipping charity partner rejection email");
             return;
         }
 
@@ -149,21 +190,17 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             helper.setFrom(fromEmail);
-            helper.setTo(referral.getReferredByUser().getEmail());
-            helper.setSubject("Referral Update: " + referral.getReferralNumber() + " - SafelyNested");
-
-            String htmlContent = buildCharityPartnerRejectionEmailHtml(referral, reason);
+            helper.setTo(to);
+            helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
             mailSender.send(message);
-            logger.info("Rejection notification sent to charity partner: {}", referral.getReferredByUser().getEmail());
+            logger.info("Rejection notification sent to charity partner: {}", to);
 
         } catch (MessagingException e) {
-            logger.error("Failed to send rejection notification to charity partner: {}",
-                    referral.getReferredByUser().getEmail(), e);
+            logger.error("Failed to send rejection notification to charity partner: {}", to, e);
         } catch (Exception e) {
-            logger.error("Unexpected error sending rejection email: {}",
-                    referral.getReferredByUser().getEmail(), e);
+            logger.error("Unexpected error sending rejection email: {}", to, e);
         }
     }
 
@@ -363,8 +400,18 @@ public class EmailService {
      * Generic method to send a simple text email
      */
     public void sendEmail(String to, String subject, String body) {
+        // Try Resend first (for cloud deployments)
+        if (useResend()) {
+            boolean success = resendEmailService.sendPlainTextEmail(to, subject, body);
+            if (!success) {
+                throw new RuntimeException("Failed to send email via Resend");
+            }
+            return;
+        }
+
+        // Fall back to SMTP
         if (mailSender == null) {
-            logger.warn("Mail sender not configured - skipping email to: {}", to);
+            logger.warn("No email service configured - skipping email to: {}", to);
             return;
         }
 
@@ -385,6 +432,46 @@ public class EmailService {
             throw new RuntimeException("Failed to send email", e);
         } catch (Exception e) {
             logger.error("Unexpected error sending email to: {}", to, e);
+            throw new RuntimeException("Failed to send email", e);
+        }
+    }
+
+    /**
+     * Generic method to send an HTML email
+     */
+    public void sendHtmlEmail(String to, String subject, String htmlBody) {
+        // Try Resend first (for cloud deployments)
+        if (useResend()) {
+            boolean success = resendEmailService.sendHtmlEmail(to, subject, htmlBody);
+            if (!success) {
+                throw new RuntimeException("Failed to send email via Resend");
+            }
+            return;
+        }
+
+        // Fall back to SMTP
+        if (mailSender == null) {
+            logger.warn("No email service configured - skipping email to: {}", to);
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);  // true = HTML
+
+            mailSender.send(message);
+            logger.info("HTML email sent to: {}", to);
+
+        } catch (MessagingException e) {
+            logger.error("Failed to send HTML email to: {}", to, e);
+            throw new RuntimeException("Failed to send email", e);
+        } catch (Exception e) {
+            logger.error("Unexpected error sending HTML email to: {}", to, e);
             throw new RuntimeException("Failed to send email", e);
         }
     }
