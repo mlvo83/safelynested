@@ -9,7 +9,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class HomeController {
 
-    @GetMapping({"/", "/home"})
+    @GetMapping("/")
+    public String landingPage() {
+        return "index";
+    }
+
+    @GetMapping("/home")
     public String home(Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();

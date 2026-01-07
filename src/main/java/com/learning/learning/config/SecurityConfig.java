@@ -49,7 +49,8 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         // Public resources
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/", "/css/**", "/js/**", "/images/**", "/static/**").permitAll()
+                        .requestMatchers("/*.jpeg", "/*.png", "/*.jpg", "/*.ico").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/debug/**").permitAll()
                         .requestMatchers("/demo/**").permitAll()
@@ -62,8 +63,8 @@ public class SecurityConfig {
                         .requestMatchers("/charity-partner/**").hasAnyRole("CHARITY_PARTNER", "CHARITY_FACILITATOR")
                         .requestMatchers("/location-admin/**").hasAnyRole("ADMIN", "LOCATION_ADMIN")
                         .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "CHARITY_FACILITATOR", "LOCATION_ADMIN")
-                        // Home page requires authentication
-                        .requestMatchers("/", "/home").authenticated()
+                        // Dashboard requires authentication
+                        .requestMatchers("/home").authenticated()
 
 
 

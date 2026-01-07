@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafelyNested - A Safe Place, Every Night</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        nav.scrolled {
+            padding: 0.7rem 5%;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            transition: transform 0.3s ease;
+            object-fit: contain;
+            filter: brightness(1.1);
+        }
+
+        .logo:hover .logo-icon {
+            transform: scale(1.08);
+        }
+
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #667eea;
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            min-height: 90vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: float 20s linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(50px, 50px) rotate(360deg); }
+        }
+
+        .hero-content {
+            text-align: center;
+            color: white;
+            z-index: 2;
+            padding: 2rem;
+            max-width: 800px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s ease;
+        }
+
+        .hero-content.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-3px);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        .modal h2 {
+            margin-bottom: 1.5rem;
+            color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 5rem 5%;
+            background: #f8f9fa;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .feature-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 5rem 5%;
+            background: white;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: space-around;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .step {
+            text-align: center;
+            flex: 1;
+            min-width: 200px;
+            padding: 2rem;
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.5s ease;
+        }
+
+        .step.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .step h3 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .step p {
+            color: #666;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 5rem 5%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            text-align: center;
+            color: white;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* Back to Top Button */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        /* Footer */
+        footer {
+            background: #2d3748;
+            color: white;
+            padding: 3rem 5%;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: white;
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .steps {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<nav id="navbar">
+    <div class="logo">
+        <!-- Logo Icon - User's uploaded image -->
+        <img src="/images/logo.jpeg" alt="SafelyNested Logo" class="logo-icon" id="navLogo">
+        <span class="logo-text">SafelyNested</span>
+    </div>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+    <ul class="nav-links" id="navLinks">
+        <li><a href="#home" class="nav-link">Home</a></li>
+        <li><a href="#how" class="nav-link">How It Works</a></li>
+        <li><a href="#about" class="nav-link">About</a></li>
+        <li><a href="#partners" class="nav-link">Partners</a></li>
+        <li><a href="/login" class="nav-link" style="color: #667eea; font-weight: 600;">Partner Login</a></li>
+    </ul>
+</nav>
+
+<section class="hero" id="home">
+    <div class="hero-content" id="heroContent">
+        <!-- Large hero logo -->
+        <img src="/images/logo.jpeg" alt="SafelyNested" id="heroLogo" style="width: 140px; height: 140px; margin: 0 auto 1.5rem; display: block; filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3)) brightness(1.15); object-fit: contain;">
+
+        <h1>A Safe Place, When It's Needed Most</h1>
+        <p>Connecting verified homeless families with short-term housing through trusted charity partnerships. Dignified, secure, and compassionate.</p>
+        <div class="cta-buttons">
+            <a href="#for-charities" class="btn btn-primary smooth-scroll">I'm a Charity</a>
+            <a href="#for-hotels" class="btn btn-secondary smooth-scroll">I'm a Partner Hotel</a>
+            <a href="#need-help" class="btn btn-secondary smooth-scroll">I Need Help</a>
+        </div>
+    </div>
+</section>
+
+
+<section class="features" id="features">
+    <h2 class="section-title">Why SafelyNested?</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🏨</div>
+            <h3>Verified Housing Partners</h3>
+            <p>All hotels and housing providers are vetted and committed to providing safe, dignified accommodations for families.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🤝</div>
+            <h3>Charity Sponsored</h3>
+            <p>Stays are fully covered through charity partnerships. Families receive help without financial burden.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔐</div>
+            <h3>Secure & Confidential</h3>
+            <p>Enterprise-grade security protects sensitive information. Your privacy is our priority.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">✅</div>
+            <h3>Verified Referrals</h3>
+            <p>Charities and schools verify eligibility, ensuring resources reach families who need them most.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3>Simple Invite Links</h3>
+            <p>No complicated sign-ups. Families receive a secure link from their charity to access housing options.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📍</div>
+            <h3>Location-Based Search</h3>
+            <p>Find available housing near schools, work, or family support networks that matter most.</p>
+        </div>
+    </div>
+</section>
+
+<section class="how-it-works" id="how">
+    <h2 class="section-title">How It Works</h2>
+    <div class="steps" id="steps">
+        <div class="step">
+            <div class="step-number">1</div>
+            <h3>Get Connected</h3>
+            <p>Contact a local charity or school social worker. They'll verify your situation and send you a secure invite link.</p>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <h3>Browse Housing</h3>
+            <p>Use your invite link to view available temporary housing options filtered by location and your needs.</p>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <h3>Confirm Booking</h3>
+            <p>Review and confirm your charity-sponsored stay. Everything is pre-arranged and covered.</p>
+        </div>
+        <div class="step">
+            <div class="step-number">4</div>
+            <h3>Check In Safely</h3>
+            <p>Show your confirmation at the location and get a safe, dignified place to rest.</p>
+        </div>
+    </div>
+</section>
+
+<!-- For Charities Section -->
+<section class="features" id="for-charities" style="background: white;">
+    <h2 class="section-title">For Charities & Schools</h2>
+    <div class="features-grid" style="max-width: 900px;">
+        <div class="feature-card">
+            <div class="feature-icon">📋</div>
+            <h3>Easy Referral System</h3>
+            <p>Submit referrals for families, upload required documents, and track cases through a simple dashboard.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💰</div>
+            <h3>Budget Management</h3>
+            <p>Allocate sponsor funds to specific cases with transparent tracking and reporting.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Impact Reporting</h3>
+            <p>Access detailed analytics on families helped, stays completed, and program effectiveness.</p>
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="/login" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Partner Login</a>
+    </div>
+</section>
+
+<!-- For Hotels Section -->
+<section class="features" id="for-hotels">
+    <h2 class="section-title">For Housing Providers</h2>
+    <div class="features-grid" style="max-width: 900px;">
+        <div class="feature-card">
+            <div class="feature-icon">🏢</div>
+            <h3>Fill Empty Rooms</h3>
+            <p>Partner with SafelyNested to fill vacant rooms while making a positive impact in your community.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💳</div>
+            <h3>Guaranteed Payment</h3>
+            <p>Receive reliable payments through our charity network. No payment uncertainty.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🤝</div>
+            <h3>Simple Onboarding</h3>
+            <p>Easy registration process with documentation upload and rate agreement setup.</p>
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="mailto:partners@safelynested.com" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">Become a Partner</a>
+    </div>
+</section>
+
+<!-- Need Help Section -->
+<section class="features" id="need-help" style="background: white;">
+    <h2 class="section-title">Need Help Finding Housing?</h2>
+    <div style="max-width: 700px; margin: 0 auto; text-align: center; padding: 0 2rem;">
+        <p style="font-size: 1.2rem; color: #555; margin-bottom: 2rem;">
+            SafelyNested works with local charities and schools to help families in need. If you're experiencing housing insecurity, here's how to get help:
+        </p>
+        <div class="features-grid" style="max-width: 700px;">
+            <div class="feature-card">
+                <div class="feature-icon">🏫</div>
+                <h3>Contact Your School</h3>
+                <p>School social workers and counselors can connect you with SafelyNested partner charities.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏛️</div>
+                <h3>Reach a Local Charity</h3>
+                <p>Local homeless services organizations can verify your situation and submit a referral.</p>
+            </div>
+        </div>
+        <p style="font-size: 1rem; color: #888; margin-top: 2rem;">
+            Already have an invite link? Click it to view available housing options.
+        </p>
+    </div>
+</section>
+
+<section class="cta-section">
+    <h2>Together, We Can End Family Homelessness</h2>
+    <p>Join our network of charities, schools, and housing providers making a difference</p>
+    <a href="mailto:info@safelynested.com" class="btn btn-primary">Contact Us</a>
+</section>
+
+<button class="back-to-top" id="backToTop">↑</button>
+
+<footer>
+    <img src="/images/logo.jpeg" alt="SafelyNested" style="width: 70px; height: 70px; margin: 0 auto 1rem; display: block; opacity: 0.85; object-fit: contain; filter: brightness(1.2);">
+    <div class="footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Contact Us</a>
+        <a href="/login">Partner Login</a>
+        <a href="#">Crisis Resources</a>
+    </div>
+    <p>&copy; 2025 SafelyNested. All rights reserved. • A nonprofit initiative to end family homelessness.</p>
+</footer>
+
+<script>
+    $(document).ready(function() {
+
+        // Fade in hero content on load
+        setTimeout(function() {
+            $('#heroContent').addClass('visible');
+        }, 200);
+
+        // Smooth scrolling for nav links
+        $('.smooth-scroll, .nav-link').on('click', function(e) {
+            if (this.hash !== '') {
+                e.preventDefault();
+                const hash = this.hash;
+                $('html, body').animate({
+                    scrollTop: $(hash).offset().top - 80
+                }, 800);
+
+                // Close mobile menu if open
+                $('#navLinks').removeClass('active');
+            }
+        });
+
+        // Mobile menu toggle
+        $('#mobileMenuBtn').on('click', function() {
+            $('#navLinks').toggleClass('active');
+        });
+
+        // Navbar scroll effect
+        $(window).on('scroll', function() {
+            if ($(window).scrollTop() > 50) {
+                $('#navbar').addClass('scrolled');
+            } else {
+                $('#navbar').removeClass('scrolled');
+            }
+
+            // Back to top button
+            if ($(window).scrollTop() > 300) {
+                $('#backToTop').fadeIn();
+            } else {
+                $('#backToTop').fadeOut();
+            }
+        });
+
+        // Back to top button click
+        $('#backToTop').on('click', function() {
+            $('html, body').animate({ scrollTop: 0 }, 800);
+        });
+
+        // Scroll animations for feature cards
+        function checkScroll() {
+            $('.feature-card').each(function(index) {
+                const elementTop = $(this).offset().top;
+                const windowBottom = $(window).scrollTop() + $(window).height();
+
+                if (elementTop < windowBottom - 100) {
+                    setTimeout(() => {
+                        $(this).addClass('visible');
+                    }, index * 100);
+                }
+            });
+
+            // Steps animation
+            $('.step').each(function(index) {
+                const elementTop = $(this).offset().top;
+                const windowBottom = $(window).scrollTop() + $(window).height();
+
+                if (elementTop < windowBottom - 100) {
+                    setTimeout(() => {
+                        $(this).addClass('visible');
+                    }, index * 150);
+                }
+            });
+        }
+
+        $(window).on('scroll', checkScroll);
+        checkScroll(); // Run on load
+
+
+        // Logo click to scroll to top
+        $('.logo').on('click', function() {
+            $('html, body').animate({ scrollTop: 0 }, 800);
+        });
+    });
+</script>
+</body>
+</html>
