@@ -82,14 +82,16 @@ public class    ResendEmailService {
             }
 
         } catch (HttpClientErrorException e) {
-            logger.error("Resend API client error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
-            return false;
+            String errorResponse = e.getResponseBodyAsString();
+            logger.error("Resend API client error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), errorResponse);
+            throw new ResendEmailException("Resend API error " + e.getStatusCode() + ": " + errorResponse, e);
         } catch (HttpServerErrorException e) {
-            logger.error("Resend API server error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
-            return false;
+            String errorResponse = e.getResponseBodyAsString();
+            logger.error("Resend API server error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), errorResponse);
+            throw new ResendEmailException("Resend server error " + e.getStatusCode() + ": " + errorResponse, e);
         } catch (Exception e) {
             logger.error("Failed to send email via Resend to: {} - Error: {}", to, e.getMessage(), e);
-            return false;
+            throw new ResendEmailException("Failed to send email: " + e.getMessage(), e);
         }
     }
 
@@ -133,14 +135,25 @@ public class    ResendEmailService {
             }
 
         } catch (HttpClientErrorException e) {
-            logger.error("Resend API client error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
-            return false;
+            String errorResponse = e.getResponseBodyAsString();
+            logger.error("Resend API client error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), errorResponse);
+            throw new ResendEmailException("Resend API error " + e.getStatusCode() + ": " + errorResponse, e);
         } catch (HttpServerErrorException e) {
-            logger.error("Resend API server error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), e.getResponseBodyAsString());
-            return false;
+            String errorResponse = e.getResponseBodyAsString();
+            logger.error("Resend API server error ({}): {} - Response: {}", e.getStatusCode(), e.getMessage(), errorResponse);
+            throw new ResendEmailException("Resend server error " + e.getStatusCode() + ": " + errorResponse, e);
         } catch (Exception e) {
             logger.error("Failed to send email via Resend to: {} - Error: {}", to, e.getMessage(), e);
-            return false;
+            throw new ResendEmailException("Failed to send email: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Custom exception to surface Resend API errors
+     */
+    public static class ResendEmailException extends RuntimeException {
+        public ResendEmailException(String message, Throwable cause) {
+            super(message, cause);
         }
     }
 }
