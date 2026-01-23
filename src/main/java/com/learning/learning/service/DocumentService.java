@@ -7,31 +7,27 @@ import com.learning.learning.entity.User;
 import com.learning.learning.repository.DocumentRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.repository.UserRepository;
+import com.learning.learning.service.storage.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class DocumentService {
 
-    @Value("${app.upload.dir:uploads}")
-    private String uploadDir;
+    @Autowired
+    private StorageService storageService;
 
     @Autowired
     private DocumentRepository documentRepository;
@@ -92,17 +88,11 @@ public class DocumentService {
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
         String uniqueFileName = generateUniqueFileName(originalFileName);
 
-        // Create directory structure: uploads/{charityId}/{referralId or 'general'}/
-        String subDir = charity.getId() + "/" + (referralId != null ? referralId : "general");
-        Path uploadPath = Paths.get(uploadDir, subDir);
+        // Create storage key: {charityId}/{referralId or 'general'}/{uniqueFileName}
+        String storageKey = charity.getId() + "/" + (referralId != null ? referralId : "general") + "/" + uniqueFileName;
 
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        // Save file
-        Path filePath = uploadPath.resolve(uniqueFileName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        // Store file using storage service (local or S3)
+        storageService.store(file, storageKey);
 
         // Create document record
         Document document = new Document();
@@ -111,7 +101,7 @@ public class DocumentService {
         document.setUploadedBy(user);
         document.setDocumentType(documentType);
         document.setFileName(originalFileName);
-        document.setFilePath(filePath.toString());
+        document.setFilePath(storageKey); // Store the storage key, not full path
         document.setFileSize(file.getSize());
         document.setMimeType(file.getContentType());
         document.setDescription(description);
@@ -148,17 +138,19 @@ public class DocumentService {
     /**
      * Download document (with access control)
      */
-    public Resource downloadDocument(Long documentId, String username) throws MalformedURLException {
+    public Resource downloadDocument(Long documentId, String username) throws IOException {
         Document document = getDocumentWithAccessCheck(documentId, username);
 
-        Path filePath = Paths.get(document.getFilePath());
-        Resource resource = new UrlResource(filePath.toUri());
+        InputStream inputStream = storageService.retrieve(document.getFilePath());
+        return new InputStreamResource(inputStream);
+    }
 
-        if (resource.exists() && resource.isReadable()) {
-            return resource;
-        } else {
-            throw new RuntimeException("Could not read file: " + document.getFileName());
-        }
+    /**
+     * Get a download URL for a document (useful for S3 pre-signed URLs)
+     */
+    public String getDownloadUrl(Long documentId, String username, int expirationMinutes) {
+        Document document = getDocumentWithAccessCheck(documentId, username);
+        return storageService.getDownloadUrl(document.getFilePath(), expirationMinutes);
     }
 
     /**
@@ -318,14 +310,18 @@ public class DocumentService {
     public void deleteDocument(Long documentId, String username) throws IOException {
         Document document = getDocumentWithAccessCheck(documentId, username);
 
-        // Delete physical file
-        Path filePath = Paths.get(document.getFilePath());
-        if (Files.exists(filePath)) {
-            Files.delete(filePath);
-        }
+        // Delete file from storage (local or S3)
+        storageService.delete(document.getFilePath());
 
         // Delete database record
         documentRepository.delete(document);
+    }
+
+    /**
+     * Get the current storage type (local or s3)
+     */
+    public String getStorageType() {
+        return storageService.getStorageType();
     }
 
     // ========================================

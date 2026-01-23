@@ -378,7 +378,7 @@ public class CharityPartnerController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"")
                     .body(resource);
 
-        } catch (MalformedURLException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Error downloading file", e);
         }
     }
