@@ -22,13 +22,24 @@ public class Document {
     @JoinColumn(name = "referral_id")
     private Referral referral;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invite_id")
+    private ReferralInvite invite;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "charity_id", nullable = false)
     private Charity charity;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "uploaded_by", nullable = false)
+    @JoinColumn(name = "uploaded_by")
     private User uploadedBy;
+
+    // For documents uploaded by participants via public invite link
+    @Column(name = "uploaded_by_participant")
+    private Boolean uploadedByParticipant = false;
+
+    @Column(name = "participant_name", length = 255)
+    private String participantName;
 
     // File information
     @Column(name = "document_type", nullable = false, length = 50)

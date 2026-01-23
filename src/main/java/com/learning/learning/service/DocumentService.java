@@ -3,8 +3,10 @@ package com.learning.learning.service;
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.Document;
 import com.learning.learning.entity.Referral;
+import com.learning.learning.entity.ReferralInvite;
 import com.learning.learning.entity.User;
 import com.learning.learning.repository.DocumentRepository;
+import com.learning.learning.repository.ReferralInviteRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.repository.UserRepository;
 import com.learning.learning.service.storage.StorageService;
@@ -34,6 +36,9 @@ public class DocumentService {
 
     @Autowired
     private ReferralRepository referralRepository;
+
+    @Autowired
+    private ReferralInviteRepository referralInviteRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -131,6 +136,138 @@ public class DocumentService {
         return uploadDocument(file, null, documentType, description, username);
     }
 
+    /**
+     * Upload document for an invite (charity partner)
+     */
+    @Transactional
+    public Document uploadDocumentForInvite(
+            MultipartFile file,
+            Long inviteId,
+            Document.DocumentType documentType,
+            String description,
+            String username
+    ) throws IOException {
+        // Validate file
+        validateFile(file);
+
+        // Get user and charity
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Charity charity = charityService.getCharityForUser(username);
+
+        // Get invite (with multi-tenant check)
+        ReferralInvite invite = referralInviteRepository.findById(inviteId)
+                .orElseThrow(() -> new RuntimeException("Invite not found"));
+
+        // Verify invite belongs to user's charity
+        if (invite.getCharity() == null || !invite.getCharity().getId().equals(charity.getId())) {
+            throw new RuntimeException("Access denied: Invite does not belong to your charity");
+        }
+
+        // Generate unique file name
+        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String uniqueFileName = generateUniqueFileName(originalFileName);
+
+        // Create storage key: {charityId}/invites/{inviteId}/{uniqueFileName}
+        String storageKey = charity.getId() + "/invites/" + inviteId + "/" + uniqueFileName;
+
+        // Store file
+        storageService.store(file, storageKey);
+
+        // Create document record
+        Document document = new Document();
+        document.setInvite(invite);
+        document.setReferral(invite.getReferral()); // Link to referral if exists
+        document.setCharity(charity);
+        document.setUploadedBy(user);
+        document.setDocumentType(documentType);
+        document.setFileName(originalFileName);
+        document.setFilePath(storageKey);
+        document.setFileSize(file.getSize());
+        document.setMimeType(file.getContentType());
+        document.setDescription(description);
+        document.setIsVerified(false);
+        document.setUploadedByParticipant(false);
+
+        return documentRepository.save(document);
+    }
+
+    /**
+     * Upload document by participant via public invite link (no authentication required)
+     */
+    @Transactional
+    public Document uploadDocumentByParticipant(
+            MultipartFile file,
+            String inviteToken,
+            Document.DocumentType documentType,
+            String description,
+            String participantName
+    ) throws IOException {
+        // Validate file
+        validateFile(file);
+
+        // Get invite by token
+        ReferralInvite invite = referralInviteRepository.findByInviteToken(inviteToken)
+                .orElseThrow(() -> new RuntimeException("Invalid invite token"));
+
+        // Check invite is valid
+        if (invite.isExpired()) {
+            throw new RuntimeException("Invite has expired");
+        }
+
+        Charity charity = invite.getCharity();
+        if (charity == null) {
+            throw new RuntimeException("Invite has no associated charity");
+        }
+
+        // Generate unique file name
+        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String uniqueFileName = generateUniqueFileName(originalFileName);
+
+        // Create storage key: {charityId}/invites/{inviteId}/participant/{uniqueFileName}
+        String storageKey = charity.getId() + "/invites/" + invite.getId() + "/participant/" + uniqueFileName;
+
+        // Store file
+        storageService.store(file, storageKey);
+
+        // Create document record
+        Document document = new Document();
+        document.setInvite(invite);
+        document.setReferral(invite.getReferral()); // Link to referral if exists
+        document.setCharity(charity);
+        document.setUploadedBy(null); // No user - uploaded by participant
+        document.setDocumentType(documentType);
+        document.setFileName(originalFileName);
+        document.setFilePath(storageKey);
+        document.setFileSize(file.getSize());
+        document.setMimeType(file.getContentType());
+        document.setDescription(description);
+        document.setIsVerified(false);
+        document.setUploadedByParticipant(true);
+        document.setParticipantName(participantName != null ? participantName : invite.getRecipientName());
+
+        return documentRepository.save(document);
+    }
+
+    /**
+     * Link all documents from an invite to a referral
+     * Called when a referral is created from an invite
+     */
+    @Transactional
+    public void linkInviteDocumentsToReferral(Long inviteId, Long referralId) {
+        List<Document> inviteDocuments = documentRepository.findByInviteId(inviteId);
+        Referral referral = referralRepository.findById(referralId)
+                .orElseThrow(() -> new RuntimeException("Referral not found"));
+
+        for (Document doc : inviteDocuments) {
+            if (doc.getReferral() == null) {
+                doc.setReferral(referral);
+                documentRepository.save(doc);
+            }
+        }
+    }
+
     // ========================================
     // FILE DOWNLOAD
     // ========================================
@@ -194,6 +331,30 @@ public class DocumentService {
     public List<Document> getDocumentsForReferral(Long referralId, String username) {
         Long charityId = charityService.getCharityIdForUser(username);
         return documentRepository.findByReferralIdAndCharityId(referralId, charityId);
+    }
+
+    /**
+     * Get documents for a specific invite (with access control)
+     */
+    public List<Document> getDocumentsForInvite(Long inviteId, String username) {
+        Long charityId = charityService.getCharityIdForUser(username);
+        return documentRepository.findByInviteIdAndCharityId(inviteId, charityId);
+    }
+
+    /**
+     * Get documents for an invite by token (for public access)
+     */
+    public List<Document> getDocumentsForInviteToken(String inviteToken) {
+        ReferralInvite invite = referralInviteRepository.findByInviteToken(inviteToken)
+                .orElseThrow(() -> new RuntimeException("Invalid invite token"));
+        return documentRepository.findByInviteIdOrderByUploadedAtDesc(invite.getId());
+    }
+
+    /**
+     * Get document count for invite
+     */
+    public Long getDocumentCountForInvite(Long inviteId) {
+        return documentRepository.countByInviteId(inviteId);
     }
 
     /**

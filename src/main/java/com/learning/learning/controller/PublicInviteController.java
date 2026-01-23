@@ -2,10 +2,12 @@ package com.learning.learning.controller;
 
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.CharityLocation;
+import com.learning.learning.entity.Document;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.entity.ReferralInvite;
 import com.learning.learning.repository.CharityLocationRepository;
 import com.learning.learning.repository.ReferralInviteRepository;
+import com.learning.learning.service.DocumentService;
 import com.learning.learning.service.ReferralService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -38,6 +42,9 @@ public class PublicInviteController {
 
     @Autowired
     private ReferralService referralService;
+
+    @Autowired
+    private DocumentService documentService;
 
     /**
      * Display the invite acceptance page with available locations
@@ -285,5 +292,95 @@ public class PublicInviteController {
         inviteRepository.save(invite);
 
         return "redirect:/referral/invite/" + token;
+    }
+
+    /**
+     * Show document upload form for participants
+     * URL: /invite/{token}/documents
+     */
+    @GetMapping("/{token}/documents")
+    public String showDocumentUploadForm(@PathVariable String token, Model model) {
+        Optional<ReferralInvite> inviteOpt = inviteRepository.findByInviteToken(token);
+
+        if (inviteOpt.isEmpty()) {
+            model.addAttribute("error", "Invalid invite link.");
+            return "public/invite-error";
+        }
+
+        ReferralInvite invite = inviteOpt.get();
+
+        // Check if invite is valid
+        if (invite.isExpired()) {
+            model.addAttribute("error", "This invite has expired.");
+            return "public/invite-error";
+        }
+
+        if (invite.getStatus() == ReferralInvite.InviteStatus.CANCELLED) {
+            model.addAttribute("error", "This invite has been cancelled.");
+            return "public/invite-error";
+        }
+
+        // Get charity
+        Charity charity = invite.getCharity();
+        if (charity == null && invite.getReferral() != null) {
+            charity = invite.getReferral().getCharity();
+        }
+
+        // Get existing documents for this invite
+        List<Document> documents = documentService.getDocumentsForInviteToken(token);
+
+        model.addAttribute("invite", invite);
+        model.addAttribute("charity", charity);
+        model.addAttribute("documents", documents);
+        model.addAttribute("documentTypes", Document.DocumentType.values());
+
+        return "public/invite-document-upload";
+    }
+
+    /**
+     * Handle document upload from participant
+     * URL: POST /invite/{token}/documents/upload
+     */
+    @PostMapping("/{token}/documents/upload")
+    public String uploadDocument(
+            @PathVariable String token,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam Document.DocumentType documentType,
+            @RequestParam(required = false) String description,
+            RedirectAttributes redirectAttributes
+    ) {
+        Optional<ReferralInvite> inviteOpt = inviteRepository.findByInviteToken(token);
+
+        if (inviteOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Invalid invite link.");
+            return "redirect:/referral/invite/" + token + "/documents";
+        }
+
+        ReferralInvite invite = inviteOpt.get();
+
+        // Check if invite is valid
+        if (invite.isExpired() || invite.getStatus() == ReferralInvite.InviteStatus.CANCELLED) {
+            redirectAttributes.addFlashAttribute("error", "This invite is no longer valid.");
+            return "redirect:/referral/invite/" + token + "/documents";
+        }
+
+        try {
+            Document document = documentService.uploadDocumentByParticipant(
+                    file,
+                    token,
+                    documentType,
+                    description,
+                    invite.getRecipientName()
+            );
+
+            logger.info("Participant uploaded document {} for invite {}", document.getId(), invite.getId());
+            redirectAttributes.addFlashAttribute("success", "Document uploaded successfully!");
+
+        } catch (IOException e) {
+            logger.error("Failed to upload document for invite {}: {}", invite.getId(), e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Failed to upload document: " + e.getMessage());
+        }
+
+        return "redirect:/referral/invite/" + token + "/documents";
     }
 }

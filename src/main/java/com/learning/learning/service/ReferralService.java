@@ -37,6 +37,9 @@ public class ReferralService {
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
+    @Autowired
+    private DocumentService documentService;
+
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
@@ -180,6 +183,9 @@ public class ReferralService {
 
         Referral savedReferral = referralRepository.save(referral);
         logger.info("Created referral {} from invite {}", savedReferral.getReferralNumber(), invite.getId());
+
+        // Link any documents uploaded to the invite to the new referral
+        documentService.linkInviteDocumentsToReferral(invite.getId(), savedReferral.getId());
 
         return savedReferral;
     }

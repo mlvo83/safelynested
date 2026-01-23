@@ -114,4 +114,23 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     // Statistics
     @Query("SELECT d.documentType, COUNT(d) FROM Document d WHERE d.charity.id = :charityId GROUP BY d.documentType")
     List<Object[]> countDocumentsByTypeForCharity(@Param("charityId") Long charityId);
+
+    // Find documents by invite
+    List<Document> findByInviteId(Long inviteId);
+
+    List<Document> findByInviteIdOrderByUploadedAtDesc(Long inviteId);
+
+    @Query("SELECT d FROM Document d WHERE d.invite.id = :inviteId AND d.charity.id = :charityId ORDER BY d.uploadedAt DESC")
+    List<Document> findByInviteIdAndCharityId(
+            @Param("inviteId") Long inviteId,
+            @Param("charityId") Long charityId
+    );
+
+    Long countByInviteId(Long inviteId);
+
+    // Find documents uploaded by participants
+    List<Document> findByUploadedByParticipantTrue();
+
+    @Query("SELECT d FROM Document d WHERE d.invite.id = :inviteId AND d.uploadedByParticipant = true")
+    List<Document> findParticipantDocumentsByInviteId(@Param("inviteId") Long inviteId);
 }

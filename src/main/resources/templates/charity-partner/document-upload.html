@@ -70,15 +70,47 @@
                                     </select>
                                 </div>
 
-                                <!-- Associated Referral -->
+                                <!-- Association Type -->
                                 <div class="mb-3">
-                                    <label for="referralId" class="form-label">Associated Referral (Optional)</label>
+                                    <label class="form-label">Associate Document With</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="associationType" id="assocNone" value="none"
+                                               th:checked="${selectedReferralId == null and selectedInviteId == null}" onchange="toggleAssociation()">
+                                        <label class="form-check-label" for="assocNone">General document (no association)</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="associationType" id="assocReferral" value="referral"
+                                               th:checked="${selectedReferralId != null}" onchange="toggleAssociation()">
+                                        <label class="form-check-label" for="assocReferral">Referral</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="associationType" id="assocInvite" value="invite"
+                                               th:checked="${selectedInviteId != null}" onchange="toggleAssociation()">
+                                        <label class="form-check-label" for="assocInvite">Invite</label>
+                                    </div>
+                                </div>
+
+                                <!-- Associated Referral -->
+                                <div class="mb-3" id="referralSelect" th:style="${selectedInviteId != null} ? 'display:none' : ''">
+                                    <label for="referralId" class="form-label">Select Referral</label>
                                     <select class="form-select" id="referralId" name="referralId">
-                                        <option value="">No specific referral (General document)</option>
+                                        <option value="">Select a referral...</option>
                                         <option th:each="ref : ${referrals}"
                                                 th:value="${ref.id}"
                                                 th:text="${ref.referralNumber + ' - ' + ref.participantName}"
                                                 th:selected="${selectedReferralId != null and selectedReferralId == ref.id}">REF-001</option>
+                                    </select>
+                                </div>
+
+                                <!-- Associated Invite -->
+                                <div class="mb-3" id="inviteSelect" th:style="${selectedInviteId == null} ? 'display:none' : ''">
+                                    <label for="inviteId" class="form-label">Select Invite</label>
+                                    <select class="form-select" id="inviteId" name="inviteId">
+                                        <option value="">Select an invite...</option>
+                                        <option th:each="inv : ${invites}"
+                                                th:value="${inv.id}"
+                                                th:text="${inv.recipientName + ' (' + inv.recipientEmail + ')'}"
+                                                th:selected="${selectedInviteId != null and selectedInviteId == inv.id}">Invite</option>
                                     </select>
                                 </div>
 
@@ -145,6 +177,33 @@
         document.getElementById('selectedFile').textContent = 'Selected: ' + e.dataTransfer.files[0]?.name;
         document.getElementById('selectedFile').style.display = 'block';
     });
+
+    // Toggle association dropdowns
+    function toggleAssociation() {
+        var assocType = document.querySelector('input[name="associationType"]:checked').value;
+        var referralSelect = document.getElementById('referralSelect');
+        var inviteSelect = document.getElementById('inviteSelect');
+        var referralInput = document.getElementById('referralId');
+        var inviteInput = document.getElementById('inviteId');
+
+        if (assocType === 'referral') {
+            referralSelect.style.display = 'block';
+            inviteSelect.style.display = 'none';
+            inviteInput.value = '';
+        } else if (assocType === 'invite') {
+            referralSelect.style.display = 'none';
+            inviteSelect.style.display = 'block';
+            referralInput.value = '';
+        } else {
+            referralSelect.style.display = 'none';
+            inviteSelect.style.display = 'none';
+            referralInput.value = '';
+            inviteInput.value = '';
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', toggleAssociation);
 </script>
 </body>
 </html>

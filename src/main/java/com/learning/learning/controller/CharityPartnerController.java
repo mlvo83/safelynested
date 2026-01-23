@@ -318,6 +318,7 @@ public class CharityPartnerController {
     @GetMapping("/documents/upload")
     public String showUploadForm(
             @RequestParam(required = false) Long referralId,
+            @RequestParam(required = false) Long inviteId,
             Model model,
             Principal principal
     ) {
@@ -327,8 +328,14 @@ public class CharityPartnerController {
         // Get referrals for dropdown
         List<Referral> referrals = referralRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
         model.addAttribute("referrals", referrals);
+
+        // Get invites for dropdown
+        List<ReferralInvite> invites = inviteService.getInvitesForCharity(username);
+        model.addAttribute("invites", invites);
+
         model.addAttribute("documentTypes", Document.DocumentType.values());
         model.addAttribute("selectedReferralId", referralId);
+        model.addAttribute("selectedInviteId", inviteId);
 
         return "charity-partner/document-upload";
     }
@@ -340,6 +347,7 @@ public class CharityPartnerController {
     public String uploadDocument(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) Long referralId,
+            @RequestParam(required = false) Long inviteId,
             @RequestParam Document.DocumentType documentType,
             @RequestParam(required = false) String description,
             Principal principal,
@@ -348,7 +356,17 @@ public class CharityPartnerController {
         String username = principal.getName();
 
         try {
-            Document document = documentService.uploadDocument(file, referralId, documentType, description, username);
+            Document document;
+
+            // If inviteId is provided, upload to invite
+            if (inviteId != null) {
+                document = documentService.uploadDocumentForInvite(file, inviteId, documentType, description, username);
+                redirectAttributes.addFlashAttribute("success", "Document uploaded to invite successfully");
+                return "redirect:/charity-partner/invites/" + inviteId;
+            }
+
+            // Otherwise, upload to referral or general
+            document = documentService.uploadDocument(file, referralId, documentType, description, username);
             redirectAttributes.addFlashAttribute("success", "Document uploaded successfully");
 
             if (referralId != null) {
