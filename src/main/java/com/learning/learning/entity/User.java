@@ -108,6 +108,10 @@ public class User {
         return hasRole("ROLE_ADMIN") || hasRole("ADMIN");
     }
 
+    public boolean isDonor() {
+        return hasRole("ROLE_DONOR") || hasRole("DONOR");
+    }
+
     public String getPrimaryRole() {
         if (roles.isEmpty()) {
             return "USER";
@@ -116,6 +120,7 @@ public class User {
         if (isAdmin()) return "ADMIN";
         if (isFacilitator()) return "FACILITATOR";
         if (isCharityPartner()) return "CHARITY_PARTNER";
+        if (isDonor()) return "DONOR";
         return roles.iterator().next().getName();
     }
 

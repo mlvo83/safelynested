@@ -2,10 +2,12 @@ package com.learning.learning.service;
 
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.Document;
+import com.learning.learning.entity.Donor;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.entity.ReferralInvite;
 import com.learning.learning.entity.User;
 import com.learning.learning.repository.DocumentRepository;
+import com.learning.learning.repository.DonorRepository;
 import com.learning.learning.repository.ReferralInviteRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.repository.UserRepository;
@@ -42,6 +44,9 @@ public class DocumentService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private DonorRepository donorRepository;
 
     @Autowired
     private CharityService charityService;
@@ -269,6 +274,155 @@ public class DocumentService {
     }
 
     // ========================================
+    // DONOR DOCUMENT UPLOAD
+    // ========================================
+
+    /**
+     * Upload document for a donor (by admin or the donor themselves)
+     */
+    @Transactional
+    public Document uploadDonorDocument(
+            MultipartFile file,
+            Long donorId,
+            Long charityId,
+            Document.DocumentType documentType,
+            String description,
+            String username
+    ) throws IOException {
+        // Validate file
+        validateFile(file);
+
+        // Get user
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Get donor
+        Donor donor = donorRepository.findById(donorId)
+                .orElseThrow(() -> new RuntimeException("Donor not found"));
+
+        // Get charity (must be one the donor is associated with)
+        Charity charity = donor.getCharities().stream()
+                .filter(c -> c.getId().equals(charityId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Donor is not associated with charity: " + charityId));
+
+        // Verify access: must be admin, facilitator, or the donor themselves
+        boolean isAdmin = user.isAdmin();
+        boolean isFacilitator = user.isFacilitator();
+        boolean isDonorUser = donor.getUser().getId().equals(user.getId());
+
+        if (!isAdmin && !isFacilitator && !isDonorUser) {
+            throw new RuntimeException("Access denied: Cannot upload documents for this donor");
+        }
+
+        // Generate unique file name
+        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
+        String uniqueFileName = generateUniqueFileName(originalFileName);
+
+        // Create storage key: {charityId}/donors/{donorId}/{uniqueFileName}
+        String storageKey = charityId + "/donors/" + donorId + "/" + uniqueFileName;
+
+        // Store file
+        storageService.store(file, storageKey);
+
+        // Create document record
+        Document document = new Document();
+        document.setDonor(donor);
+        document.setCharity(charity);
+        document.setUploadedBy(user);
+        document.setDocumentType(documentType);
+        document.setFileName(originalFileName);
+        document.setFilePath(storageKey);
+        document.setFileSize(file.getSize());
+        document.setMimeType(file.getContentType());
+        document.setDescription(description);
+        document.setIsVerified(false);
+
+        return documentRepository.save(document);
+    }
+
+    /**
+     * Upload document for own donor account (for donors to upload their own docs)
+     */
+    @Transactional
+    public Document uploadOwnDonorDocument(
+            MultipartFile file,
+            Long charityId,
+            Document.DocumentType documentType,
+            String description,
+            String username
+    ) throws IOException {
+        // Get donor by username
+        Donor donor = donorRepository.findByUserUsername(username)
+                .orElseThrow(() -> new RuntimeException("Donor profile not found for user: " + username));
+
+        return uploadDonorDocument(file, donor.getId(), charityId, documentType, description, username);
+    }
+
+    // ========================================
+    // DONOR DOCUMENT QUERIES
+    // ========================================
+
+    /**
+     * Get all documents for a donor (donor's own view)
+     */
+    public List<Document> getDocumentsForDonor(String username) {
+        Donor donor = donorRepository.findByUserUsername(username)
+                .orElseThrow(() -> new RuntimeException("Donor profile not found for user: " + username));
+        return documentRepository.findByDonorIdOrderByUploadedAtDesc(donor.getId());
+    }
+
+    /**
+     * Get documents for a donor at a specific charity (donor's own view)
+     */
+    public List<Document> getDocumentsForDonorAtCharity(String username, Long charityId) {
+        Donor donor = donorRepository.findByUserUsername(username)
+                .orElseThrow(() -> new RuntimeException("Donor profile not found for user: " + username));
+
+        // Verify donor is associated with this charity
+        if (!donor.isAssociatedWithCharity(charityId)) {
+            throw new RuntimeException("Donor is not associated with charity: " + charityId);
+        }
+
+        return documentRepository.findByDonorIdAndCharityId(donor.getId(), charityId);
+    }
+
+    /**
+     * Get documents for a specific donor (admin/charity view)
+     */
+    public List<Document> getDocumentsForDonorById(Long donorId, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Admins and facilitators can see any donor's documents
+        if (user.isAdmin() || user.isFacilitator()) {
+            return documentRepository.findByDonorIdOrderByUploadedAtDesc(donorId);
+        }
+
+        // Charity partners can only see donors associated with their charity
+        if (user.isCharityPartner()) {
+            Charity charity = charityService.getCharityForUser(username);
+            Donor donor = donorRepository.findById(donorId)
+                    .orElseThrow(() -> new RuntimeException("Donor not found"));
+
+            if (!donor.isAssociatedWithCharity(charity.getId())) {
+                throw new RuntimeException("Access denied: Donor not associated with your charity");
+            }
+
+            return documentRepository.findByDonorIdAndCharityId(donorId, charity.getId());
+        }
+
+        throw new RuntimeException("Access denied");
+    }
+
+    /**
+     * Get document count for a donor
+     */
+    public Long getDocumentCountForDonor(Long donorId) {
+        return documentRepository.countByDonorId(donorId);
+    }
+
+    // ========================================
     // FILE DOWNLOAD
     // ========================================
 
@@ -308,6 +462,15 @@ public class DocumentService {
         // Charity partners can only access their own charity's documents
         if (user.isCharityPartner() && user.belongsToCharity(document.getCharity().getId())) {
             return document;
+        }
+
+        // Donors can only access their own documents
+        if (user.isDonor()) {
+            Donor donor = donorRepository.findByUserId(user.getId()).orElse(null);
+            if (donor != null && document.getDonor() != null &&
+                    document.getDonor().getId().equals(donor.getId())) {
+                return document;
+            }
         }
 
         throw new RuntimeException("Access denied: User cannot access this document");

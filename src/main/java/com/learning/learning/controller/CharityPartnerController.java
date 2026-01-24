@@ -4,6 +4,9 @@ import com.learning.learning.entity.*;
 import com.learning.learning.repository.*;
 import com.learning.learning.service.CharityService;
 import com.learning.learning.service.DocumentService;
+import com.learning.learning.service.DonationService;
+import com.learning.learning.service.DonorDashboardService;
+import com.learning.learning.service.DonorService;
 import com.learning.learning.service.InviteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -37,6 +40,15 @@ public class CharityPartnerController {
 
     @Autowired
     private InviteService inviteService;
+
+    @Autowired
+    private DonorService donorService;
+
+    @Autowired
+    private DonationService donationService;
+
+    @Autowired
+    private DonorDashboardService donorDashboardService;
 
     @Autowired
     private ReferralRepository referralRepository;
@@ -882,6 +894,70 @@ public class CharityPartnerController {
      * Delete location
      */
 
+
+    // ========================================
+    // DONORS (READ-ONLY VIEW)
+    // ========================================
+
+    /**
+     * List donors associated with this charity (read-only)
+     */
+    @GetMapping("/donors")
+    public String listDonors(
+            @RequestParam(required = false) String search,
+            Model model,
+            Principal principal
+    ) {
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+        Long charityId = charity.getId();
+
+        List<Donor> donors;
+        if (search != null && !search.trim().isEmpty()) {
+            donors = donorService.searchDonorsForCharity(charityId, search);
+        } else {
+            donors = donorService.getDonorsForCharity(charityId);
+        }
+
+        // Get stats
+        long donorCount = donorService.countDonorsForCharity(charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("donors", donors);
+        model.addAttribute("donorCount", donorCount);
+        model.addAttribute("searchTerm", search);
+
+        return "charity-partner/donors";
+    }
+
+    /**
+     * View single donor detail (read-only)
+     */
+    @GetMapping("/donors/{id}")
+    public String viewDonor(@PathVariable Long id, Model model, Principal principal) {
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+        Long charityId = charity.getId();
+
+        // Verify donor is associated with this charity
+        Donor donor = donorService.getDonorById(id);
+        if (!donor.isAssociatedWithCharity(charityId)) {
+            return "redirect:/charity-partner/donors?error=Access+denied";
+        }
+
+        // Get donations for this donor at this charity only
+        List<Donation> donations = donationService.getDonationsForDonorAtCharity(id, charityId);
+
+        // Get stats for this charity only
+        DonorDashboardService.DonorDashboardStats stats = donorDashboardService.getDashboardStatsForCharity(id, charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("donor", donor);
+        model.addAttribute("donations", donations);
+        model.addAttribute("stats", stats);
+
+        return "charity-partner/donor-view";
+    }
 
     // ========================================
     // CHARITY PROFILE

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Details - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-info h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header-info .meta {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .charity-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .charity-tag {
+            background: #e9ecef;
+            padding: 6px 12px;
+            border-radius: 5px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .charity-tag .remove-btn {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .add-charity-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .add-charity-form select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
+
+        .fee-breakdown {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .action-forms {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-forms form {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Donor Details</div>
+    <a th:href="@{/admin/donors}" class="nav-link">Back to Donors</a>
+</nav>
+
+<div class="container">
+    <div th:if="${success}" class="alert alert-success">
+        <span th:text="${success}">Success message</span>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}">Error message</span>
+    </div>
+
+    <div class="header">
+        <div class="header-info">
+            <!-- Business donor header -->
+            <div th:if="${donor.donorType?.name() == 'BUSINESS'}">
+                <h1>
+                    <span th:text="${donor.businessName ?: 'Unnamed Business'}">Business Name</span>
+                    <span class="badge" style="background: #6f42c1; color: white; font-size: 14px; vertical-align: middle;">Business</span>
+                </h1>
+                <div class="meta">
+                    <span th:text="'@' + ${donor.user.username}">@username</span>
+                    <span th:if="${donor.contactName}"> | Contact: <span th:text="${donor.contactName}">Contact Name</span></span>
+                    <span th:if="${donor.user.email}"> | <span th:text="${donor.user.email}">email@example.com</span></span>
+                    <span th:if="${donor.user.phone}"> | <span th:text="${donor.user.phone}">(555) 123-4567</span></span>
+                    <span th:if="${donor.taxId}"> | Tax ID: <span th:text="${donor.taxId}">XX-XXXXXXX</span></span>
+                </div>
+            </div>
+            <!-- Individual donor header -->
+            <div th:unless="${donor.donorType?.name() == 'BUSINESS'}">
+                <h1>
+                    <span th:text="${(donor.user.firstName ?: '') + ' ' + (donor.user.lastName ?: '')}">Donor Name</span>
+                    <span class="badge badge-info" style="font-size: 14px; vertical-align: middle;">Individual</span>
+                </h1>
+                <div class="meta">
+                    <span th:text="'@' + ${donor.user.username}">@username</span>
+                    <span th:if="${donor.user.email}"> | <span th:text="${donor.user.email}">email@example.com</span></span>
+                    <span th:if="${donor.user.phone}"> | <span th:text="${donor.user.phone}">(555) 123-4567</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a th:href="@{/admin/donors/{id}/edit(id=${donor.id})}" class="btn btn-warning">Edit Donor</a>
+            <a th:href="@{/admin/donors/{id}/record-donation(id=${donor.id})}" class="btn btn-success">+ Record Donation</a>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- Left Column: Donor Info -->
+        <div>
+            <!-- Status Card -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">Account Status</div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <span class="info-label">Verification</span>
+                        <span class="info-value">
+                            <span th:if="${donor.isVerified}" class="badge badge-success">Verified</span>
+                            <span th:unless="${donor.isVerified}" class="badge badge-warning">Pending</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Account</span>
+                        <span class="info-value">
+                            <span th:if="${donor.user.enabled}" class="badge badge-info">Active</span>
+                            <span th:unless="${donor.user.enabled}" class="badge badge-secondary">Disabled</span>
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Created</span>
+                        <span class="info-value"
+                              th:text="${donor.createdAt != null} ? ${#temporals.format(donor.createdAt, 'MMM d, yyyy')} : '-'">
+                            Jan 1, 2024
+                        </span>
+                    </div>
+
+                    <div class="action-forms" style="margin-top: 15px;">
+                        <!-- Verification Actions -->
+                        <form th:unless="${donor.isVerified}"
+                              th:action="@{/admin/donors/{id}/verify(id=${donor.id})}" method="post">
+                            <button type="submit" class="btn btn-success btn-sm">Verify Donor</button>
+                        </form>
+                        <form th:if="${donor.isVerified}"
+                              th:action="@{/admin/donors/{id}/unverify(id=${donor.id})}" method="post">
+                            <button type="submit" class="btn btn-secondary btn-sm">Remove Verification</button>
+                        </form>
+
+                        <!-- Activation Actions -->
+                        <form th:unless="${donor.user.enabled}"
+                              th:action="@{/admin/donors/{id}/activate(id=${donor.id})}" method="post">
+                            <button type="submit" class="btn btn-info btn-sm">Activate Account</button>
+                        </form>
+                        <form th:if="${donor.user.enabled}"
+                              th:action="@{/admin/donors/{id}/deactivate(id=${donor.id})}" method="post"
+                              onsubmit="return confirm('Are you sure you want to deactivate this donor account?');">
+                            <button type="submit" class="btn btn-danger btn-sm">Deactivate Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">Donation Statistics</div>
+                <div class="card-body">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="'$' + ${#numbers.formatDecimal(stats.totalDonated, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                            <div class="stat-label">Total Donated</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="'$' + ${#numbers.formatDecimal(stats.netFunds, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                            <div class="stat-label">Net to Charity</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="${stats.totalNightsFunded}">0</div>
+                            <div class="stat-label">Nights Funded</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="${stats.nightsUsed}">0</div>
+                            <div class="stat-label">Nights Used</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="${stats.donationCount}">0</div>
+                            <div class="stat-label">Donations</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" th:text="'$' + ${#numbers.formatDecimal(stats.totalFees, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                            <div class="stat-label">Total Fees</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charities Card -->
+            <div class="card">
+                <div class="card-header">Associated Charities</div>
+                <div class="card-body">
+                    <div class="charity-list">
+                        <div th:if="${#sets.isEmpty(donor.charities)}" class="no-data" style="width: 100%; padding: 15px;">
+                            No charities assigned yet.
+                        </div>
+                        <div th:each="charity : ${donor.charities}" class="charity-tag">
+                            <span th:text="${charity.charityName}">Charity Name</span>
+                            <form th:action="@{/admin/donors/{id}/remove-charity(id=${donor.id})}"
+                                  method="post" style="margin: 0;">
+                                <input type="hidden" name="charityId" th:value="${charity.id}">
+                                <button type="submit" class="remove-btn"
+                                        onclick="return confirm('Remove this charity from donor?');">
+                                    &times;
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Add Charity Form -->
+                    <form th:action="@{/admin/donors/{id}/assign-charity(id=${donor.id})}"
+                          method="post" class="add-charity-form">
+                        <select name="charityId" required>
+                            <option value="">-- Select a charity to add --</option>
+                            <th:block th:each="charity : ${charities}">
+                                <option th:unless="${donor.charities.contains(charity)}"
+                                        th:value="${charity.id}"
+                                        th:text="${charity.charityName}">
+                                    Charity Name
+                                </option>
+                            </th:block>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm">Add Charity</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Donations -->
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <span>Donation History</span>
+                    <a th:href="@{/admin/donors/{id}/record-donation(id=${donor.id})}"
+                       class="btn btn-success btn-sm">+ Record Donation</a>
+                </div>
+                <table th:if="${!#lists.isEmpty(donations)}">
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Charity</th>
+                        <th>Gross</th>
+                        <th>Net</th>
+                        <th>Nights</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="donation : ${donations}">
+                        <td th:text="${donation.donatedAt != null} ? ${#temporals.format(donation.donatedAt, 'MMM d, yyyy')} : '-'">
+                            Jan 1, 2024
+                        </td>
+                        <td th:text="${donation.charity.charityName}">Charity Name</td>
+                        <td>
+                            <div th:text="'$' + ${#numbers.formatDecimal(donation.grossAmount, 1, 'COMMA', 2, 'POINT')}">$100.00</div>
+                            <div class="fee-breakdown">
+                                Fees: $<span th:text="${#numbers.formatDecimal(donation.platformFee.add(donation.facilitatorFee), 1, 'COMMA', 2, 'POINT')}">10.00</span>
+                            </div>
+                        </td>
+                        <td th:text="'$' + ${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">$90.00</td>
+                        <td th:text="${donation.nightsFunded}">3</td>
+                        <td>
+                            <span th:switch="${donation.status.name()}">
+                                <span th:case="'PENDING'" class="badge badge-warning">Pending</span>
+                                <span th:case="'VERIFIED'" class="badge badge-info">Verified</span>
+                                <span th:case="'ALLOCATED'" class="badge badge-info">Allocated</span>
+                                <span th:case="'PARTIALLY_USED'" class="badge badge-success">Partially Used</span>
+                                <span th:case="'FULLY_USED'" class="badge badge-success">Fully Used</span>
+                                <span th:case="'CANCELLED'" class="badge badge-danger">Cancelled</span>
+                                <span th:case="*" class="badge badge-secondary" th:text="${donation.status}">Status</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-forms">
+                                <form th:if="${donation.status.name() == 'PENDING'}"
+                                      th:action="@{/admin/donors/donations/{id}/verify(id=${donation.id})}"
+                                      method="post">
+                                    <button type="submit" class="btn btn-success btn-sm">Verify</button>
+                                </form>
+                                <form th:if="${donation.status.name() == 'PENDING'}"
+                                      th:action="@{/admin/donors/donations/{id}/reject(id=${donation.id})}"
+                                      method="post"
+                                      onsubmit="return confirm('Reject this donation? Please provide a reason.');">
+                                    <input type="hidden" name="reason" value="Rejected by admin">
+                                    <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div th:if="${#lists.isEmpty(donations)}" class="no-data">
+                    <p>No donations recorded yet.</p>
+                    <a th:href="@{/admin/donors/{id}/record-donation(id=${donor.id})}"
+                       class="btn btn-success" style="margin-top: 15px;">Record First Donation</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

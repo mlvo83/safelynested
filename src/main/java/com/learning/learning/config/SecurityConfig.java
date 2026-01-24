@@ -61,8 +61,9 @@ public class SecurityConfig {
                         .requestMatchers("/facilitator/**").hasRole("FACILITATOR")
                         .requestMatchers("/charity-facilitator/**").hasRole("CHARITY_FACILITATOR")
                         .requestMatchers("/charity-partner/**").hasAnyRole("CHARITY_PARTNER", "CHARITY_FACILITATOR")
+                        .requestMatchers("/donor/**").hasRole("DONOR")
                         .requestMatchers("/location-admin/**").hasAnyRole("ADMIN", "LOCATION_ADMIN")
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "CHARITY_FACILITATOR", "LOCATION_ADMIN")
+                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "CHARITY_FACILITATOR", "LOCATION_ADMIN", "DONOR")
                         // Dashboard requires authentication
                         .requestMatchers("/home").authenticated()
 

@@ -26,6 +26,10 @@ public class Document {
     @JoinColumn(name = "invite_id")
     private ReferralInvite invite;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "donor_id")
+    private Donor donor;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "charity_id", nullable = false)
     private Charity charity;
@@ -83,6 +87,7 @@ public class Document {
 
     // Document Types Enum
     public enum DocumentType {
+        // Beneficiary document types
         ID_CARD("Government-issued ID"),
         DRIVERS_LICENSE("Driver's License"),
         PASSPORT("Passport"),
@@ -100,6 +105,15 @@ public class Document {
         SCHOOL_RECORDS("School Records"),
         EMPLOYMENT_LETTER("Employment Letter"),
         REFERENCE_LETTER("Reference Letter"),
+
+        // Donor document types
+        DONATION_RECEIPT("Donation Receipt"),
+        VERIFICATION_OF_FUNDS("Verification of Funds"),
+        DONOR_AGREEMENT("Donor Agreement"),
+        TAX_EXEMPTION_LETTER("Tax Exemption Letter"),
+        WIRE_TRANSFER_CONFIRMATION("Wire Transfer Confirmation"),
+        CHECK_COPY("Check Copy"),
+
         OTHER("Other Document");
 
         private final String displayName;

@@ -187,7 +187,13 @@
     <div class="card">
       <h3 class="card-title">Charity Management</h3>
       <p class="card-description">Create charities and manage partner organizations in the system.</p>
-      <a th:href="@{/admin/charities}" class="btn">Manage Charities</a>
+      <a th:href="@{/admin/charities}" class="card-link">Manage Charities</a>
+    </div>
+
+    <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
+      <h3>Donor Management</h3>
+      <p>Create donors, record donations, and track donor contributions across charities.</p>
+      <a th:href="@{/admin/donors}" class="card-link">Manage Donors</a>
     </div>
   </div>
 </div>

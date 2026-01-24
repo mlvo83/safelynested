@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Details - Charity Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Include shared sidebar styles -->
+    <th:block th:replace="~{charity-partner/fragments/sidebar :: sidebar-styles}"></th:block>
+    <style>
+        .stat-card { border-left: 4px solid #28a745; }
+        .stat-value { font-size: 1.75rem; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Fragment -->
+        <th:block th:replace="~{charity-partner/fragments/sidebar :: sidebar('donors')}"></th:block>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/dashboard}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/donors}">Donors</a></li>
+                            <li class="breadcrumb-item active">Donor Details</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2">
+                        <i class="fas fa-user me-2"></i>
+                        <span th:text="${(donor.user.firstName ?: '') + ' ' + (donor.user.lastName ?: '')}">Donor Name</span>
+                    </h1>
+                    <p class="text-muted mb-0">
+                        <span th:if="${donor.isVerified}" class="badge bg-success me-2">
+                            <i class="fas fa-check me-1"></i>Verified Donor
+                        </span>
+                        <span th:unless="${donor.isVerified}" class="badge bg-warning text-dark me-2">
+                            <i class="fas fa-clock me-1"></i>Pending Verification
+                        </span>
+                        Member since <span th:text="${donor.createdAt != null} ? ${#temporals.format(donor.createdAt, 'MMMM d, yyyy')} : 'Unknown'">January 1, 2024</span>
+                    </p>
+                </div>
+                <a th:href="@{/charity-partner/donors}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Donors
+                </a>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i><span th:text="${success}">Success</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}">Error</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="row">
+                <!-- Left Column: Donor Info & Stats -->
+                <div class="col-lg-4">
+                    <!-- Contact Information Card -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-address-card me-2"></i>Contact Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3" th:if="${donor.user.email}">
+                                <small class="text-muted d-block">Email</small>
+                                <span th:text="${donor.user.email}">email@example.com</span>
+                            </div>
+                            <div class="mb-3" th:if="${donor.user.phone}">
+                                <small class="text-muted d-block">Phone</small>
+                                <span th:text="${donor.user.phone}">(555) 123-4567</span>
+                            </div>
+                            <div th:unless="${donor.user.email or donor.user.phone}">
+                                <p class="text-muted mb-0">No contact information available.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Donation Statistics Card -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Donation Statistics</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="stat-value text-success" th:text="'$' + ${#numbers.formatDecimal(stats.totalDonated, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                                        <small class="text-muted">Total Donated</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="stat-value text-primary" th:text="'$' + ${#numbers.formatDecimal(stats.netFunds, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                                        <small class="text-muted">Net to Charity</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="stat-value text-info" th:text="${stats.totalNightsFunded}">0</div>
+                                        <small class="text-muted">Nights Funded</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="stat-value text-warning" th:text="${stats.nightsUsed}">0</div>
+                                        <small class="text-muted">Nights Used</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="stat-value" th:text="${stats.donationCount}">0</div>
+                                        <small class="text-muted">Donations</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <div class="stat-value text-secondary" th:text="'$' + ${#numbers.formatDecimal(stats.totalFees, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                                        <small class="text-muted">Platform Fees</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Donation History -->
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-history me-2"></i>Donation History</h6>
+                            <span class="badge bg-primary" th:text="${donations != null ? donations.size() : 0} + ' donations'">0 donations</span>
+                        </div>
+
+                        <!-- No Donations -->
+                        <div th:if="${donations == null or donations.isEmpty()}" class="card-body text-center py-5">
+                            <i class="fas fa-donate fa-3x text-muted mb-3"></i>
+                            <p class="text-muted mb-0">No donations recorded yet for your charity.</p>
+                        </div>
+
+                        <!-- Donations Table -->
+                        <div th:unless="${donations == null or donations.isEmpty()}" class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Gross Amount</th>
+                                    <th>Fees</th>
+                                    <th>Net Amount</th>
+                                    <th>Nights</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="donation : ${donations}">
+                                    <td>
+                                        <span th:text="${donation.donatedAt != null} ? ${#temporals.format(donation.donatedAt, 'MMM d, yyyy')} : '-'">Jan 1, 2024</span>
+                                    </td>
+                                    <td>
+                                        <strong th:text="'$' + ${#numbers.formatDecimal(donation.grossAmount, 1, 'COMMA', 2, 'POINT')}">$100.00</strong>
+                                    </td>
+                                    <td class="text-muted">
+                                        <span th:text="'$' + ${#numbers.formatDecimal(donation.platformFee.add(donation.facilitatorFee), 1, 'COMMA', 2, 'POINT')}">$10.00</span>
+                                    </td>
+                                    <td class="text-success">
+                                        <strong th:text="'$' + ${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">$90.00</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info" th:text="${donation.nightsFunded} + ' nights'">3 nights</span>
+                                    </td>
+                                    <td>
+                                        <span th:switch="${donation.status.name()}">
+                                            <span th:case="'PENDING'" class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock me-1"></i>Pending
+                                            </span>
+                                            <span th:case="'VERIFIED'" class="badge bg-info">
+                                                <i class="fas fa-check me-1"></i>Verified
+                                            </span>
+                                            <span th:case="'ALLOCATED'" class="badge bg-primary">
+                                                <i class="fas fa-hand-holding-usd me-1"></i>Allocated
+                                            </span>
+                                            <span th:case="'PARTIALLY_USED'" class="badge bg-success">
+                                                <i class="fas fa-chart-pie me-1"></i>In Use
+                                            </span>
+                                            <span th:case="'FULLY_USED'" class="badge bg-success">
+                                                <i class="fas fa-check-double me-1"></i>Fully Used
+                                            </span>
+                                            <span th:case="'CANCELLED'" class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Cancelled
+                                            </span>
+                                            <span th:case="*" class="badge bg-secondary" th:text="${donation.status}">Status</span>
+                                        </span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Fee Breakdown Info -->
+                    <div class="card shadow-sm mt-4">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="fas fa-info-circle me-2 text-info"></i>Fee Structure</h6>
+                            <p class="text-muted small mb-2">
+                                All donations are subject to a 10% fee to support platform operations and facilitation services:
+                            </p>
+                            <ul class="small text-muted mb-0">
+                                <li><strong>7% Platform Fee</strong> - Supports platform maintenance and development</li>
+                                <li><strong>3% Facilitator Fee</strong> - Supports coordination and facilitation services</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

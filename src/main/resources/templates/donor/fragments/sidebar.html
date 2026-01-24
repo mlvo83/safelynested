@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- Sidebar Fragment -->
+<nav th:fragment="sidebar(activePage)" class="col-md-3 col-lg-2 d-md-block sidebar collapse py-3">
+    <div class="text-center mb-4">
+        <i class="fas fa-hand-holding-heart text-white fa-3x mb-2"></i>
+        <h6 class="text-white" th:text="${donor?.user?.firstName} ?: 'Donor'">Donor Name</h6>
+        <small class="text-white-50">Donor Portal</small>
+    </div>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a th:class="${activePage == 'dashboard'} ? 'nav-link active' : 'nav-link'" th:href="@{/donor/dashboard}">
+                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'donations'} ? 'nav-link active' : 'nav-link'" th:href="@{/donor/donations}">
+                <i class="fas fa-donate me-2"></i> My Donations
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'impact'} ? 'nav-link active' : 'nav-link'" th:href="@{/donor/impact}">
+                <i class="fas fa-heart me-2"></i> My Impact
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'charities'} ? 'nav-link active' : 'nav-link'" th:href="@{/donor/charities}">
+                <i class="fas fa-hands-helping me-2"></i> Charities
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'profile'} ? 'nav-link active' : 'nav-link'" th:href="@{/donor/profile}">
+                <i class="fas fa-user me-2"></i> My Profile
+            </a>
+        </li>
+        <li class="nav-item mt-4">
+            <form th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </button>
+            </form>
+        </li>
+    </ul>
+</nav>
+
+<!-- Sidebar Styles Fragment -->
+<th:block th:fragment="sidebar-styles">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            margin: 0.2rem 0;
+            border-radius: 0.5rem;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: inherit;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .main-content {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .stat-card {
+            border-left: 4px solid #28a745;
+        }
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: bold;
+        }
+    </style>
+</th:block>
+
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Donation - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* Fee Calculator */
+        .fee-calculator {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .fee-calculator h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .fee-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .fee-row:last-child {
+            border-bottom: none;
+        }
+
+        .fee-row.total {
+            font-weight: bold;
+            font-size: 16px;
+            padding-top: 12px;
+            margin-top: 8px;
+            border-top: 2px solid #667eea;
+            border-bottom: none;
+        }
+
+        .fee-label {
+            color: #666;
+        }
+
+        .fee-value {
+            font-weight: 500;
+        }
+
+        .fee-value.positive {
+            color: #28a745;
+        }
+
+        .fee-value.negative {
+            color: #dc3545;
+        }
+
+        .nights-funded {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .nights-funded .value {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .nights-funded .label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .donor-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .donor-info .name {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .donor-info .meta {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Record Donation</div>
+    <a th:href="@{/admin/donors/{id}(id=${donor.id})}" class="nav-link">Back to Donor</a>
+</nav>
+
+<div class="container">
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}">Error message</span>
+    </div>
+
+    <div class="donor-info">
+        <div class="name" th:text="${(donor.user.firstName ?: '') + ' ' + (donor.user.lastName ?: '')}">Donor Name</div>
+        <div class="meta">
+            <span th:text="'@' + ${donor.user.username}">@username</span>
+            <span th:if="${donor.user.email}"> | <span th:text="${donor.user.email}">email@example.com</span></span>
+        </div>
+    </div>
+
+    <div class="card">
+        <form th:action="@{/admin/donors/{id}/record-donation(id=${donor.id})}"
+              method="post" id="donationForm">
+
+            <div class="section-title">Donation Details</div>
+
+            <div class="form-group">
+                <label for="charityId" class="required">Charity</label>
+                <select id="charityId" name="charityId" required onchange="updateNightlyRate()">
+                    <option value="">-- Select charity --</option>
+                    <option th:each="charity : ${charities}"
+                            th:value="${charity.id}"
+                            th:text="${charity.charityName}"
+                            th:data-rate="${charity.id}">
+                        Charity Name
+                    </option>
+                </select>
+                <div class="help-text">Select the charity this donation is for.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="grossAmount" class="required">Donation Amount (Gross)</label>
+                <input type="number" id="grossAmount" name="grossAmount"
+                       step="0.01" min="0.01" required
+                       placeholder="Enter donation amount"
+                       oninput="calculateFees()">
+                <div class="help-text">Enter the full donation amount before fees.</div>
+            </div>
+
+            <!-- Fee Calculator Display -->
+            <div class="fee-calculator" id="feeCalculator" style="display: none;">
+                <h3>Fee Breakdown (10% total)</h3>
+                <div class="fee-row">
+                    <span class="fee-label">Gross Amount</span>
+                    <span class="fee-value" id="displayGross">$0.00</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Platform Fee (7%)</span>
+                    <span class="fee-value negative" id="displayPlatformFee">-$0.00</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Facilitator Fee (3%)</span>
+                    <span class="fee-value negative" id="displayFacilitatorFee">-$0.00</span>
+                </div>
+                <div class="fee-row total">
+                    <span class="fee-label">Net Amount to Charity</span>
+                    <span class="fee-value positive" id="displayNet">$0.00</span>
+                </div>
+            </div>
+
+            <div class="nights-funded" id="nightsDisplay" style="display: none;">
+                <div class="value" id="nightsValue">0</div>
+                <div class="label">Nights of Shelter Funded</div>
+            </div>
+
+            <div class="section-title">Additional Information</div>
+
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="3"
+                          placeholder="Optional notes about this donation (check number, wire reference, etc.)"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Record Donation</button>
+                <a th:href="@{/admin/donors/{id}(id=${donor.id})}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const PLATFORM_FEE_RATE = 0.07;
+    const FACILITATOR_FEE_RATE = 0.03;
+
+    function calculateFees() {
+        const grossInput = document.getElementById('grossAmount');
+        const gross = parseFloat(grossInput.value) || 0;
+
+        const feeCalculator = document.getElementById('feeCalculator');
+        const nightsDisplay = document.getElementById('nightsDisplay');
+
+        if (gross > 0) {
+            const platformFee = gross * PLATFORM_FEE_RATE;
+            const facilitatorFee = gross * FACILITATOR_FEE_RATE;
+            const totalFees = platformFee + facilitatorFee;
+            const netAmount = gross - totalFees;
+
+            document.getElementById('displayGross').textContent = '$' + gross.toFixed(2);
+            document.getElementById('displayPlatformFee').textContent = '-$' + platformFee.toFixed(2);
+            document.getElementById('displayFacilitatorFee').textContent = '-$' + facilitatorFee.toFixed(2);
+            document.getElementById('displayNet').textContent = '$' + netAmount.toFixed(2);
+
+            feeCalculator.style.display = 'block';
+
+            // Calculate nights if charity is selected
+            calculateNights(netAmount);
+        } else {
+            feeCalculator.style.display = 'none';
+            nightsDisplay.style.display = 'none';
+        }
+    }
+
+    function calculateNights(netAmount) {
+        const charityId = document.getElementById('charityId').value;
+        const nightsDisplay = document.getElementById('nightsDisplay');
+
+        if (charityId && netAmount > 0) {
+            // Make AJAX call to get nights funded
+            fetch('/admin/donors/calculate-nights?netAmount=' + netAmount + '&charityId=' + charityId)
+                .then(response => response.json())
+                .then(nights => {
+                    document.getElementById('nightsValue').textContent = nights;
+                    nightsDisplay.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error calculating nights:', error);
+                    nightsDisplay.style.display = 'none';
+                });
+        } else {
+            nightsDisplay.style.display = 'none';
+        }
+    }
+
+    function updateNightlyRate() {
+        const grossInput = document.getElementById('grossAmount');
+        const gross = parseFloat(grossInput.value) || 0;
+
+        if (gross > 0) {
+            const platformFee = gross * PLATFORM_FEE_RATE;
+            const facilitatorFee = gross * FACILITATOR_FEE_RATE;
+            const netAmount = gross - platformFee - facilitatorFee;
+            calculateNights(netAmount);
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        calculateFees();
+    });
+</script>
+</body>
+</html>

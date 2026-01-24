@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Details - Donor Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <th:block th:replace="~{donor/fragments/sidebar :: sidebar-styles}"></th:block>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <th:block th:replace="~{donor/fragments/sidebar :: sidebar('donations')}"></th:block>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item"><a th:href="@{/donor/dashboard}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/donor/donations}">My Donations</a></li>
+                            <li class="breadcrumb-item active">Donation Details</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2"><i class="fas fa-receipt me-2 text-success"></i>Donation Details</h1>
+                </div>
+                <a th:href="@{/donor/donations}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Donations
+                </a>
+            </div>
+
+            <div class="row g-4">
+                <!-- Main Details -->
+                <div class="col-lg-8">
+                    <!-- Donation Summary Card -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-success text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-donate me-2"></i>
+                                    Donation Summary
+                                </h5>
+                                <span th:switch="${donation.status.name()}">
+                                    <span th:case="'PENDING'" class="badge bg-warning text-dark">
+                                        <i class="fas fa-clock me-1"></i>Pending Verification
+                                    </span>
+                                    <span th:case="'VERIFIED'" class="badge bg-info">
+                                        <i class="fas fa-check me-1"></i>Verified
+                                    </span>
+                                    <span th:case="'ALLOCATED'" class="badge bg-primary">
+                                        <i class="fas fa-hand-holding-usd me-1"></i>Allocated
+                                    </span>
+                                    <span th:case="'PARTIALLY_USED'" class="badge bg-light text-dark">
+                                        <i class="fas fa-chart-pie me-1"></i>Partially Used
+                                    </span>
+                                    <span th:case="'FULLY_USED'" class="badge bg-light text-dark">
+                                        <i class="fas fa-check-double me-1"></i>Fully Used
+                                    </span>
+                                    <span th:case="'CANCELLED'" class="badge bg-danger">
+                                        <i class="fas fa-times me-1"></i>Cancelled
+                                    </span>
+                                    <span th:case="*" class="badge bg-secondary" th:text="${donation.status}">Status</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <small class="text-muted d-block">Donation Date</small>
+                                        <strong th:text="${donation.donatedAt != null} ? ${#temporals.format(donation.donatedAt, 'MMMM d, yyyy')} : 'Not recorded'">January 1, 2024</strong>
+                                    </div>
+                                    <div class="mb-4">
+                                        <small class="text-muted d-block">Charity</small>
+                                        <a th:href="@{/donor/charities/{id}(id=${donation.charity.id})}" class="text-decoration-none">
+                                            <i class="fas fa-building me-1 text-success"></i>
+                                            <strong th:text="${donation.charity.charityName}">Charity Name</strong>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-4">
+                                        <small class="text-muted d-block">Reference Number</small>
+                                        <strong th:text="${donation.receiptNumber ?: 'N/A'}">REC-2024-001</strong>
+                                    </div>
+                                    <div class="mb-4">
+                                        <small class="text-muted d-block">Nights Funded</small>
+                                        <span class="badge bg-primary fs-6" th:text="${donation.nightsFunded} + ' nights'">3 nights</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Breakdown -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Financial Breakdown</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="bg-light rounded p-3 text-center h-100">
+                                        <small class="text-muted d-block">Gross Amount</small>
+                                        <h4 class="mb-0" th:text="'$' + ${#numbers.formatDecimal(donation.grossAmount, 1, 'COMMA', 2, 'POINT')}">$100.00</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light rounded p-3 text-center h-100">
+                                        <small class="text-muted d-block">Total Fees (10%)</small>
+                                        <h4 class="mb-0 text-muted" th:text="'$' + ${#numbers.formatDecimal(donation.platformFee.add(donation.facilitatorFee), 1, 'COMMA', 2, 'POINT')}">$10.00</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-success bg-opacity-10 rounded p-3 text-center h-100">
+                                        <small class="text-muted d-block">Net to Charity</small>
+                                        <h4 class="mb-0 text-success" th:text="'$' + ${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">$90.00</h4>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <h6 class="text-muted mb-3">Fee Details</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Platform Fee (7%)</span>
+                                        <span th:text="'$' + ${#numbers.formatDecimal(donation.platformFee, 1, 'COMMA', 2, 'POINT')}">$7.00</span>
+                                    </div>
+                                    <small class="text-muted">Technology, security, and operations</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Facilitator Fee (3%)</span>
+                                        <span th:text="'$' + ${#numbers.formatDecimal(donation.facilitatorFee, 1, 'COMMA', 2, 'POINT')}">$3.00</span>
+                                    </div>
+                                    <small class="text-muted">Case coordination and support</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Impact from this Donation (if situations exist) -->
+                    <div th:if="${situations != null and !situations.isEmpty()}" class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-heart me-2"></i>Impact from This Donation</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                <small>To protect privacy, personal details are kept confidential.</small>
+                            </div>
+                            <div class="list-group">
+                                <div th:each="situation : ${situations}" class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-home me-2 text-success"></i>
+                                                <span th:text="${situation.situationType}">Housing Assistance</span>
+                                            </h6>
+                                            <p class="text-muted small mb-0" th:text="${situation.description}">
+                                                Family receiving assistance
+                                            </p>
+                                        </div>
+                                        <span th:if="${situation.status == 'HOUSED'}" class="badge bg-success">Housed</span>
+                                        <span th:if="${situation.status == 'ACTIVE'}" class="badge bg-primary">Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Side Panel -->
+                <div class="col-lg-4">
+                    <!-- Status Timeline -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-stream me-2"></i>Donation Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="position-relative">
+                                <!-- Pending -->
+                                <div class="d-flex mb-3">
+                                    <div class="me-3">
+                                        <div th:class="${donation.status.name() == 'PENDING' or donation.status.ordinal() > 0} ? 'bg-success text-white rounded-circle p-2' : 'bg-light text-muted rounded-circle p-2'">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Received</strong>
+                                        <small class="text-muted d-block">Donation recorded</small>
+                                    </div>
+                                </div>
+                                <!-- Verified -->
+                                <div class="d-flex mb-3">
+                                    <div class="me-3">
+                                        <div th:class="${donation.status.ordinal() >= 1} ? 'bg-success text-white rounded-circle p-2' : 'bg-light text-muted rounded-circle p-2'">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Verified</strong>
+                                        <small class="text-muted d-block">Donation confirmed</small>
+                                    </div>
+                                </div>
+                                <!-- Allocated -->
+                                <div class="d-flex mb-3">
+                                    <div class="me-3">
+                                        <div th:class="${donation.status.ordinal() >= 2} ? 'bg-success text-white rounded-circle p-2' : 'bg-light text-muted rounded-circle p-2'">
+                                            <i class="fas fa-hand-holding-usd"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Allocated</strong>
+                                        <small class="text-muted d-block">Assigned to help families</small>
+                                    </div>
+                                </div>
+                                <!-- Used -->
+                                <div class="d-flex">
+                                    <div class="me-3">
+                                        <div th:class="${donation.status.ordinal() >= 4} ? 'bg-success text-white rounded-circle p-2' : 'bg-light text-muted rounded-circle p-2'">
+                                            <i class="fas fa-check-double"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <strong>Complete</strong>
+                                        <small class="text-muted d-block">Funds fully utilized</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charity Info Card -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-building me-2"></i>Charity</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 th:text="${donation.charity.charityName}">Charity Name</h6>
+                            <p class="text-muted small mb-2" th:if="${donation.charity.city != null and donation.charity.state != null}"
+                               th:text="${donation.charity.city + ', ' + donation.charity.state}">City, State</p>
+                            <a th:href="@{/donor/charities/{id}(id=${donation.charity.id})}" class="btn btn-sm btn-outline-success w-100">
+                                <i class="fas fa-eye me-1"></i> View All Donations to This Charity
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Notes Card -->
+                    <div th:if="${donation.notes}" class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Notes</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-0" th:text="${donation.notes}">Donation notes...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -21,6 +21,7 @@ import java.util.Set;
  * - ROLE_FACILITATOR        → /facilitator/dashboard
  * - ROLE_CHARITY_FACILITATOR → /charity-partner/dashboard (with link to facilitator functions)
  * - ROLE_CHARITY_PARTNER    → /charity-partner/dashboard
+ * - ROLE_DONOR              → /donor/dashboard
  * - ROLE_LOCATION_ADMIN     → /location-admin/dashboard
  * - ROLE_USER               → /user/dashboard
  */
@@ -35,7 +36,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
         // Get the roles of the logged-in user
         Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
 
-        // Route based on role (priority order: admin > facilitator > charity-facilitator > charity-partner > location-admin > user)
+        // Route based on role (priority order: admin > facilitator > charity-facilitator > charity-partner > donor > location-admin > user)
         String redirectUrl = "/home"; // Default fallback
 
         if (roles.contains("ROLE_ADMIN")) {
@@ -46,6 +47,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             redirectUrl = "/charity-partner/dashboard";
         } else if (roles.contains("ROLE_CHARITY_PARTNER")) {
             redirectUrl = "/charity-partner/dashboard";
+        } else if (roles.contains("ROLE_DONOR")) {
+            redirectUrl = "/donor/dashboard";
         } else if (roles.contains("ROLE_LOCATION_ADMIN")) {
             redirectUrl = "/location-admin/dashboard";
         } else if (roles.contains("ROLE_USER")) {

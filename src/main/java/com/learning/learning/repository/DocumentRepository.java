@@ -133,4 +133,17 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     @Query("SELECT d FROM Document d WHERE d.invite.id = :inviteId AND d.uploadedByParticipant = true")
     List<Document> findParticipantDocumentsByInviteId(@Param("inviteId") Long inviteId);
+
+    // Find documents by donor
+    List<Document> findByDonorId(Long donorId);
+
+    List<Document> findByDonorIdOrderByUploadedAtDesc(Long donorId);
+
+    @Query("SELECT d FROM Document d WHERE d.donor.id = :donorId AND d.charity.id = :charityId ORDER BY d.uploadedAt DESC")
+    List<Document> findByDonorIdAndCharityId(
+            @Param("donorId") Long donorId,
+            @Param("charityId") Long charityId
+    );
+
+    Long countByDonorId(Long donorId);
 }

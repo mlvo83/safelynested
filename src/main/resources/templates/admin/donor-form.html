@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${isEdit} ? 'Edit Donor - Admin' : 'Create Donor - Admin'">Donor Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="tel"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .checkbox-item:hover {
+            background: #e9ecef;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Donor Type Selection */
+        .donor-type-selector {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .donor-type-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .donor-type-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .donor-type-card {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .donor-type-option input[type="radio"]:checked + .donor-type-card {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+        }
+
+        .donor-type-card:hover {
+            border-color: #667eea;
+        }
+
+        .donor-type-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .donor-type-label {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .donor-type-desc {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .help-text {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin: 30px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        /* Hidden sections */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand" th:text="${isEdit} ? 'Edit Donor' : 'Create New Donor'">Donor Form</div>
+    <a th:href="@{/admin/donors}" class="nav-link">Back to Donors</a>
+</nav>
+
+<div class="container">
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}">Error message</span>
+    </div>
+
+    <div class="card">
+        <form th:action="${isEdit} ? @{/admin/donors/{id}/edit(id=${donor.id})} : @{/admin/donors/new}"
+              method="post" id="donorForm">
+
+            <!-- Donor Type Selection -->
+            <div class="section-title">Donor Type</div>
+            <div class="donor-type-selector">
+                <label class="donor-type-option">
+                    <input type="radio" name="donorType" value="INDIVIDUAL"
+                           th:checked="${donor.donorType == null or donor.donorType.name() == 'INDIVIDUAL'}"
+                           onchange="toggleDonorType()">
+                    <div class="donor-type-card">
+                        <div class="donor-type-icon">&#128100;</div>
+                        <div class="donor-type-label">Individual</div>
+                        <div class="donor-type-desc">A person donating individually</div>
+                    </div>
+                </label>
+                <label class="donor-type-option">
+                    <input type="radio" name="donorType" value="BUSINESS"
+                           th:checked="${donor.donorType != null and donor.donorType.name() == 'BUSINESS'}"
+                           onchange="toggleDonorType()">
+                    <div class="donor-type-card">
+                        <div class="donor-type-icon">&#127970;</div>
+                        <div class="donor-type-label">Business / Organization</div>
+                        <div class="donor-type-desc">A company, foundation, or organization</div>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Account Information Section -->
+            <div class="section-title">Account Information</div>
+
+            <div class="form-row" th:unless="${isEdit}">
+                <div class="form-group">
+                    <label for="username" class="required">Username</label>
+                    <input type="text" id="username" name="username" required
+                           placeholder="Enter username">
+                    <div class="help-text">Used for login. Must be unique.</div>
+                </div>
+                <div class="form-group">
+                    <label for="password" class="required">Password</label>
+                    <input type="password" id="password" name="password" required
+                           placeholder="Enter password" minlength="6">
+                    <div class="help-text">Minimum 6 characters.</div>
+                </div>
+            </div>
+
+            <!-- Individual Donor Fields -->
+            <div id="individualFields">
+                <div class="section-title">Personal Information</div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" name="firstName"
+                               th:value="${isEdit} ? ${donor.user.firstName} : ''"
+                               placeholder="Enter first name">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input type="text" id="lastName" name="lastName"
+                               th:value="${isEdit} ? ${donor.user.lastName} : ''"
+                               placeholder="Enter last name">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="emailIndividual">Email Address</label>
+                        <input type="email" id="emailIndividual" name="email"
+                               th:value="${isEdit and donor.donorType.name() == 'INDIVIDUAL'} ? ${donor.user.email} : ''"
+                               placeholder="donor@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="phoneIndividual">Phone Number</label>
+                        <input type="tel" id="phoneIndividual" name="phone"
+                               th:value="${isEdit and donor.donorType.name() == 'INDIVIDUAL'} ? ${donor.user.phone} : ''"
+                               placeholder="(555) 123-4567">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Donor Fields -->
+            <div id="businessFields" class="hidden">
+                <div class="section-title">Business Information</div>
+
+                <div class="form-group">
+                    <label for="businessName" class="required">Business / Organization Name</label>
+                    <input type="text" id="businessName" name="businessName"
+                           th:value="${isEdit} ? ${donor.businessName} : ''"
+                           placeholder="Enter business or organization name">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contactName">Primary Contact Name</label>
+                        <input type="text" id="contactName" name="contactName"
+                               th:value="${isEdit} ? ${donor.contactName} : ''"
+                               placeholder="Person to contact">
+                    </div>
+                    <div class="form-group">
+                        <label for="taxId">Tax ID / EIN</label>
+                        <input type="text" id="taxId" name="taxId"
+                               th:value="${isEdit} ? ${donor.taxId} : ''"
+                               placeholder="XX-XXXXXXX (optional)">
+                        <div class="help-text">Optional. Used for tax receipts.</div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="emailBusiness">Contact Email</label>
+                        <input type="email" id="emailBusiness" name="emailBusiness"
+                               th:value="${isEdit and donor.donorType.name() == 'BUSINESS'} ? ${donor.user.email} : ''"
+                               placeholder="contact@business.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="phoneBusiness">Contact Phone</label>
+                        <input type="tel" id="phoneBusiness" name="phoneBusiness"
+                               th:value="${isEdit and donor.donorType.name() == 'BUSINESS'} ? ${donor.user.phone} : ''"
+                               placeholder="(555) 123-4567">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charity Assignment Section -->
+            <div class="section-title">Charity Assignment</div>
+            <p class="help-text" style="margin-bottom: 15px;">
+                Select which charities this donor is associated with. Donors can donate to any of their assigned charities.
+            </p>
+
+            <div class="checkbox-group">
+                <label th:each="charity : ${charities}" class="checkbox-item">
+                    <input type="checkbox" name="charityIds"
+                           th:value="${charity.id}"
+                           th:checked="${isEdit and donor.charities != null and donor.charities.contains(charity)}">
+                    <span th:text="${charity.charityName}">Charity Name</span>
+                </label>
+            </div>
+
+            <div th:if="${#lists.isEmpty(charities)}" class="help-text" style="color: #dc3545;">
+                No active charities available. Please create a charity first.
+            </div>
+
+            <!-- Verification Notes (Edit only) -->
+            <div th:if="${isEdit}">
+                <div class="section-title">Verification Notes</div>
+                <div class="form-group">
+                    <label for="verificationNotes">Notes</label>
+                    <textarea id="verificationNotes" name="verificationNotes" rows="3"
+                              th:text="${donor.verificationNotes}"
+                              placeholder="Internal notes about this donor..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"
+                        th:text="${isEdit} ? 'Update Donor' : 'Create Donor'">
+                    Submit
+                </button>
+                <a th:href="@{/admin/donors}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    function toggleDonorType() {
+        const donorType = document.querySelector('input[name="donorType"]:checked').value;
+        const individualFields = document.getElementById('individualFields');
+        const businessFields = document.getElementById('businessFields');
+
+        if (donorType === 'BUSINESS') {
+            individualFields.classList.add('hidden');
+            businessFields.classList.remove('hidden');
+            // Disable individual fields so they don't submit
+            individualFields.querySelectorAll('input').forEach(i => i.disabled = true);
+            businessFields.querySelectorAll('input').forEach(i => i.disabled = false);
+        } else {
+            individualFields.classList.remove('hidden');
+            businessFields.classList.add('hidden');
+            // Disable business fields so they don't submit
+            individualFields.querySelectorAll('input').forEach(i => i.disabled = false);
+            businessFields.querySelectorAll('input').forEach(i => i.disabled = true);
+        }
+    }
+
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleDonorType();
+    });
+</script>
+</body>
+</html>

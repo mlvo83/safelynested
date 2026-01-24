@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Donors - Charity Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Include shared sidebar styles -->
+    <th:block th:replace="~{charity-partner/fragments/sidebar :: sidebar-styles}"></th:block>
+    <style>
+        .donor-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .donor-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .stat-card { border-left: 4px solid #28a745; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar Fragment -->
+        <th:block th:replace="~{charity-partner/fragments/sidebar :: sidebar('donors')}"></th:block>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/dashboard}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Donors</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2"><i class="fas fa-hand-holding-heart me-2"></i>Our Donors</h1>
+                    <p class="text-muted mb-0" th:if="${charity != null}">
+                        Donors supporting <strong th:text="${charity.charityName}">Charity Name</strong>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i><span th:text="${success}">Success</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}">Error</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-users fa-2x text-success"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0" th:text="${donorCount} ?: 0">0</h3>
+                                    <small class="text-muted">Total Donors</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-check-circle fa-2x text-primary"></i>
+                                </div>
+                                <div>
+                                    <h3 class="mb-0" th:text="${donors.?[verified == true].size()}">0</h3>
+                                    <small class="text-muted">Verified Donors</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Filter -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <form th:action="@{/charity-partner/donors}" method="get" class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label for="search" class="form-label">Search Donors</label>
+                            <input type="text" class="form-control" id="search" name="search"
+                                   th:value="${searchTerm}" placeholder="Name or email...">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-1"></i> Search
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <a th:href="@{/charity-partner/donors}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-times me-1"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Count -->
+            <p class="text-muted mb-3">
+                Showing <strong th:text="${donors != null ? donors.size() : 0}">0</strong> donor(s)
+            </p>
+
+            <!-- No Donors Message -->
+            <div th:if="${donors == null or donors.isEmpty()}" class="text-center py-5">
+                <i class="fas fa-hand-holding-heart fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Donors Yet</h4>
+                <p class="text-muted">Donors assigned to your charity will appear here.</p>
+            </div>
+
+            <!-- Donors Table -->
+            <div th:unless="${donors == null or donors.isEmpty()}" class="card shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Status</th>
+                            <th>Member Since</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="donor : ${donors}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-success bg-opacity-10 rounded-circle p-2 me-2">
+                                        <i class="fas fa-user text-success"></i>
+                                    </div>
+                                    <div>
+                                        <strong th:text="${(donor.user.firstName ?: '') + ' ' + (donor.user.lastName ?: '')}">Donor Name</strong>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:text="${donor.user.email ?: 'N/A'}" class="text-muted">email@example.com</span>
+                            </td>
+                            <td>
+                                <span th:text="${donor.user.phone ?: 'N/A'}" class="text-muted">(555) 123-4567</span>
+                            </td>
+                            <td>
+                                <span th:if="${donor.isVerified}" class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>Verified
+                                </span>
+                                <span th:unless="${donor.isVerified}" class="badge bg-warning text-dark">
+                                    <i class="fas fa-clock me-1"></i>Pending
+                                </span>
+                            </td>
+                            <td>
+                                <span th:text="${donor.createdAt != null} ? ${#temporals.format(donor.createdAt, 'MMM d, yyyy')} : '-'" class="text-muted">
+                                    Jan 1, 2024
+                                </span>
+                            </td>
+                            <td>
+                                <a th:href="@{/charity-partner/donors/{id}(id=${donor.id})}"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
