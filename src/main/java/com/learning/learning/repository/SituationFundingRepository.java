@@ -17,6 +17,12 @@ public interface SituationFundingRepository extends JpaRepository<SituationFundi
 
     List<SituationFunding> findByDonationIdOrderByAllocatedAtDesc(Long donationId);
 
+    @Query("SELECT sf FROM SituationFunding sf " +
+            "JOIN FETCH sf.situation s " +
+            "WHERE sf.donation.id = :donationId " +
+            "ORDER BY sf.allocatedAt DESC")
+    List<SituationFunding> findByDonationIdWithSituation(@Param("donationId") Long donationId);
+
     // Find by situation
     List<SituationFunding> findBySituationId(Long situationId);
 

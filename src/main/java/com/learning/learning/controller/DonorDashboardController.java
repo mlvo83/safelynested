@@ -134,9 +134,9 @@ public class DonorDashboardController {
             return "redirect:/donor/donations?error=Access+denied";
         }
 
-        // Get situations funded by this donation (if any)
+        // Get situations funded by this specific donation (if any)
         List<SituationService.DonorSituationView> situations =
-                situationService.getSituationsForDonor(donor.getId());
+                situationService.getSituationsForDonation(id);
 
         model.addAttribute("donor", donor);
         model.addAttribute("donation", donation);

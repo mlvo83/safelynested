@@ -157,17 +157,39 @@
                             <div class="list-group">
                                 <div th:each="situation : ${situations}" class="list-group-item">
                                     <div class="d-flex justify-content-between align-items-start">
-                                        <div>
+                                        <div class="flex-grow-1">
                                             <h6 class="mb-1">
                                                 <i class="fas fa-home me-2 text-success"></i>
-                                                <span th:text="${situation.situationType}">Housing Assistance</span>
+                                                <span th:text="${situation.category()}">Housing Assistance</span>
                                             </h6>
-                                            <p class="text-muted small mb-0" th:text="${situation.description}">
+                                            <p class="text-muted small mb-2" th:text="${situation.description()}">
                                                 Family receiving assistance
                                             </p>
+                                            <div class="d-flex gap-3 small">
+                                                <span class="text-muted">
+                                                    <i class="fas fa-moon me-1"></i>
+                                                    <span th:text="${situation.nightsAllocated()}">0</span> nights allocated
+                                                </span>
+                                                <span class="text-success" th:if="${situation.nightsUsed() != null and situation.nightsUsed() > 0}">
+                                                    <i class="fas fa-check me-1"></i>
+                                                    <span th:text="${situation.nightsUsed()}">0</span> used
+                                                </span>
+                                            </div>
+                                            <!-- Progress bar -->
+                                            <div class="progress mt-2" style="height: 6px;">
+                                                <div class="progress-bar bg-success" role="progressbar"
+                                                     th:style="'width: ' + ${situation.nightsAllocated() > 0 ? (situation.nightsUsed() * 100 / situation.nightsAllocated()) : 0} + '%'"
+                                                     th:attr="aria-valuenow=${situation.nightsUsed()},aria-valuemin=0,aria-valuemax=${situation.nightsAllocated()}">
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span th:if="${situation.status == 'HOUSED'}" class="badge bg-success">Housed</span>
-                                        <span th:if="${situation.status == 'ACTIVE'}" class="badge bg-primary">Active</span>
+                                        <div class="ms-3 text-end">
+                                            <span th:if="${situation.isActive()}" class="badge bg-primary">Active</span>
+                                            <span th:unless="${situation.isActive()}" class="badge bg-success">Resolved</span>
+                                            <div class="small text-muted mt-1" th:if="${situation.amountAllocated() != null}">
+                                                <span th:text="'$' + ${#numbers.formatDecimal(situation.amountAllocated(), 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

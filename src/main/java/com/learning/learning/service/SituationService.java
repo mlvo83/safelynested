@@ -179,6 +179,18 @@ public class SituationService {
     }
 
     /**
+     * Get situations funded by a specific donation.
+     * Returns privacy-safe DTOs without referral information.
+     */
+    public List<DonorSituationView> getSituationsForDonation(Long donationId) {
+        List<SituationFunding> fundings = situationFundingRepository.findByDonationIdWithSituation(donationId);
+
+        return fundings.stream()
+                .map(this::toDonorSituationView)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Get unique situations funded by a donor
      */
     public List<DonorSituationSummary> getUniqueSituationsFundedByDonor(Long donorId) {

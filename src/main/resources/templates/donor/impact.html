@@ -94,54 +94,62 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">
                                     <i class="fas fa-home me-2 text-success"></i>
-                                    <span th:text="${situation.situationType}">Housing Need</span>
+                                    <span th:text="${situation.category()}">Housing Need</span>
                                 </h6>
-                                <span th:switch="${situation.status}">
-                                    <span th:case="'ACTIVE'" class="badge bg-primary">
-                                        <i class="fas fa-spinner me-1"></i>Active
-                                    </span>
-                                    <span th:case="'HOUSED'" class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i>Housed
-                                    </span>
-                                    <span th:case="'COMPLETED'" class="badge bg-success">
-                                        <i class="fas fa-check-double me-1"></i>Completed
-                                    </span>
-                                    <span th:case="*" class="badge bg-secondary" th:text="${situation.status}">Status</span>
+                                <span th:if="${situation.isActive()}" class="badge bg-primary">
+                                    <i class="fas fa-spinner me-1"></i>Active
+                                </span>
+                                <span th:unless="${situation.isActive()}" class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>Resolved
                                 </span>
                             </div>
                         </div>
                         <div class="card-body">
                             <!-- Situation Description -->
-                            <p class="text-muted mb-3" th:text="${situation.description}">
+                            <p class="text-muted mb-3" th:text="${situation.description()}">
                                 Family of 4 needing temporary housing assistance.
                             </p>
 
                             <!-- Impact Stats -->
                             <div class="row g-2 mb-3">
-                                <div class="col-6">
+                                <div class="col-4">
                                     <div class="bg-light rounded p-2 text-center">
-                                        <small class="text-muted d-block">Your Contribution</small>
-                                        <strong class="text-success" th:text="${situation.nightsFundedByDonor} + ' nights'">0 nights</strong>
+                                        <small class="text-muted d-block">Nights Allocated</small>
+                                        <strong class="text-success" th:text="${situation.totalNightsAllocated()}">0</strong>
                                     </div>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-4">
+                                    <div class="bg-light rounded p-2 text-center">
+                                        <small class="text-muted d-block">Nights Used</small>
+                                        <strong class="text-primary" th:text="${situation.totalNightsUsed()}">0</strong>
+                                    </div>
+                                </div>
+                                <div class="col-4">
                                     <div class="bg-light rounded p-2 text-center">
                                         <small class="text-muted d-block">Amount</small>
-                                        <strong th:text="'$' + ${#numbers.formatDecimal(situation.amountContributed, 1, 'COMMA', 2, 'POINT')}">$0.00</strong>
+                                        <strong th:text="'$' + ${#numbers.formatDecimal(situation.totalAmountAllocated(), 1, 'COMMA', 2, 'POINT')}">$0.00</strong>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Charity Info -->
-                            <div class="d-flex align-items-center text-muted small">
-                                <i class="fas fa-building me-2"></i>
-                                <span th:text="${situation.charityName}">Charity Name</span>
+                            <!-- Progress Bar -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small text-muted mb-1">
+                                    <span>Progress</span>
+                                    <span th:text="${situation.totalNightsAllocated() > 0 ? (situation.totalNightsUsed() * 100 / situation.totalNightsAllocated()) : 0} + '%'">0%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar"
+                                         th:style="'width: ' + ${situation.totalNightsAllocated() > 0 ? (situation.totalNightsUsed() * 100 / situation.totalNightsAllocated()) : 0} + '%'"
+                                         th:attr="aria-valuenow=${situation.totalNightsUsed()},aria-valuemin=0,aria-valuemax=${situation.totalNightsAllocated()}">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="card-footer bg-white">
                             <small class="text-muted">
-                                <i class="fas fa-calendar me-1"></i>
-                                Started <span th:text="${situation.startDate != null} ? ${#temporals.format(situation.startDate, 'MMM d, yyyy')} : 'Unknown'">Jan 1, 2024</span>
+                                <i class="fas fa-bed me-1"></i>
+                                <span th:text="${situation.nightsRemaining()}">0</span> nights remaining
                             </small>
                         </div>
                     </div>
