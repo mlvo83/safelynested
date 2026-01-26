@@ -132,10 +132,27 @@ public class AdminController {
         try {
             userService.deleteUser(id);
             redirectAttributes.addFlashAttribute("success",
-                    "User deleted successfully!");
+                    "User disabled successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error",
-                    "Error deleting user: " + e.getMessage());
+                    "Error disabling user: " + e.getMessage());
+        }
+
+        return "redirect:/admin/users";
+    }
+
+    @PostMapping("/users/reactivate/{id}")
+    public String reactivateUser(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            userService.reactivateUser(id);
+            redirectAttributes.addFlashAttribute("success",
+                    "User reactivated successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Error reactivating user: " + e.getMessage());
         }
 
         return "redirect:/admin/users";

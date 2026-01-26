@@ -68,6 +68,13 @@ public class UserService {
         return userRepository.findAll();
     }
 
+    /**
+     * Get only active (non-deleted) users
+     */
+    public List<User> getActiveUsers() {
+        return userRepository.findByEnabledTrue();
+    }
+
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -78,9 +85,43 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    /**
+     * Soft delete a user by disabling their account.
+     * This preserves referential integrity with related records (bookings, referrals, etc.)
+     * while preventing the user from logging in.
+     */
     @Transactional
     public void deleteUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Soft delete: disable the account instead of deleting
+        user.setEnabled(false);
+        user.setIsActive(false);
+        userRepository.save(user);
+    }
+
+    /**
+     * Permanently delete a user. Use with caution - will fail if user has
+     * related records in other tables (bookings, referrals, etc.)
+     * For a clean database reset, use the DATABASE_RESET.sql script instead.
+     */
+    @Transactional
+    public void hardDeleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    /**
+     * Reactivate a previously disabled user account.
+     */
+    @Transactional
+    public void reactivateUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setEnabled(true);
+        user.setIsActive(true);
+        userRepository.save(user);
     }
 
     public List<Role> getAllRoles() {

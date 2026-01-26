@@ -187,6 +187,30 @@
             color: #999;
             font-style: italic;
         }
+
+        .row-disabled {
+            background-color: #f8f8f8;
+            opacity: 0.7;
+        }
+
+        .row-disabled:hover {
+            background-color: #f0f0f0;
+        }
+
+        .badge-active {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-disabled {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -224,7 +248,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="user : ${users}">
+            <tr th:each="user : ${users}" th:classappend="${!user.enabled} ? 'row-disabled' : ''">
                 <td th:text="${user.id}">1</td>
                 <td th:text="${user.username}">admin</td>
                 <td>
@@ -246,17 +270,28 @@
                     <span th:unless="${user.charity != null}" class="no-charity">Not assigned</span>
                 </td>
                 <td>
-                    <span th:text="${user.enabled} ? 'Active' : 'Disabled'">Active</span>
+                    <span th:if="${user.enabled}" class="badge badge-active">Active</span>
+                    <span th:unless="${user.enabled}" class="badge badge-disabled">Disabled</span>
                 </td>
                 <td th:text="${user.createdAt != null} ? ${#temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm')} : '-'">2024-01-01 12:00</td>
                 <td>
                     <div class="action-buttons">
                         <a th:href="@{/admin/users/edit/{id}(id=${user.id})}" class="btn btn-warning btn-sm">Edit</a>
-                        <form th:action="@{/admin/users/delete/{id}(id=${user.id})}"
+                        <!-- Disable button for active users -->
+                        <form th:if="${user.enabled}"
+                              th:action="@{/admin/users/delete/{id}(id=${user.id})}"
                               method="post"
-                              onsubmit="return confirm('Are you sure you want to delete this user?');"
+                              onsubmit="return confirm('Are you sure you want to disable this user? They will no longer be able to log in.');"
                               style="margin: 0;">
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            <button type="submit" class="btn btn-danger btn-sm">Disable</button>
+                        </form>
+                        <!-- Reactivate button for disabled users -->
+                        <form th:unless="${user.enabled}"
+                              th:action="@{/admin/users/reactivate/{id}(id=${user.id})}"
+                              method="post"
+                              onsubmit="return confirm('Are you sure you want to reactivate this user?');"
+                              style="margin: 0;">
+                            <button type="submit" class="btn btn-success btn-sm">Reactivate</button>
                         </form>
                     </div>
                 </td>
