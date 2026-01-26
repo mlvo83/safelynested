@@ -313,4 +313,14 @@ public class AdminController {
 
         return "redirect:/admin/charities";
     }
+
+    // ========================================
+    // DOCUMENTATION
+    // ========================================
+
+    @GetMapping("/documentation")
+    public String showDocumentation(@RequestParam(required = false, defaultValue = "overview") String section, Model model) {
+        model.addAttribute("activeSection", section);
+        return "admin/documentation";
+    }
 }

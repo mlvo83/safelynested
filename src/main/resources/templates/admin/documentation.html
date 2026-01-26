@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - SafelyNested</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar .nav-link {
+            color: #333;
+            padding: 12px 20px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .sidebar .nav-link:hover {
+            background: #f8f9fa;
+            border-left-color: #667eea;
+        }
+
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-left-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .sidebar .nav-link i {
+            width: 24px;
+        }
+
+        .doc-content {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        .doc-content h1 {
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        .doc-content h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .doc-content h3 {
+            color: #555;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .step-list li {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 50px;
+            margin-bottom: 20px;
+        }
+
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .tip-box {
+            background: #e7f3ff;
+            border: 1px solid #b6d4fe;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+
+        .tip-box i {
+            color: #0d6efd;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffecb5;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box i {
+            color: #ffc107;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .role-admin { background: #667eea; color: white; }
+        .role-charity { background: #28a745; color: white; }
+        .role-facilitator { background: #17a2b8; color: white; }
+        .role-donor { background: #ffc107; color: #333; }
+        .role-location { background: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">
+            <i class="fas fa-book me-2"></i>SafelyNested Documentation
+        </span>
+        <a th:href="@{/home}" class="btn btn-outline-light btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-3">
+            <div class="sidebar p-3">
+                <h6 class="text-muted text-uppercase mb-3 px-3">Documentation</h6>
+                <nav class="nav flex-column">
+                    <a class="nav-link" th:classappend="${activeSection == 'overview'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='overview')}">
+                        <i class="fas fa-home me-2"></i>Overview
+                    </a>
+                    <a class="nav-link" th:classappend="${activeSection == 'admin'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='admin')}">
+                        <i class="fas fa-user-shield me-2"></i>Admin Guide
+                    </a>
+                    <a class="nav-link" th:classappend="${activeSection == 'charity-partner'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='charity-partner')}">
+                        <i class="fas fa-hands-helping me-2"></i>Charity Partner Guide
+                    </a>
+                    <a class="nav-link" th:classappend="${activeSection == 'charity-facilitator'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='charity-facilitator')}">
+                        <i class="fas fa-user-tie me-2"></i>Charity Facilitator Guide
+                    </a>
+                    <a class="nav-link" th:classappend="${activeSection == 'donor'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='donor')}">
+                        <i class="fas fa-hand-holding-heart me-2"></i>Donor Guide
+                    </a>
+                    <a class="nav-link" th:classappend="${activeSection == 'location-admin'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='location-admin')}">
+                        <i class="fas fa-map-marker-alt me-2"></i>Location Admin Guide
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="doc-content">
+
+                <!-- Overview Section -->
+                <div th:if="${activeSection == 'overview'}">
+                    <h1><i class="fas fa-home me-2"></i>SafelyNested Platform Overview</h1>
+
+                    <p class="lead">SafelyNested is a comprehensive housing assistance platform that connects donors with charities to provide emergency and transitional housing for those in need.</p>
+
+                    <h2>How It Works</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <h4><i class="fas fa-donate text-success me-2"></i>Donations</h4>
+                                <p>Donors contribute funds to partner charities. A small fee (10% total) supports platform operations, while 90% goes directly to housing nights.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <h4><i class="fas fa-bed text-primary me-2"></i>Housing Nights</h4>
+                                <p>Donations are converted to housing nights based on location rates. These nights are then allocated to situations (people in need).</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <h4><i class="fas fa-user-shield text-info me-2"></i>Privacy Protection</h4>
+                                <p>Beneficiary information is protected. Donors see "Situations" (generic descriptions) without any personally identifiable information.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <h4><i class="fas fa-chart-line text-warning me-2"></i>Impact Tracking</h4>
+                                <p>Donors can track their impact - total donations, nights funded, nights used, and the situations they've helped support.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2>User Roles</h2>
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Role</th>
+                                <th>Description</th>
+                                <th>Primary Responsibilities</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="role-badge role-admin">Admin</span></td>
+                                <td>System administrator</td>
+                                <td>Manage users, charities, donors, and system settings</td>
+                            </tr>
+                            <tr>
+                                <td><span class="role-badge role-charity">Charity Partner</span></td>
+                                <td>Charity staff member</td>
+                                <td>Create referrals, manage invites, view donors</td>
+                            </tr>
+                            <tr>
+                                <td><span class="role-badge role-facilitator">Charity Facilitator</span></td>
+                                <td>Charity operations manager</td>
+                                <td>Approve referrals, create bookings, manage operations</td>
+                            </tr>
+                            <tr>
+                                <td><span class="role-badge role-donor">Donor</span></td>
+                                <td>Financial contributor</td>
+                                <td>View donations, track impact, see funded situations</td>
+                            </tr>
+                            <tr>
+                                <td><span class="role-badge role-location">Location Admin</span></td>
+                                <td>Property manager</td>
+                                <td>Manage shelter locations and nightly rates</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2>Fee Structure</h2>
+                    <div class="tip-box">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Transparent Fees:</strong> Every donation has a clear breakdown showing where funds go.
+                    </div>
+                    <ul>
+                        <li><strong>Platform Fee (7%):</strong> Supports SafelyNested operations and technology</li>
+                        <li><strong>Facilitator Fee (3%):</strong> Goes to the anchor charity for coordination</li>
+                        <li><strong>Net Amount (90%):</strong> Converted directly to housing nights</li>
+                    </ul>
+                </div>
+
+                <!-- Admin Guide Section -->
+                <div th:if="${activeSection == 'admin'}">
+                    <h1><i class="fas fa-user-shield me-2"></i>Administrator Guide</h1>
+
+                    <p class="lead">As an administrator, you have full access to manage all aspects of the SafelyNested platform.</p>
+
+                    <h2>User Management</h2>
+                    <h3>Creating a New User</h3>
+                    <ol class="step-list">
+                        <li>Navigate to <strong>User Management</strong> from the dashboard</li>
+                        <li>Click <strong>Create New User</strong></li>
+                        <li>Fill in the user details (username, email, password)</li>
+                        <li>Select the appropriate role for the user</li>
+                        <li>If the user is a Charity Partner or Facilitator, assign them to a charity</li>
+                        <li>Click <strong>Save</strong> to create the account</li>
+                    </ol>
+
+                    <div class="tip-box">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> When creating Charity Partner users, always assign them to a charity so they can only see data relevant to their organization.
+                    </div>
+
+                    <h3>Disabling/Reactivating Users</h3>
+                    <p>Instead of permanently deleting users (which could break historical records), you can disable them:</p>
+                    <ul>
+                        <li><strong>Disable:</strong> Prevents the user from logging in while preserving all their historical data</li>
+                        <li><strong>Reactivate:</strong> Re-enables a previously disabled account</li>
+                    </ul>
+
+                    <h2>Charity Management</h2>
+                    <h3>Adding a New Charity</h3>
+                    <ol class="step-list">
+                        <li>Go to <strong>Charity Management</strong></li>
+                        <li>Click <strong>Create New Charity</strong></li>
+                        <li>Enter the charity name and contact information</li>
+                        <li>Set the maximum referrals per month (optional limit)</li>
+                        <li>Save the charity</li>
+                    </ol>
+
+                    <h3>Verifying Charities</h3>
+                    <p>New charities should be verified before they can fully operate. Verification confirms the charity is legitimate and has agreed to platform terms.</p>
+
+                    <h2>Donor Management</h2>
+                    <h3>Creating a Donor Account</h3>
+                    <ol class="step-list">
+                        <li>Navigate to <strong>Donor Management</strong></li>
+                        <li>Click <strong>Create New Donor</strong></li>
+                        <li>Select donor type: <strong>Individual</strong> or <strong>Business</strong></li>
+                        <li>Fill in contact details and create login credentials</li>
+                        <li>Assign the donor to one or more charities they wish to support</li>
+                        <li>Save the donor account</li>
+                    </ol>
+
+                    <h3>Recording Donations</h3>
+                    <ol class="step-list">
+                        <li>Go to the donor's detail page</li>
+                        <li>Click <strong>Record Donation</strong></li>
+                        <li>Enter the gross donation amount</li>
+                        <li>The system automatically calculates fees and nights funded</li>
+                        <li>Add any notes and save</li>
+                    </ol>
+
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Important:</strong> Donations should be recorded only after funds have been received and verified.
+                    </div>
+                </div>
+
+                <!-- Charity Partner Guide Section -->
+                <div th:if="${activeSection == 'charity-partner'}">
+                    <h1><i class="fas fa-hands-helping me-2"></i>Charity Partner Guide</h1>
+
+                    <p class="lead">As a Charity Partner, you help connect people in need with housing assistance through referrals and invitations.</p>
+
+                    <h2>Dashboard Overview</h2>
+                    <p>Your dashboard shows key metrics for your charity:</p>
+                    <ul>
+                        <li>Active referrals and their status</li>
+                        <li>Pending invites awaiting participant response</li>
+                        <li>Recent activity and notifications</li>
+                    </ul>
+
+                    <h2>Creating Referrals</h2>
+                    <h3>Direct Referral Method</h3>
+                    <ol class="step-list">
+                        <li>Click <strong>New Referral</strong> from the dashboard</li>
+                        <li>Enter participant information (name, contact details)</li>
+                        <li>Describe their housing needs</li>
+                        <li>Set urgency level (Low, Medium, High, Urgent)</li>
+                        <li>Indicate if documents are required</li>
+                        <li>Submit the referral for facilitator review</li>
+                    </ol>
+
+                    <h3>Invite Link Method</h3>
+                    <p>For participants who can select their own location:</p>
+                    <ol class="step-list">
+                        <li>Go to <strong>Invites</strong> section</li>
+                        <li>Click <strong>Create New Invite</strong></li>
+                        <li>Set allowed zip codes (optional filter for locations)</li>
+                        <li>Generate the invite link</li>
+                        <li>Share the link with the participant</li>
+                        <li>Participant selects their preferred location via the link</li>
+                        <li>A referral is automatically created when they complete the form</li>
+                    </ol>
+
+                    <div class="tip-box">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Invite links expire after 30 days. You can see the status and expiration date in your Invites list.
+                    </div>
+
+                    <h2>Managing Documents</h2>
+                    <p>Some referrals require documentation (ID, proof of address, etc.):</p>
+                    <ul>
+                        <li>Mark "Documents Required" when creating the referral</li>
+                        <li>Upload documents on behalf of participants if needed</li>
+                        <li>Participants can also upload documents via their invite link</li>
+                        <li>Track document status in the referral details</li>
+                    </ul>
+
+                    <h2>Viewing Donors</h2>
+                    <p>You can see donors who support your charity (read-only access):</p>
+                    <ul>
+                        <li>View donor names and contact information</li>
+                        <li>See verification status</li>
+                        <li>Note: Donation amounts and detailed financials are managed by administrators</li>
+                    </ul>
+                </div>
+
+                <!-- Charity Facilitator Guide Section -->
+                <div th:if="${activeSection == 'charity-facilitator'}">
+                    <h1><i class="fas fa-user-tie me-2"></i>Charity Facilitator Guide</h1>
+
+                    <p class="lead">As a Charity Facilitator, you review referrals, approve housing requests, and manage bookings for your charity.</p>
+
+                    <h2>Reviewing Referrals</h2>
+                    <h3>Approval Process</h3>
+                    <ol class="step-list">
+                        <li>Check the <strong>Referrals</strong> section for pending requests</li>
+                        <li>Review participant information and needs description</li>
+                        <li>Verify all required documents have been uploaded (if applicable)</li>
+                        <li>Add facilitator notes if needed</li>
+                        <li>Click <strong>Approve</strong> or <strong>Reject</strong> with a reason</li>
+                    </ol>
+
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Important:</strong> Always provide a clear reason when rejecting a referral so the Charity Partner can address any issues.
+                    </div>
+
+                    <h2>Creating Bookings</h2>
+                    <p>Once a referral is approved, you can create a booking:</p>
+                    <ol class="step-list">
+                        <li>Open the approved referral</li>
+                        <li>Click <strong>Create Booking</strong></li>
+                        <li>Select the check-in and check-out dates</li>
+                        <li>Confirm the location (or select if not pre-selected)</li>
+                        <li>Add any special instructions for the property</li>
+                        <li>Save the booking - a confirmation code is generated automatically</li>
+                    </ol>
+
+                    <h3>Booking Statuses</h3>
+                    <table class="table table-sm">
+                        <tr><td><strong>Pending</strong></td><td>Booking created, awaiting check-in</td></tr>
+                        <tr><td><strong>Confirmed</strong></td><td>Booking confirmed with the location</td></tr>
+                        <tr><td><strong>Checked In</strong></td><td>Participant has arrived</td></tr>
+                        <tr><td><strong>Checked Out</strong></td><td>Stay completed</td></tr>
+                        <tr><td><strong>Cancelled</strong></td><td>Booking was cancelled</td></tr>
+                        <tr><td><strong>No Show</strong></td><td>Participant did not arrive</td></tr>
+                    </table>
+
+                    <h2>Managing Your Dashboard</h2>
+                    <p>Your facilitator dashboard provides quick access to:</p>
+                    <ul>
+                        <li><strong>Pending Referrals:</strong> Requests awaiting your review</li>
+                        <li><strong>Active Bookings:</strong> Current and upcoming stays</li>
+                        <li><strong>Recent Activity:</strong> Latest actions and updates</li>
+                    </ul>
+                </div>
+
+                <!-- Donor Guide Section -->
+                <div th:if="${activeSection == 'donor'}">
+                    <h1><i class="fas fa-hand-holding-heart me-2"></i>Donor Guide</h1>
+
+                    <p class="lead">Thank you for supporting SafelyNested! As a donor, you can track your contributions and see the real impact of your generosity.</p>
+
+                    <h2>Your Dashboard</h2>
+                    <p>The donor dashboard shows your contribution summary:</p>
+                    <ul>
+                        <li><strong>Total Donated:</strong> Your lifetime contributions</li>
+                        <li><strong>Nights Funded:</strong> How many housing nights your donations have provided</li>
+                        <li><strong>Nights Used:</strong> How many of those nights have been used</li>
+                        <li><strong>Nights Available:</strong> Remaining nights ready to help someone in need</li>
+                    </ul>
+
+                    <h2>Viewing Your Donations</h2>
+                    <p>The Donations page shows all your contributions with details:</p>
+                    <ul>
+                        <li>Donation date and amount</li>
+                        <li>Fee breakdown (platform fee, facilitator fee, net amount)</li>
+                        <li>Which charity received the donation</li>
+                        <li>Nights funded from each donation</li>
+                    </ul>
+
+                    <h2>Understanding Your Impact</h2>
+                    <p>The Impact page shows the situations your donations have helped:</p>
+
+                    <div class="tip-box">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <strong>Privacy Protected:</strong> You'll see situation categories (e.g., "Family displaced due to eviction") but never personal details like names or addresses. This protects beneficiary privacy while showing you the real impact of your generosity.
+                    </div>
+
+                    <h3>Situation Categories</h3>
+                    <p>Situations are categorized by type of need:</p>
+                    <ul>
+                        <li>Eviction / Housing Loss</li>
+                        <li>Domestic Violence</li>
+                        <li>Medical Emergency</li>
+                        <li>Job Loss</li>
+                        <li>Natural Disaster</li>
+                        <li>Veteran Transition</li>
+                        <li>And more...</li>
+                    </ul>
+
+                    <h2>Charities You Support</h2>
+                    <p>View the charities where your donations go:</p>
+                    <ul>
+                        <li>Charity name and mission</li>
+                        <li>Your total contributions to each charity</li>
+                        <li>Nights funded per charity</li>
+                    </ul>
+
+                    <h2>Your Profile</h2>
+                    <p>Keep your profile information up to date:</p>
+                    <ul>
+                        <li>Contact information for receipts and updates</li>
+                        <li>Business details (for business/organization donors)</li>
+                        <li>Tax ID for donation records</li>
+                    </ul>
+                </div>
+
+                <!-- Location Admin Guide Section -->
+                <div th:if="${activeSection == 'location-admin'}">
+                    <h1><i class="fas fa-map-marker-alt me-2"></i>Location Admin Guide</h1>
+
+                    <p class="lead">As a Location Admin, you manage shelter locations and their availability for housing assistance.</p>
+
+                    <h2>Managing Locations</h2>
+                    <h3>Adding a New Location</h3>
+                    <ol class="step-list">
+                        <li>Go to <strong>Locations</strong> from your dashboard</li>
+                        <li>Click <strong>Add New Location</strong></li>
+                        <li>Enter the location name and full address</li>
+                        <li>Set the nightly rate</li>
+                        <li>Add any special notes or instructions</li>
+                        <li>Save the location</li>
+                    </ol>
+
+                    <h3>Updating Nightly Rates</h3>
+                    <p>Rates can be updated as needed:</p>
+                    <ol class="step-list">
+                        <li>Open the location details</li>
+                        <li>Click <strong>Update Rate</strong></li>
+                        <li>Enter the new nightly rate</li>
+                        <li>The system tracks rate history for accurate donation calculations</li>
+                    </ol>
+
+                    <div class="tip-box">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Rate changes apply to new bookings. Existing bookings keep their original rate.
+                    </div>
+
+                    <h2>Location Status</h2>
+                    <p>Locations can be set as active or inactive:</p>
+                    <ul>
+                        <li><strong>Active:</strong> Available for new bookings and visible to participants selecting locations</li>
+                        <li><strong>Inactive:</strong> Not available for new bookings (existing bookings are unaffected)</li>
+                    </ul>
+
+                    <h2>Viewing Bookings</h2>
+                    <p>See all bookings at your locations:</p>
+                    <ul>
+                        <li>Upcoming check-ins</li>
+                        <li>Current guests</li>
+                        <li>Booking history</li>
+                        <li>Special instructions from facilitators</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
