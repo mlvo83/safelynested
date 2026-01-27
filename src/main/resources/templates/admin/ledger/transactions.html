@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledger Transactions - SafelyNested</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f7fa; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">
+            <i class="fas fa-exchange-alt me-2"></i>All Transactions
+        </span>
+        <a th:href="@{/admin/ledger}" class="btn btn-outline-light btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Back to Ledger
+        </a>
+    </div>
+</nav>
+
+<div class="container-fluid py-4">
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div th:if="${transactions.content == null or transactions.content.isEmpty()}" class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Transactions</h4>
+                <p class="text-muted">Transactions will appear here when donations are recorded.</p>
+            </div>
+            <table th:unless="${transactions.content == null or transactions.content.isEmpty()}" class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Code</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Charity</th>
+                        <th class="text-end">Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="txn : ${transactions.content}">
+                        <td th:text="${#temporals.format(txn.transactionDate, 'MM/dd/yyyy HH:mm')}">01/01/2024</td>
+                        <td>
+                            <code th:text="${txn.transactionCode}">TXN-20240101-00001</code>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary" th:text="${txn.transactionType.displayName}">Donation</span>
+                        </td>
+                        <td>
+                            <span th:text="${#strings.abbreviate(txn.description, 50)}">Description</span>
+                        </td>
+                        <td>
+                            <span th:if="${txn.charity}" th:text="${txn.charity.charityName}">Charity</span>
+                            <span th:unless="${txn.charity}" class="text-muted">-</span>
+                        </td>
+                        <td class="text-end">
+                            <strong>$<span th:text="${#numbers.formatDecimal(txn.totalAmount, 1, 2)}">0.00</span></strong>
+                        </td>
+                        <td>
+                            <a th:href="@{/admin/ledger/transactions/{id}(id=${txn.id})}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${totalPages > 1}" class="card-footer">
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/ledger/transactions(page=${currentPage - 1})}">Previous</a>
+                    </li>
+                    <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link" th:href="@{/admin/ledger/transactions(page=${i})}" th:text="${i + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                        <a class="page-link" th:href="@{/admin/ledger/transactions(page=${currentPage + 1})}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

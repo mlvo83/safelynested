@@ -195,6 +195,12 @@
       <p>Create donors, record donations, and track donor contributions across charities.</p>
       <a th:href="@{/admin/donors}" class="card-link">Manage Donors</a>
     </div>
+
+    <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
+      <h3>Financial Ledger</h3>
+      <p>Double-entry accounting ledger with full visibility of all financial transactions.</p>
+      <a th:href="@{/admin/ledger}" class="card-link">View Ledger</a>
+    </div>
   </div>
 </div>
 </body>
