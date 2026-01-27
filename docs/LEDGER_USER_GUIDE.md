@@ -192,6 +192,44 @@ Lists all accounts with their current balances. Use this to see:
 
 ---
 
+## When Are Ledger Entries Created?
+
+The ledger automatically records transactions at specific points in the workflow:
+
+### Automatic Triggers
+
+| Action | Ledger Transaction | What's Recorded |
+|--------|-------------------|-----------------|
+| **Verify Donation** | DONATION_RECEIVED | Cash in, charity fund credit, fee revenues |
+| **Allocate Funds to Situation** | FUND_ALLOCATED | Transfer from charity fund to allocated funds |
+| **Mark Booking as Paid** | FUND_DISBURSED | Payment to housing location |
+| **Refund Donation** | DONATION_REFUND | Reversal of original donation |
+
+### Integration Points
+
+1. **Donation Verification** (`DonationService.verifyDonation()`)
+   - When an admin verifies a donation, the ledger records the cash received and splits it between the charity fund, platform fee, and facilitator fee accounts.
+
+2. **Fund Allocation** (`SituationService.allocateDonationToSituation()`)
+   - When funds are allocated to a specific situation, the ledger moves money from the charity's available fund to the "Allocated Funds" account.
+
+3. **Booking Payment** (`BookingService.updatePaymentStatus()`)
+   - When a booking payment status changes to PAID or PROGRAM_FUNDED, the ledger records the disbursement from allocated funds to cash (money going out).
+
+### Traceability
+
+Each ledger transaction is linked back to its source:
+
+| Reference Type | Links To |
+|---------------|----------|
+| DONATION | Donation record |
+| SITUATION_FUNDING | SituationFunding record |
+| BOOKING | Booking record |
+
+You can view these references in the transaction detail page to trace the full history of any financial movement.
+
+---
+
 ## Common Questions
 
 ### Q: Why don't I see ledger entries for a donation?
@@ -215,6 +253,43 @@ Lists all accounts with their current balances. Use this to see:
 ### Q: What happens if a charity is deleted?
 
 **A:** Their fund account remains in the ledger for historical records. The account can be marked inactive but the transaction history is preserved.
+
+---
+
+## Expected Ledger Flow Example
+
+Here's a complete example showing how the ledger tracks a $1,000 donation through allocation and disbursement:
+
+### Scenario
+- Donor gives $1,000 to Hope Shelter
+- $500 is allocated to a situation (family needing housing)
+- $500 is disbursed to pay the hotel
+
+### Transaction-by-Transaction
+
+| Step | Transaction Type | What Happens |
+|------|-----------------|--------------|
+| 1 | DONATION_RECEIVED | $1,000 comes in, split into charity fund ($900), platform fee ($70), facilitator fee ($30) |
+| 2 | FUND_ALLOCATED | $500 moves from charity's available fund to "allocated" status |
+| 3 | FUND_DISBURSED | $500 is paid out to the hotel |
+
+### Account Balances After Each Step
+
+| Account | After Step 1 | After Step 2 | After Step 3 |
+|---------|-------------|-------------|-------------|
+| 1000 - Cash | $1,000 | $1,000 | $500 |
+| 2000-1 - Charity Fund | $900 | $400 | $400 |
+| 2100 - Allocated Funds | $0 | $500 | $0 |
+| 4000 - Platform Fee | $70 | $70 | $70 |
+| 4100 - Facilitator Fee | $30 | $30 | $30 |
+
+### Key Observations
+
+- **Cash balance** = $500 (received $1,000, paid out $500)
+- **Charity Fund balance** = $400 (received $900 net, allocated $500)
+- **Allocated Funds balance** = $0 (allocated $500, disbursed $500)
+- **Total Revenue** = $100 (platform + facilitator fees)
+- **Trial Balance**: Debits = Credits (always!)
 
 ---
 

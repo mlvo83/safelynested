@@ -45,6 +45,9 @@ public class SituationService {
     @Autowired
     private ReferralRepository referralRepository;
 
+    @Autowired
+    private LedgerService ledgerService;
+
     // ========================================
     // SITUATION CREATION (Admin/Facilitator)
     // ========================================
@@ -252,6 +255,18 @@ public class SituationService {
         funding.setAllocatedBy(allocator);
 
         funding = situationFundingRepository.save(funding);
+
+        // Record to ledger - moves funds from charity fund to allocated funds
+        try {
+            var ledgerTransaction = ledgerService.recordAllocation(funding, allocator);
+            funding.setLedgerTransaction(ledgerTransaction);
+            funding = situationFundingRepository.save(funding);
+            logger.info("Recorded allocation {} to ledger as transaction {}",
+                    funding.getId(), ledgerTransaction.getTransactionCode());
+        } catch (Exception e) {
+            logger.error("Failed to record allocation {} to ledger: {}", funding.getId(), e.getMessage());
+            // Don't fail the allocation if ledger recording fails - log and continue
+        }
 
         // Update donation status
         updateDonationStatus(donation);

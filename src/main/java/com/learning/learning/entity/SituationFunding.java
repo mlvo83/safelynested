@@ -56,6 +56,11 @@ public class SituationFunding {
     @Column(name = "usage_explanation", columnDefinition = "TEXT")
     private String usageExplanation;
 
+    // Ledger reference for allocation transaction
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ledger_transaction_id")
+    private LedgerTransaction ledgerTransaction;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

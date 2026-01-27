@@ -9,6 +9,8 @@ import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.LocationRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +25,13 @@ import java.util.List;
 @Service
 public class BookingService {
 
+    private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
+
     @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
+    private LedgerService ledgerService;
 
     @Autowired
     private ReferralRepository referralRepository;
@@ -248,7 +255,52 @@ public class BookingService {
      * Update payment status
      */
     @Transactional
+    public Booking updatePaymentStatus(Long bookingId, Booking.PaymentStatus status, String notes, String username) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Booking.PaymentStatus previousStatus = booking.getPaymentStatus();
+        booking.setPaymentStatus(status);
+
+        if (notes != null && !notes.isEmpty()) {
+            String existingNotes = booking.getAdminNotes() != null ? booking.getAdminNotes() + "\n\n" : "";
+            booking.setAdminNotes(existingNotes + LocalDateTime.now() + ": Payment - " + notes);
+        }
+
+        booking = bookingRepository.save(booking);
+
+        // Record disbursement to ledger when payment is made
+        // Only record if transitioning TO a paid status (not already paid)
+        if ((status == Booking.PaymentStatus.PAID || status == Booking.PaymentStatus.PROGRAM_FUNDED)
+                && previousStatus != Booking.PaymentStatus.PAID
+                && previousStatus != Booking.PaymentStatus.PROGRAM_FUNDED
+                && booking.getCost() != null
+                && booking.getCost().compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                var ledgerTransaction = ledgerService.recordDisbursement(booking, booking.getCost(), user);
+                booking.setLedgerTransaction(ledgerTransaction);
+                booking = bookingRepository.save(booking);
+                logger.info("Recorded disbursement for booking {} to ledger as transaction {}",
+                        booking.getId(), ledgerTransaction.getTransactionCode());
+            } catch (Exception e) {
+                logger.error("Failed to record disbursement for booking {} to ledger: {}",
+                        booking.getId(), e.getMessage());
+                // Don't fail the payment update if ledger recording fails - log and continue
+            }
+        }
+
+        return booking;
+    }
+
+    /**
+     * Update payment status (backward compatible overload without username)
+     */
+    @Transactional
     public Booking updatePaymentStatus(Long bookingId, Booking.PaymentStatus status, String notes) {
+        // For backward compatibility, use a system user or skip ledger recording
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 

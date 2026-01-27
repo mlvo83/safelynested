@@ -138,6 +138,11 @@ public class Booking {
     @Column(name = "request_id")
     private Long requestId;
 
+    // Ledger reference for disbursement transaction
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ledger_transaction_id")
+    private LedgerTransaction ledgerTransaction;
+
     // Timestamps
     @Column(name = "created_at")
     private LocalDateTime createdAt;
