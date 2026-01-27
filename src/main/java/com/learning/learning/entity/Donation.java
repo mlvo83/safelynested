@@ -88,6 +88,11 @@ public class Donation {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Ledger reference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ledger_transaction_id")
+    private LedgerTransaction ledgerTransaction;
+
     // Relationships
     @OneToMany(mappedBy = "donation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SituationFunding> situationFundings = new ArrayList<>();

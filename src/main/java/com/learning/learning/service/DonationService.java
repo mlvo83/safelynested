@@ -38,6 +38,9 @@ public class DonationService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private LedgerService ledgerService;
+
     // ========================================
     // FEE CALCULATION
     // ========================================
@@ -196,7 +199,7 @@ public class DonationService {
     // ========================================
 
     /**
-     * Verify a donation
+     * Verify a donation and record to ledger
      */
     @Transactional
     public Donation verifyDonation(Long donationId, String verifierUsername) {
@@ -209,7 +212,21 @@ public class DonationService {
         donation.setVerifiedAt(LocalDateTime.now());
         donation.setVerifiedBy(verifier);
 
-        return donationRepository.save(donation);
+        donation = donationRepository.save(donation);
+
+        // Record to ledger - this creates the accounting entries
+        try {
+            var ledgerTransaction = ledgerService.recordDonation(donation, verifier);
+            donation.setLedgerTransaction(ledgerTransaction);
+            donation = donationRepository.save(donation);
+            logger.info("Recorded donation {} to ledger as transaction {}",
+                    donation.getId(), ledgerTransaction.getTransactionCode());
+        } catch (Exception e) {
+            logger.error("Failed to record donation {} to ledger: {}", donation.getId(), e.getMessage());
+            // Don't fail the verification if ledger recording fails - log and continue
+        }
+
+        return donation;
     }
 
     /**
