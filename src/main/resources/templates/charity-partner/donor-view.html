@@ -76,7 +76,7 @@
                                 <small class="text-muted d-block">Phone</small>
                                 <span th:text="${donor.user.phone}">(555) 123-4567</span>
                             </div>
-                            <div th:unless="${donor.user.email or donor.user.phone}">
+                            <div th:unless="${donor.user.email != null or donor.user.phone != null}">
                                 <p class="text-muted mb-0">No contact information available.</p>
                             </div>
                         </div>

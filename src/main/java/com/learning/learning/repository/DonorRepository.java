@@ -58,4 +58,8 @@ public interface DonorRepository extends JpaRepository<Donor, Long> {
 
     // Find all donors ordered by creation date
     List<Donor> findAllByOrderByCreatedAtDesc();
+
+    // Find donor by ID with charities eagerly loaded
+    @Query("SELECT d FROM Donor d LEFT JOIN FETCH d.charities WHERE d.id = :id")
+    Optional<Donor> findByIdWithCharities(@Param("id") Long id);
 }

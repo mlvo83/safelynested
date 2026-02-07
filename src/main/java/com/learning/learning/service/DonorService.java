@@ -63,6 +63,14 @@ public class DonorService {
     }
 
     /**
+     * Get donor by ID with charities eagerly loaded
+     */
+    public Donor getDonorByIdWithCharities(Long donorId) {
+        return donorRepository.findByIdWithCharities(donorId)
+                .orElseThrow(() -> new RuntimeException("Donor not found with ID: " + donorId));
+    }
+
+    /**
      * Find donor by ID (returns Optional)
      */
     public Optional<Donor> findById(Long donorId) {

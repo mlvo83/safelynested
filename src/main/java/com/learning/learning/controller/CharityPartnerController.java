@@ -939,8 +939,8 @@ public class CharityPartnerController {
         Charity charity = charityService.getCharityForUser(username);
         Long charityId = charity.getId();
 
-        // Verify donor is associated with this charity
-        Donor donor = donorService.getDonorById(id);
+        // Verify donor is associated with this charity (use method that eagerly loads charities)
+        Donor donor = donorService.getDonorByIdWithCharities(id);
         if (!donor.isAssociatedWithCharity(charityId)) {
             return "redirect:/charity-partner/donors?error=Access+denied";
         }
