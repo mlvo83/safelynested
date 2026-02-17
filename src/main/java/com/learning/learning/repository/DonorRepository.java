@@ -62,4 +62,12 @@ public interface DonorRepository extends JpaRepository<Donor, Long> {
     // Find donor by ID with charities eagerly loaded
     @Query("SELECT d FROM Donor d LEFT JOIN FETCH d.charities WHERE d.id = :id")
     Optional<Donor> findByIdWithCharities(@Param("id") Long id);
+
+    // Search donors across all fields including business name, with charities eagerly loaded
+    @Query("SELECT DISTINCT d FROM Donor d LEFT JOIN FETCH d.charities WHERE " +
+            "LOWER(d.user.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(d.user.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(d.user.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(d.businessName) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    List<Donor> searchDonorsWithCharities(@Param("searchTerm") String searchTerm);
 }

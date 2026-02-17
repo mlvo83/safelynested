@@ -3,10 +3,14 @@ package com.learning.learning.controller;
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.Donation;
 import com.learning.learning.entity.Donor;
+import com.learning.learning.entity.DonorSetupRequest;
+import com.learning.learning.entity.User;
 import com.learning.learning.repository.CharityRepository;
+import com.learning.learning.repository.UserRepository;
 import com.learning.learning.service.DonationService;
 import com.learning.learning.service.DonorDashboardService;
 import com.learning.learning.service.DonorService;
+import com.learning.learning.service.DonorSetupRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -38,6 +42,12 @@ public class DonorController {
 
     @Autowired
     private CharityRepository charityRepository;
+
+    @Autowired
+    private DonorSetupRequestService donorSetupRequestService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // ========================================
     // DONOR LIST
@@ -376,5 +386,86 @@ public class DonorController {
             @RequestParam BigDecimal netAmount,
             @RequestParam Long charityId) {
         return donationService.calculateNightsFunded(netAmount, charityId);
+    }
+
+    // ========================================
+    // DONOR SETUP REQUESTS (Admin Review)
+    // ========================================
+
+    @GetMapping("/setup-requests")
+    public String listSetupRequests(
+            @RequestParam(required = false) String status,
+            Model model) {
+
+        List<DonorSetupRequest> requests;
+        if (status != null && !status.isEmpty()) {
+            try {
+                DonorSetupRequest.RequestStatus requestStatus =
+                        DonorSetupRequest.RequestStatus.valueOf(status.toUpperCase());
+                requests = donorSetupRequestService.getRequestsByStatus(requestStatus);
+            } catch (IllegalArgumentException e) {
+                requests = donorSetupRequestService.getAllRequests();
+            }
+        } else {
+            requests = donorSetupRequestService.getAllRequests();
+        }
+
+        long pendingCount = donorSetupRequestService.countPendingRequests();
+
+        model.addAttribute("requests", requests);
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("totalRequests", requests.size());
+        model.addAttribute("currentStatus", status);
+
+        return "admin/donor-setup-requests";
+    }
+
+    @GetMapping("/setup-requests/{id}")
+    public String viewSetupRequest(@PathVariable Long id, Model model) {
+        DonorSetupRequest request = donorSetupRequestService.getRequestById(id);
+        model.addAttribute("request", request);
+        return "admin/donor-setup-request-detail";
+    }
+
+    @PostMapping("/setup-requests/{id}/approve")
+    public String approveSetupRequest(
+            @PathVariable Long id,
+            @RequestParam(required = false) String adminNotes,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            User adminUser = userRepository.findByUsername(principal.getName())
+                    .orElseThrow(() -> new RuntimeException("Admin user not found"));
+
+            DonorSetupRequest request = donorSetupRequestService.approveRequest(id, adminUser, adminNotes);
+            redirectAttributes.addFlashAttribute("success",
+                    "Request " + request.getRequestNumber() + " approved successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/admin/donors/setup-requests/" + id;
+    }
+
+    @PostMapping("/setup-requests/{id}/reject")
+    public String rejectSetupRequest(
+            @PathVariable Long id,
+            @RequestParam String rejectionReason,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            User adminUser = userRepository.findByUsername(principal.getName())
+                    .orElseThrow(() -> new RuntimeException("Admin user not found"));
+
+            DonorSetupRequest request = donorSetupRequestService.rejectRequest(id, adminUser, rejectionReason);
+            redirectAttributes.addFlashAttribute("success",
+                    "Request " + request.getRequestNumber() + " rejected.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/admin/donors/setup-requests/" + id;
     }
 }

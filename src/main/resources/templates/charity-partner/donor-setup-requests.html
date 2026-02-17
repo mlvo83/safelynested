@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Setup Requests</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <th:block th:replace="~{charity-partner/fragments/sidebar :: sidebar-styles}"></th:block>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <th:block th:replace="~{charity-partner/fragments/sidebar :: sidebar('donors')}"></th:block>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mt-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/charity-partner/dashboard}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/charity-partner/donors}">Donors</a></li>
+                    <li class="breadcrumb-item active">Setup Requests</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h2"><i class="fas fa-clipboard-list me-2"></i> Donor Setup Requests</h1>
+                <a th:href="@{/charity-partner/donors/setup}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> New Request
+                </a>
+            </div>
+
+            <!-- Alert Messages -->
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle me-2"></i><span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Pending Count Stat -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm border-start border-4 border-warning">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="text-muted mb-1">Pending Requests</h6>
+                                    <h2 class="mb-0" th:text="${pendingCount} ?: 0">0</h2>
+                                </div>
+                                <div class="text-warning" style="font-size: 2.5rem; opacity: 0.8;">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="mb-3">
+                <div class="btn-group" role="group">
+                    <a th:href="@{/charity-partner/donors/setup-requests}"
+                       th:class="${currentStatus == null} ? 'btn btn-primary' : 'btn btn-outline-primary'">All</a>
+                    <a th:href="@{/charity-partner/donors/setup-requests(status='PENDING')}"
+                       th:class="${currentStatus == 'PENDING'} ? 'btn btn-warning' : 'btn btn-outline-warning'">Pending</a>
+                    <a th:href="@{/charity-partner/donors/setup-requests(status='APPROVED')}"
+                       th:class="${currentStatus == 'APPROVED'} ? 'btn btn-success' : 'btn btn-outline-success'">Approved</a>
+                    <a th:href="@{/charity-partner/donors/setup-requests(status='REJECTED')}"
+                       th:class="${currentStatus == 'REJECTED'} ? 'btn btn-danger' : 'btn btn-outline-danger'">Rejected</a>
+                </div>
+            </div>
+
+            <!-- Requests Table -->
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" th:if="${requests != null and !requests.empty}">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Request #</th>
+                                <th>Type</th>
+                                <th>Donor Name</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Reviewed</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="req : ${requests}">
+                                <td>
+                                    <span class="fw-bold" th:text="${req.requestNumber}">DSR-2026-0001</span>
+                                </td>
+                                <td>
+                                    <span th:if="${req.requestType.name() == 'LINK_EXISTING'}" class="badge bg-info">
+                                        <i class="fas fa-link me-1"></i> Link Existing
+                                    </span>
+                                    <span th:if="${req.requestType.name() == 'CREATE_NEW'}" class="badge bg-primary">
+                                        <i class="fas fa-plus me-1"></i> Create New
+                                    </span>
+                                </td>
+                                <td th:text="${req.donorDisplayName}">John Doe</td>
+                                <td>
+                                    <span class="badge"
+                                          th:classappend="${req.status.name() == 'PENDING' ? 'bg-warning text-dark' :
+                                                           (req.status.name() == 'APPROVED' ? 'bg-success' : 'bg-danger')}"
+                                          th:text="${req.status.displayName}">Pending</span>
+                                </td>
+                                <td th:text="${req.createdAt != null ? #temporals.format(req.createdAt, 'MMM dd, yyyy') : '-'}">Jan 01, 2026</td>
+                                <td th:text="${req.reviewedAt != null ? #temporals.format(req.reviewedAt, 'MMM dd, yyyy') : '-'}">-</td>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        <div th:if="${requests == null or requests.empty}" class="text-center text-muted py-5">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <p class="mb-0">No setup requests found.</p>
+                            <a th:href="@{/charity-partner/donors/setup}" class="btn btn-primary btn-sm mt-2">
+                                Create your first request
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

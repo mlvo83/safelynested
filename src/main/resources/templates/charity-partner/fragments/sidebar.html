@@ -35,8 +35,13 @@
             </a>
         </li>
         <li class="nav-item">
-            <a th:class="${activePage == 'donors'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/donors}">
-                <i class="fas fa-hand-holding-heart me-2"></i> Donors
+            <a th:class="${activePage == 'donors'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/donors}"
+               style="display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fas fa-hand-holding-heart me-2"></i> Donors</span>
+                <span th:if="${pendingDonorSetupCount != null and pendingDonorSetupCount > 0}"
+                      class="badge rounded-pill bg-warning text-dark"
+                      th:text="${pendingDonorSetupCount}"
+                      style="font-size: 0.7rem;">0</span>
             </a>
         </li>
         <li class="nav-item">

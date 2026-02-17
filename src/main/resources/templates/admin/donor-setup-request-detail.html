@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Request Detail - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; transition: background 0.3s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; flex-wrap: wrap; gap: 20px; }
+        .header h1 { color: #333; }
+        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
+        .card-header { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dee2e6; font-weight: 600; }
+        .card-body { padding: 20px; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #666; font-size: 14px; min-width: 160px; }
+        .info-value { font-weight: 500; color: #333; text-align: right; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-warning { background: #ffc107; color: #333; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+        .badge-info { background: #17a2b8; color: white; }
+        .badge-primary { background: #667eea; color: white; }
+        .btn { padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: 600; transition: transform 0.2s; display: inline-block; border: none; cursor: pointer; font-size: 14px; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #333; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        textarea.form-control { resize: vertical; }
+        .action-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .action-cards { grid-template-columns: 1fr; } }
+        .decision-info { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Request Detail</div>
+    <a th:href="@{/admin/donors/setup-requests}" class="nav-link">Back to Requests</a>
+</nav>
+
+<div class="container">
+    <div th:if="${success}" class="alert alert-success">
+        <span th:text="${success}">Success</span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}">Error</span>
+    </div>
+
+    <div class="header">
+        <div>
+            <h1>
+                <span th:text="${request.requestNumber}">DSR-2026-0001</span>
+                <span class="badge"
+                      th:classappend="${request.status.name() == 'PENDING' ? 'badge-warning' :
+                                       (request.status.name() == 'APPROVED' ? 'badge-success' : 'badge-danger')}"
+                      th:text="${request.status.displayName}"
+                      style="font-size: 14px; vertical-align: middle;">Pending</span>
+            </h1>
+        </div>
+    </div>
+
+    <!-- Request Info -->
+    <div class="card">
+        <div class="card-header">Request Information</div>
+        <div class="card-body">
+            <div class="info-row">
+                <span class="info-label">Request Number</span>
+                <span class="info-value" th:text="${request.requestNumber}">DSR-2026-0001</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Request Type</span>
+                <span class="info-value">
+                    <span th:if="${request.requestType.name() == 'LINK_EXISTING'}" class="badge badge-info">Link Existing Donor</span>
+                    <span th:if="${request.requestType.name() == 'CREATE_NEW'}" class="badge badge-primary">Create New Donor</span>
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Charity</span>
+                <span class="info-value" th:text="${request.charity.charityName}">Charity Name</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Requested By</span>
+                <span class="info-value" th:text="${request.requestedBy.fullName}">User Name</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Submitted</span>
+                <span class="info-value" th:text="${request.createdAt != null ? #temporals.format(request.createdAt, 'MMM dd, yyyy HH:mm') : '-'}">Jan 01, 2026</span>
+            </div>
+            <div th:if="${request.notes}" class="info-row">
+                <span class="info-label">Notes</span>
+                <span class="info-value" th:text="${request.notes}">Notes</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donor Info Card -->
+    <div class="card">
+        <div class="card-header">
+            <span th:if="${request.requestType.name() == 'LINK_EXISTING'}">Existing Donor Details</span>
+            <span th:if="${request.requestType.name() == 'CREATE_NEW'}">New Donor Details</span>
+        </div>
+        <div class="card-body">
+            <!-- LINK_EXISTING: show existing donor info -->
+            <div th:if="${request.requestType.name() == 'LINK_EXISTING' and request.existingDonor != null}">
+                <div class="info-row">
+                    <span class="info-label">Donor Name</span>
+                    <span class="info-value" th:text="${request.existingDonor.displayName}">Donor Name</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Email</span>
+                    <span class="info-value" th:text="${request.existingDonor.donorEmail ?: '-'}">email@example.com</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Type</span>
+                    <span class="info-value" th:text="${request.existingDonor.donorType?.displayName ?: 'Individual'}">Individual</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Verified</span>
+                    <span class="info-value">
+                        <span th:if="${request.existingDonor.isVerified}" class="badge badge-success">Verified</span>
+                        <span th:unless="${request.existingDonor.isVerified}" class="badge badge-warning">Pending</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- CREATE_NEW: show submitted fields -->
+            <div th:if="${request.requestType.name() == 'CREATE_NEW'}">
+                <div class="info-row">
+                    <span class="info-label">Donor Type</span>
+                    <span class="info-value" th:text="${request.donorType?.displayName ?: 'Individual'}">Individual</span>
+                </div>
+
+                <!-- Individual fields -->
+                <div th:if="${request.donorType == null or request.donorType.name() == 'INDIVIDUAL'}">
+                    <div class="info-row">
+                        <span class="info-label">First Name</span>
+                        <span class="info-value" th:text="${request.firstName ?: '-'}">John</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Last Name</span>
+                        <span class="info-value" th:text="${request.lastName ?: '-'}">Doe</span>
+                    </div>
+                </div>
+
+                <!-- Business fields -->
+                <div th:if="${request.donorType != null and request.donorType.name() == 'BUSINESS'}">
+                    <div class="info-row">
+                        <span class="info-label">Company Name</span>
+                        <span class="info-value" th:text="${request.companyName ?: '-'}">Company</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Contact Name</span>
+                        <span class="info-value" th:text="${request.contactName ?: '-'}">Contact</span>
+                    </div>
+                    <div th:if="${request.taxId}" class="info-row">
+                        <span class="info-label">Tax ID</span>
+                        <span class="info-value" th:text="${request.taxId}">XX-XXXXXXX</span>
+                    </div>
+                </div>
+
+                <!-- Contact info -->
+                <div class="info-row">
+                    <span class="info-label">Email</span>
+                    <span class="info-value" th:text="${request.email ?: '-'}">email@example.com</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Phone</span>
+                    <span class="info-value" th:text="${request.phone ?: '-'}">(555) 123-4567</span>
+                </div>
+
+                <!-- Address -->
+                <div th:if="${request.streetAddress != null or request.city != null or request.state != null or request.zipCode != null}" class="info-row">
+                    <span class="info-label">Address</span>
+                    <span class="info-value">
+                        <span th:if="${request.streetAddress}" th:text="${request.streetAddress}">123 Main St</span>
+                        <span th:if="${request.city}">, <span th:text="${request.city}">City</span></span>
+                        <span th:if="${request.state}">, <span th:text="${request.state}">ST</span></span>
+                        <span th:if="${request.zipCode}"> <span th:text="${request.zipCode}">12345</span></span>
+                    </span>
+                </div>
+
+                <!-- Preferences -->
+                <div th:if="${request.anonymityPreference}" class="info-row">
+                    <span class="info-label">Anonymity Preference</span>
+                    <span class="info-value" th:text="${request.anonymityPreference.displayName}">Full Name</span>
+                </div>
+                <div th:if="${request.preferredContactMethod}" class="info-row">
+                    <span class="info-label">Preferred Contact</span>
+                    <span class="info-value" th:text="${request.preferredContactMethod.displayName}">Email</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Section (PENDING only) -->
+    <div th:if="${request.status.name() == 'PENDING'}">
+        <div class="action-cards">
+            <!-- Approve -->
+            <div class="card" style="border-top: 3px solid #28a745;">
+                <div class="card-header" style="color: #28a745;">Approve Request</div>
+                <div class="card-body">
+                    <form th:action="@{/admin/donors/setup-requests/{id}/approve(id=${request.id})}" method="post">
+                        <div class="form-group">
+                            <label for="adminNotes">Admin Notes (optional)</label>
+                            <textarea id="adminNotes" name="adminNotes" class="form-control" rows="3"
+                                      placeholder="Optional notes about the approval..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success"
+                                onclick="return confirm('Approve this request? This will create/link the donor.');">
+                            Approve Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Reject -->
+            <div class="card" style="border-top: 3px solid #dc3545;">
+                <div class="card-header" style="color: #dc3545;">Reject Request</div>
+                <div class="card-body">
+                    <form th:action="@{/admin/donors/setup-requests/{id}/reject(id=${request.id})}" method="post">
+                        <div class="form-group">
+                            <label for="rejectionReason">Rejection Reason <span style="color: red;">*</span></label>
+                            <textarea id="rejectionReason" name="rejectionReason" class="form-control" rows="3"
+                                      placeholder="Please provide a reason for rejection..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger"
+                                onclick="return confirm('Reject this request?');">
+                            Reject Request
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Decision Info (APPROVED / REJECTED) -->
+    <div th:if="${request.status.name() != 'PENDING'}" class="card">
+        <div class="card-header">Decision</div>
+        <div class="card-body">
+            <div class="decision-info">
+                <div class="info-row">
+                    <span class="info-label">Decision</span>
+                    <span class="info-value">
+                        <span class="badge"
+                              th:classappend="${request.status.name() == 'APPROVED' ? 'badge-success' : 'badge-danger'}"
+                              th:text="${request.status.displayName}">Approved</span>
+                    </span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Reviewed By</span>
+                    <span class="info-value" th:text="${request.reviewedBy != null ? request.reviewedBy.fullName : '-'}">Admin</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Reviewed At</span>
+                    <span class="info-value" th:text="${request.reviewedAt != null ? #temporals.format(request.reviewedAt, 'MMM dd, yyyy HH:mm') : '-'}">Jan 01, 2026</span>
+                </div>
+                <div th:if="${request.adminNotes}" class="info-row">
+                    <span class="info-label">Admin Notes</span>
+                    <span class="info-value" th:text="${request.adminNotes}">Notes</span>
+                </div>
+                <div th:if="${request.rejectionReason}" class="info-row">
+                    <span class="info-label">Rejection Reason</span>
+                    <span class="info-value" style="color: #dc3545;" th:text="${request.rejectionReason}">Reason</span>
+                </div>
+                <div th:if="${request.resultDonor != null}" class="info-row">
+                    <span class="info-label">Result Donor</span>
+                    <span class="info-value">
+                        <a th:href="@{/admin/donors/{id}(id=${request.resultDonor.id})}"
+                           style="color: #667eea; text-decoration: none;"
+                           th:text="${request.resultDonor.displayName}">Donor Name</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

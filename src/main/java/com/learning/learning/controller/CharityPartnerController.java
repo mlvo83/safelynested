@@ -7,6 +7,7 @@ import com.learning.learning.service.DocumentService;
 import com.learning.learning.service.DonationService;
 import com.learning.learning.service.DonorDashboardService;
 import com.learning.learning.service.DonorService;
+import com.learning.learning.service.DonorSetupRequestService;
 import com.learning.learning.service.InviteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -51,6 +53,12 @@ public class CharityPartnerController {
     private DonorDashboardService donorDashboardService;
 
     @Autowired
+    private DonorSetupRequestService donorSetupRequestService;
+
+    @Autowired
+    private DonorRepository donorRepository;
+
+    @Autowired
     private ReferralRepository referralRepository;
 
     @Autowired
@@ -58,6 +66,18 @@ public class CharityPartnerController {
 
     @Autowired
     private UserRepository userRepository;
+
+    // Adds pending donor setup request count to all charity-partner views for sidebar badge
+    @ModelAttribute("pendingDonorSetupCount")
+    public Long pendingDonorSetupCount(Principal principal) {
+        try {
+            String username = principal.getName();
+            Long charityId = charityService.getCharityIdForUser(username);
+            return donorSetupRequestService.countPendingRequestsForCharity(charityId);
+        } catch (Exception e) {
+            return 0L;
+        }
+    }
 
     // ========================================
     // DASHBOARD
@@ -957,6 +977,167 @@ public class CharityPartnerController {
         model.addAttribute("stats", stats);
 
         return "charity-partner/donor-view";
+    }
+
+    // ========================================
+    // DONOR SETUP REQUESTS
+    // ========================================
+
+    /**
+     * Show donor setup page with search and new donor form
+     */
+    @GetMapping("/donors/setup")
+    public String donorSetupPage(Model model, Principal principal) {
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("anonymityPreferences", DonorSetupRequest.AnonymityPreference.values());
+        model.addAttribute("contactMethods", DonorSetupRequest.PreferredContactMethod.values());
+
+        return "charity-partner/donor-setup";
+    }
+
+    /**
+     * AJAX endpoint: Search all system donors for linking
+     */
+    @GetMapping("/donors/search-all")
+    @ResponseBody
+    public List<Map<String, Object>> searchAllDonors(@RequestParam String q, Principal principal) {
+        String username = principal.getName();
+        Long charityId = charityService.getCharityIdForUser(username);
+
+        List<Donor> donors = donorRepository.searchDonorsWithCharities(q);
+
+        return donors.stream().map(donor -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", donor.getId());
+            map.put("name", donor.getDisplayName());
+            map.put("email", donor.getDonorEmail());
+            map.put("type", donor.getDonorType() != null ? donor.getDonorType().getDisplayName() : "Individual");
+            map.put("isVerified", donor.getIsVerified() != null && donor.getIsVerified());
+            map.put("alreadyLinked", donor.isAssociatedWithCharity(charityId));
+            return map;
+        }).toList();
+    }
+
+    /**
+     * Submit link-existing-donor request
+     */
+    @PostMapping("/donors/setup/link")
+    public String submitLinkRequest(
+            @RequestParam Long donorId,
+            @RequestParam(required = false) String notes,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        try {
+            Donor donor = donorService.getDonorByIdWithCharities(donorId);
+            donorSetupRequestService.createLinkRequest(donor, charity, user, notes);
+            redirectAttributes.addFlashAttribute("success",
+                    "Request to link donor has been submitted for admin review.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/charity-partner/donors/setup-requests";
+    }
+
+    /**
+     * Submit create-new-donor request
+     */
+    @PostMapping("/donors/setup/new")
+    public String submitNewDonorRequest(
+            @RequestParam String donorType,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String streetAddress,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String zipCode,
+            @RequestParam(required = false) String companyName,
+            @RequestParam(required = false) String contactName,
+            @RequestParam(required = false) String taxId,
+            @RequestParam(required = false) String anonymityPreference,
+            @RequestParam(required = false) String preferredContactMethod,
+            @RequestParam(required = false) String notes,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        try {
+            Donor.DonorType type = Donor.DonorType.valueOf(donorType);
+
+            DonorSetupRequest.AnonymityPreference anonPref = null;
+            if (anonymityPreference != null && !anonymityPreference.isEmpty()) {
+                anonPref = DonorSetupRequest.AnonymityPreference.valueOf(anonymityPreference);
+            }
+
+            DonorSetupRequest.PreferredContactMethod contactMethod = null;
+            if (preferredContactMethod != null && !preferredContactMethod.isEmpty()) {
+                contactMethod = DonorSetupRequest.PreferredContactMethod.valueOf(preferredContactMethod);
+            }
+
+            donorSetupRequestService.createNewDonorRequest(
+                    charity, user, type, firstName, lastName, email, phone,
+                    streetAddress, city, state, zipCode,
+                    companyName, contactName, taxId,
+                    anonPref, contactMethod, notes);
+
+            redirectAttributes.addFlashAttribute("success",
+                    "New donor request has been submitted for admin review.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/charity-partner/donors/setup-requests";
+    }
+
+    /**
+     * List this charity's setup requests
+     */
+    @GetMapping("/donors/setup-requests")
+    public String listSetupRequests(
+            @RequestParam(required = false) String status,
+            Model model,
+            Principal principal) {
+
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+        Long charityId = charity.getId();
+
+        List<DonorSetupRequest> requests;
+        if (status != null && !status.isEmpty()) {
+            try {
+                DonorSetupRequest.RequestStatus requestStatus =
+                        DonorSetupRequest.RequestStatus.valueOf(status.toUpperCase());
+                requests = donorSetupRequestService.getRequestsForCharity(charityId, requestStatus);
+            } catch (IllegalArgumentException e) {
+                requests = donorSetupRequestService.getRequestsForCharity(charityId);
+            }
+        } else {
+            requests = donorSetupRequestService.getRequestsForCharity(charityId);
+        }
+
+        long pendingCount = donorSetupRequestService.countPendingRequestsForCharity(charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("requests", requests);
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("currentStatus", status);
+
+        return "charity-partner/donor-setup-requests";
     }
 
     // ========================================
