@@ -164,6 +164,35 @@
             margin-top: 10px;
         }
 
+        .role-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .role-checkbox label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: normal;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .role-checkbox label:hover {
+            background: #e9ecef;
+        }
+
+        .role-checkbox input:checked + span {
+            color: #667eea;
+            font-weight: 600;
+        }
+
         .charity-section-title {
             font-size: 14px;
             color: #667eea;
@@ -235,16 +264,19 @@
             </div>
 
             <div class="form-group">
-                <label for="role">Role</label>
-                <select id="role" th:field="*{role}" required>
-                    <option value="">Select a role</option>
-                    <option th:each="r : ${roles}"
-                            th:value="${r.name}"
-                            th:text="${#strings.replace(r.name, 'ROLE_', '')}">
-                        ROLE
-                    </option>
-                </select>
-                <div class="error" th:if="${#fields.hasErrors('role')}" th:errors="*{role}">
+                <label>Roles</label>
+                <div class="role-checkboxes">
+                    <div th:each="r : ${roles}" class="role-checkbox">
+                        <label>
+                            <input type="checkbox" name="roles"
+                                   th:value="${r.name}"
+                                   th:checked="${userDto.roles != null and userDto.roles.contains(r.name)}">
+                            <span th:text="${#strings.replace(r.name, 'ROLE_', '')}">ROLE</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="help-text">You can assign multiple roles to a user (e.g. CHARITY_PARTNER + CHARITY_FACILITATOR).</div>
+                <div class="error" th:if="${#fields.hasErrors('roles')}" th:errors="*{roles}">
                     Role error
                 </div>
             </div>

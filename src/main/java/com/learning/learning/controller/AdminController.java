@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin")
@@ -83,7 +84,9 @@ public class AdminController {
             userDto.setCharityId(user.getCharity().getId());
         }
         if (!user.getRoles().isEmpty()) {
-            userDto.setRole(user.getRoles().iterator().next().getName());
+            userDto.setRoles(user.getRoles().stream()
+                    .map(r -> r.getName())
+                    .collect(Collectors.toList()));
         }
 
         model.addAttribute("userDto", userDto);

@@ -13,7 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -40,6 +39,11 @@ public class UserService {
             throw new RuntimeException("Username already exists");
         }
 
+        // Password is required for new users
+        if (userDto.getPassword() == null || userDto.getPassword().length() < 6) {
+            throw new RuntimeException("Password is required and must be at least 6 characters");
+        }
+
         User user = new User();
         user.setUsername(userDto.getUsername());
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
@@ -49,10 +53,14 @@ public class UserService {
         user.setLastName(userDto.getLastName());
         user.setPhone(userDto.getPhone());
 
-        // Set role
-        Role role = roleRepository.findByName(userDto.getRole())
-                .orElseThrow(() -> new RuntimeException("Role not found: " + userDto.getRole()));
-        user.setRoles(new HashSet<>(Collections.singletonList(role)));
+        // Set roles
+        HashSet<Role> userRoles = new HashSet<>();
+        for (String roleName : userDto.getRoles()) {
+            Role role = roleRepository.findByName(roleName)
+                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+            userRoles.add(role);
+        }
+        user.setRoles(userRoles);
 
         // Assign charity if provided
         if (userDto.getCharityId() != null) {
@@ -147,11 +155,15 @@ public class UserService {
         user.setLastName(userDto.getLastName());
         user.setPhone(userDto.getPhone());
 
-        // Update role
-        if (userDto.getRole() != null && !userDto.getRole().isEmpty()) {
-            Role role = roleRepository.findByName(userDto.getRole())
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + userDto.getRole()));
-            user.setRoles(new HashSet<>(Collections.singletonList(role)));
+        // Update roles
+        if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
+            HashSet<Role> userRoles = new HashSet<>();
+            for (String roleName : userDto.getRoles()) {
+                Role role = roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+                userRoles.add(role);
+            }
+            user.setRoles(userRoles);
         }
 
         // Update charity assignment
