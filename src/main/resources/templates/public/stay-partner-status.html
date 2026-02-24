@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Application Status - SafelyNested</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .navbar-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .navbar-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: background 0.3s;
+        }
+
+        .navbar-links a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 22px;
+        }
+
+        .card .subtitle {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-header h3 {
+            color: #333;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .rejection-box {
+            background: #fff3f3;
+            border-left: 4px solid #dc3545;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 20px;
+        }
+
+        .rejection-box h6 {
+            color: #dc3545;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .rejection-box p {
+            color: #555;
+            margin: 0;
+        }
+
+        .not-found-box {
+            background: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .not-found-box h5 {
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .not-found-box p {
+            color: #666;
+            margin: 0;
+        }
+
+        .footer-text {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <a class="navbar-brand" href="#">Check Application Status</a>
+    <div class="navbar-links">
+        <a th:href="@{/}"><i class="fas fa-home me-1"></i> Home</a>
+        <a th:href="@{/stay-partner/apply}"><i class="fas fa-file-alt me-1"></i> Apply</a>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Lookup Form -->
+    <div class="card">
+        <h2><i class="fas fa-search me-2" style="color: #667eea;"></i>Look Up Your Application</h2>
+        <p class="subtitle">Enter your application number and email address to check the status of your Stay Partner app.</p>
+
+        <form th:action="@{/stay-partner/status}" method="post">
+            <div class="form-group">
+                <label for="applicationNumber">
+                    <i class="fas fa-hashtag me-1" style="color: #667eea;"></i> Application Number
+                </label>
+                <input type="text"
+                       id="applicationNumber"
+                       name="applicationNumber"
+                       placeholder="e.g. SP-2026-000001"
+                       th:value="${applicationNumber}"
+                       required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">
+                    <i class="fas fa-envelope me-1" style="color: #667eea;"></i> Email Address
+                </label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       placeholder="your@email.com"
+                       th:value="${email}"
+                       required>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-search me-2"></i>Check Status
+            </button>
+        </form>
+    </div>
+
+    <!-- Results Section -->
+    <div th:if="${found != null}">
+
+        <!-- Application Found -->
+        <div th:if="${found}" class="result-card">
+            <div class="result-header">
+                <h3>
+                    <i class="fas fa-file-circle-check me-2" style="color: #667eea;"></i>
+                    Application <span th:text="${app?.applicationNumber}">SP-2026-000001</span>
+                </h3>
+                <span th:if="${app != null and app.status != null}" th:switch="${app.status.name()}">
+                    <span th:case="'PENDING'" class="badge-warning">
+                        <i class="fas fa-clock me-1"></i>
+                        <span th:text="${app.status.displayName}">Pending</span>
+                    </span>
+                    <span th:case="'UNDER_REVIEW'" class="badge-info">
+                        <i class="fas fa-eye me-1"></i>
+                        <span th:text="${app.status.displayName}">Under Review</span>
+                    </span>
+                    <span th:case="'APPROVED'" class="badge-success">
+                        <i class="fas fa-check-circle me-1"></i>
+                        <span th:text="${app.status.displayName}">Approved</span>
+                    </span>
+                    <span th:case="'REJECTED'" class="badge-danger">
+                        <i class="fas fa-times-circle me-1"></i>
+                        <span th:text="${app.status.displayName}">Rejected</span>
+                    </span>
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-user me-1"></i> Applicant Name</span>
+                <span class="info-value" th:text="${app?.applicantDisplayName}">John Doe</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-user-tag me-1"></i> Applicant Type</span>
+                <span class="info-value" th:text="${app?.applicantType}">Individual</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-building me-1"></i> Property Name</span>
+                <span class="info-value" th:text="${app?.propertyName}">My Property</span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-map-marker-alt me-1"></i> Location</span>
+                <span class="info-value">
+                    <span th:text="${app?.city}">City</span>,
+                    <span th:text="${app?.state}">State</span>
+                    <span th:text="${app?.zipCode}">12345</span>
+                </span>
+            </div>
+
+            <div class="info-row">
+                <span class="info-label"><i class="fas fa-calendar-plus me-1"></i> Submitted</span>
+                <span class="info-value" th:text="${app?.createdAt != null ? #temporals.format(app.createdAt, 'MMM dd, yyyy') : 'N/A'}">Jan 01, 2026</span>
+            </div>
+
+            <div th:if="${app != null and app.reviewedAt != null}" class="info-row">
+                <span class="info-label"><i class="fas fa-calendar-check me-1"></i> Reviewed</span>
+                <span class="info-value" th:text="${#temporals.format(app.reviewedAt, 'MMM dd, yyyy')}">Jan 15, 2026</span>
+            </div>
+
+            <!-- Rejection Reason -->
+            <div th:if="${app != null and app.status != null and app.status.name() == 'REJECTED' and app.rejectionReason != null}" class="rejection-box">
+                <h6><i class="fas fa-exclamation-triangle me-1"></i> Reason for Rejection</h6>
+                <p th:text="${app?.rejectionReason}">The application was rejected because...</p>
+            </div>
+        </div>
+
+        <!-- Application Not Found -->
+        <div th:if="${!found}" class="not-found-box">
+            <h5><i class="fas fa-exclamation-circle me-2"></i>Application Not Found</h5>
+            <p th:text="${notFoundMessage}">No application was found matching the provided details. Please double-check your application number and email address.</p>
+        </div>
+    </div>
+
+    <div class="footer-text">
+        <p>SafelyNested &copy; 2025 - Connecting people with shelter services</p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
