@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stay Partner Applications - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+        .nav-links { display: flex; gap: 10px; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; transition: background 0.3s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        h1 { color: #333; }
+        .btn { padding: 10px 20px; border-radius: 5px; text-decoration: none; font-weight: 600; transition: transform 0.2s; display: inline-block; border: none; cursor: pointer; font-size: 14px; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-sm { padding: 6px 12px; font-size: 13px; }
+        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
+        .stat-value { font-size: 32px; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; margin-top: 5px; }
+        .stat-value.warning { color: #ffc107; }
+        .filter-buttons { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { padding: 8px 16px; border-radius: 5px; text-decoration: none; font-size: 14px; border: 1px solid #ddd; color: #333; background: white; }
+        .filter-btn:hover { background: #f0f0f0; }
+        .filter-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        .filter-btn.active-warning { background: #ffc107; color: #333; border-color: #ffc107; }
+        .filter-btn.active-info { background: #17a2b8; color: white; border-color: #17a2b8; }
+        .filter-btn.active-success { background: #28a745; color: white; border-color: #28a745; }
+        .filter-btn.active-danger { background: #dc3545; color: white; border-color: #dc3545; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; padding: 15px; text-align: left; font-weight: 600; color: #333; border-bottom: 2px solid #dee2e6; }
+        td { padding: 15px; border-bottom: 1px solid #dee2e6; }
+        tr:hover { background: #f8f9fa; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-warning { background: #ffc107; color: #333; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+        .badge-info { background: #17a2b8; color: white; }
+        .badge-primary { background: #667eea; color: white; }
+        .no-data { text-align: center; padding: 40px; color: #666; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Stay Partner Applications</div>
+    <div class="nav-links">
+        <a th:href="@{/admin/stay-partner-applications}" class="nav-link">Refresh</a>
+        <a th:href="@{/home}" class="nav-link">Home</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <h1>Stay Partner Applications</h1>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success">
+        <span th:text="${success}">Success</span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}">Error</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-value warning" th:text="${pendingCount}">0</div>
+            <div class="stat-label">Pending Review</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" th:text="${totalApplications}">0</div>
+            <div class="stat-label">Total Applications</div>
+        </div>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="filter-buttons">
+        <a th:href="@{/admin/stay-partner-applications}"
+           th:class="${currentStatus == null} ? 'filter-btn active' : 'filter-btn'">All</a>
+        <a th:href="@{/admin/stay-partner-applications(status='PENDING')}"
+           th:class="${currentStatus == 'PENDING'} ? 'filter-btn active-warning' : 'filter-btn'">Pending</a>
+        <a th:href="@{/admin/stay-partner-applications(status='UNDER_REVIEW')}"
+           th:class="${currentStatus == 'UNDER_REVIEW'} ? 'filter-btn active-info' : 'filter-btn'">Under Review</a>
+        <a th:href="@{/admin/stay-partner-applications(status='APPROVED')}"
+           th:class="${currentStatus == 'APPROVED'} ? 'filter-btn active-success' : 'filter-btn'">Approved</a>
+        <a th:href="@{/admin/stay-partner-applications(status='REJECTED')}"
+           th:class="${currentStatus == 'REJECTED'} ? 'filter-btn active-danger' : 'filter-btn'">Rejected</a>
+    </div>
+
+    <!-- Applications Table -->
+    <div class="card">
+        <table th:if="${!#lists.isEmpty(applications)}">
+            <thead>
+            <tr>
+                <th>Application #</th>
+                <th>Applicant</th>
+                <th>Type</th>
+                <th>Property</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="app : ${applications}">
+                <td>
+                    <a th:href="@{/admin/stay-partner-applications/{id}(id=${app.id})}"
+                       style="font-weight: 600; color: #667eea;"
+                       th:text="${app.applicationNumber}">SPA-2026-0001</a>
+                </td>
+                <td th:text="${app.applicantDisplayName}">John Doe</td>
+                <td>
+                    <span th:if="${app.applicantType != null and app.applicantType.name() == 'INDIVIDUAL'}" class="badge badge-info" th:text="${app.applicantType.displayName}">Individual</span>
+                    <span th:if="${app.applicantType != null and app.applicantType.name() == 'BUSINESS'}" class="badge badge-primary" th:text="${app.applicantType.displayName}">Business</span>
+                </td>
+                <td th:text="${app.propertyName}">Property Name</td>
+                <td th:text="${app.city + ', ' + app.state}">City, State</td>
+                <td>
+                    <span th:if="${app.status != null}" class="badge"
+                          th:classappend="${app.status.name() == 'PENDING' ? 'badge-warning' :
+                                           (app.status.name() == 'UNDER_REVIEW' ? 'badge-info' :
+                                           (app.status.name() == 'APPROVED' ? 'badge-success' : 'badge-danger'))}"
+                          th:text="${app.status.displayName}">Pending</span>
+                </td>
+                <td th:text="${app.createdAt != null ? #temporals.format(app.createdAt, 'MMM dd, yyyy') : '-'}">Jan 01, 2026</td>
+                <td>
+                    <a th:href="@{/admin/stay-partner-applications/{id}(id=${app.id})}"
+                       class="btn btn-info btn-sm">View</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div th:if="${#lists.isEmpty(applications)}" class="no-data">
+            <p>No stay partner applications found.</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

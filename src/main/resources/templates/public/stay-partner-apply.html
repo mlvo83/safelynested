@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply to be a Stay Partner - SafelyNested</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-row > div {
+            flex: 1;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+        }
+
+        .required {
+            color: red;
+        }
+
+        .type-toggle {
+            display: flex;
+            gap: 0;
+            margin-bottom: 10px;
+        }
+
+        .type-toggle label {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            cursor: pointer;
+            border: 2px solid #ddd;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .type-toggle label:first-of-type {
+            border-radius: 5px 0 0 5px;
+        }
+
+        .type-toggle label:last-of-type {
+            border-radius: 0 5px 5px 0;
+        }
+
+        .type-toggle input {
+            display: none;
+        }
+
+        .type-toggle input:checked + label {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+        }
+
+        .info-text {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .submit-section {
+            text-align: center;
+            margin: 30px 0 40px;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex !important;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-content h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .loading-content p {
+            color: #666;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h3>Submitting Application...</h3>
+        <p>Please wait while we process your application</p>
+    </div>
+</div>
+
+<nav class="navbar">
+    <div class="navbar-brand">Apply to be a Stay Partner</div>
+    <div class="nav-links">
+        <a th:href="@{/}" class="nav-link">Home</a>
+        <a th:href="@{/stay-partner/status}" class="nav-link">Check Status</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div th:if="${error}" class="alert alert-danger">
+        <span th:text="${error}">Error</span>
+    </div>
+
+    <p class="info-text">
+        Interested in partnering with SafelyNested to provide temporary housing for families in need?
+        Fill out the application below and our team will review it within a few business days.
+    </p>
+
+    <form th:action="@{/stay-partner/apply}" method="post">
+
+        <!-- Applicant Type -->
+        <div class="card">
+            <div class="card-header">Applicant Type</div>
+            <div class="card-body">
+                <div class="type-toggle">
+                    <input type="radio" name="applicantType" id="typeIndividual" value="INDIVIDUAL" checked onchange="toggleApplicantType()">
+                    <label for="typeIndividual">Individual</label>
+                    <input type="radio" name="applicantType" id="typeBusiness" value="BUSINESS" onchange="toggleApplicantType()">
+                    <label for="typeBusiness">Business / Organization</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Fields -->
+        <div class="card" id="individualFields">
+            <div class="card-header">Your Information</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name <span class="required">*</span></label>
+                        <input type="text" id="firstName" name="firstName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name <span class="required">*</span></label>
+                        <input type="text" id="lastName" name="lastName" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" class="form-control">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Fields -->
+        <div class="card" id="businessFields" style="display:none;">
+            <div class="card-header">Business Information</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="businessName">Business Name <span class="required">*</span></label>
+                        <input type="text" id="businessName" name="businessName" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="contactName">Contact Person</label>
+                        <input type="text" id="contactName" name="contactName" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="businessEmail">Business Email <span class="required">*</span></label>
+                        <input type="email" id="businessEmail" name="businessEmail" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="businessPhone">Business Phone</label>
+                        <input type="tel" id="businessPhone" name="businessPhone" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="taxId">Tax ID / EIN</label>
+                    <input type="text" id="taxId" name="taxId" class="form-control" placeholder="XX-XXXXXXX">
+                </div>
+                <!-- Hidden email field for business submissions -->
+                <input type="hidden" id="businessEmailHidden" name="email" value="" disabled>
+            </div>
+        </div>
+
+        <!-- Property Information -->
+        <div class="card">
+            <div class="card-header">Property Information</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="propertyType">Property Type <span class="required">*</span></label>
+                        <select id="propertyType" name="propertyType" class="form-control" required>
+                            <option value="">-- Select --</option>
+                            <option value="HOTEL">Hotel</option>
+                            <option value="MOTEL">Motel</option>
+                            <option value="HOME">Home</option>
+                            <option value="APARTMENT">Apartment</option>
+                            <option value="ROOM">Room</option>
+                            <option value="SHELTER">Shelter</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="propertyName">Property Name <span class="required">*</span></label>
+                        <input type="text" id="propertyName" name="propertyName" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="numberOfBedrooms">Number of Bedrooms</label>
+                        <input type="number" id="numberOfBedrooms" name="numberOfBedrooms" class="form-control" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxGuests">Max Guests</label>
+                        <input type="number" id="maxGuests" name="maxGuests" class="form-control" min="1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" class="form-control" rows="3" placeholder="Describe the property..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Address Section -->
+        <div class="card">
+            <div class="card-header">Address</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="streetAddress">Street Address <span class="required">*</span></label>
+                    <input type="text" id="streetAddress" name="streetAddress" class="form-control" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City <span class="required">*</span></label>
+                        <input type="text" id="city" name="city" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="state">State <span class="required">*</span></label>
+                        <input type="text" id="state" name="state" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="zipCode">Zip Code <span class="required">*</span></label>
+                        <input type="text" id="zipCode" name="zipCode" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input type="text" id="country" name="country" class="form-control" value="USA">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preferences Section -->
+        <div class="card">
+            <div class="card-header">Preferences</div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nightlyRate">Nightly Rate</label>
+                        <input type="number" id="nightlyRate" name="nightlyRate" class="form-control"
+                               step="0.01" min="0" placeholder="e.g., 125.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Pets Allowed</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="petsAllowed" name="petsAllowed">
+                            <label for="petsAllowed" style="margin:0;font-weight:500;">Yes</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="amenities">Amenities</label>
+                    <textarea id="amenities" name="amenities" class="form-control" rows="3"
+                              placeholder="List amenities (WiFi, kitchen, parking, laundry, etc.)..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="availabilityNotes">Availability Notes</label>
+                    <textarea id="availabilityNotes" name="availabilityNotes" class="form-control" rows="3"
+                              placeholder="Describe availability (dates, blackout periods, minimum stay, etc.)..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="accessibilityFeatures">Accessibility Features</label>
+                    <textarea id="accessibilityFeatures" name="accessibilityFeatures" class="form-control" rows="3"
+                              placeholder="Describe accessibility (ramps, elevator, step-free entry, etc.)..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Preferences Section -->
+        <div class="card">
+            <div class="card-header">Contact Preferences</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="preferredContactMethod">Preferred Contact Method</label>
+                    <select id="preferredContactMethod" name="preferredContactMethod" class="form-control">
+                        <option value="EMAIL" selected>Email</option>
+                        <option value="PHONE">Phone</option>
+                        <option value="EITHER">Either</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="additionalNotes">Additional Notes</label>
+                    <textarea id="additionalNotes" name="additionalNotes" class="form-control" rows="3"
+                              placeholder="Anything else you'd like us to know?"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-section">
+            <button type="submit" id="submitBtn" class="btn-submit">Submit Application</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleApplicantType() {
+        var isIndividual = document.getElementById('typeIndividual').checked;
+        var individualFields = document.getElementById('individualFields');
+        var businessFields = document.getElementById('businessFields');
+        var emailField = document.getElementById('email');
+        var businessEmailHidden = document.getElementById('businessEmailHidden');
+
+        if (isIndividual) {
+            individualFields.style.display = 'block';
+            businessFields.style.display = 'none';
+            emailField.required = true;
+            emailField.disabled = false;
+            businessEmailHidden.disabled = true;
+        } else {
+            individualFields.style.display = 'none';
+            businessFields.style.display = 'block';
+            emailField.required = false;
+            emailField.disabled = true;
+            businessEmailHidden.disabled = false;
+        }
+    }
+
+    // Sync business email to hidden field for form submission
+    var businessEmailInput = document.getElementById('businessEmail');
+    if (businessEmailInput) {
+        businessEmailInput.addEventListener('input', function() {
+            document.getElementById('businessEmailHidden').value = this.value;
+        });
+    }
+
+    // Loading overlay on form submit
+    var form = document.querySelector('form[method="post"]');
+    var formSubmitting = false;
+
+    form.addEventListener('submit', function(e) {
+        if (formSubmitting) {
+            e.preventDefault();
+            return false;
+        }
+
+        // Let the browser validate required fields first
+        if (!form.checkValidity()) {
+            return;
+        }
+
+        e.preventDefault();
+        formSubmitting = true;
+
+        // Show loading overlay
+        document.getElementById('loadingOverlay').classList.add('active');
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('submitBtn').textContent = 'Submitting...';
+        document.body.style.cursor = 'wait';
+
+        // Submit after brief delay so spinner renders
+        setTimeout(function() {
+            form.submit();
+        }, 100);
+    });
+
+    // Hide loading if user navigates back
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            document.getElementById('loadingOverlay').classList.remove('active');
+            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('submitBtn').textContent = 'Submit Application';
+            document.body.style.cursor = 'default';
+            formSubmitting = false;
+        }
+    });
+</script>
+</body>
+</html>
