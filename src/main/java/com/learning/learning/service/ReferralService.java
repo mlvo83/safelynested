@@ -179,6 +179,8 @@ public class ReferralService {
         // Add participant notes as needs description if provided
         if (invite.getParticipantNotes() != null && !invite.getParticipantNotes().isEmpty()) {
             referral.setNeedsDescription("Participant notes: " + invite.getParticipantNotes());
+        } else {
+            referral.setNeedsDescription("Referral created from invite");
         }
 
         Referral savedReferral = referralRepository.save(referral);

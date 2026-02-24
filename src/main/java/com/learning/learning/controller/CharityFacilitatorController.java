@@ -3,10 +3,10 @@ package com.learning.learning.controller;
 import com.learning.learning.dto.BookingDto;
 import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.Charity;
-import com.learning.learning.entity.Location;
+import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.repository.BookingRepository;
-import com.learning.learning.repository.LocationRepository;
+import com.learning.learning.repository.CharityLocationRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.service.BookingService;
 import com.learning.learning.service.CharityService;
@@ -59,7 +59,7 @@ public class CharityFacilitatorController {
     private BookingRepository bookingRepository;
 
     @Autowired
-    private LocationRepository locationRepository;
+    private CharityLocationRepository charityLocationRepository;
 
     /**
      * Charity Facilitator Dashboard
@@ -296,8 +296,13 @@ public class CharityFacilitatorController {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setReferralId(referralId);
 
-        // Get all active locations for the dropdown
-        List<Location> locations = locationRepository.findByIsActiveTrueOrderByLocationNameAsc();
+        // Pre-select the location the participant chose (if any)
+        if (referral.getSelectedLocation() != null) {
+            bookingDto.setLocationId(referral.getSelectedLocation().getId());
+        }
+
+        // Get active locations for this charity
+        List<CharityLocation> locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(charityId);
 
         model.addAttribute("username", username);
         model.addAttribute("charity", charity);
@@ -332,7 +337,7 @@ public class CharityFacilitatorController {
         }
 
         if (bindingResult.hasErrors()) {
-            List<Location> locations = locationRepository.findByIsActiveTrueOrderByLocationNameAsc();
+            List<CharityLocation> locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(charityId);
             model.addAttribute("username", username);
             model.addAttribute("charity", charity);
             model.addAttribute("referral", referral);

@@ -2,11 +2,11 @@ package com.learning.learning.service;
 
 import com.learning.learning.dto.BookingDto;
 import com.learning.learning.entity.Booking;
-import com.learning.learning.entity.Location;
+import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.entity.User;
 import com.learning.learning.repository.BookingRepository;
-import com.learning.learning.repository.LocationRepository;
+import com.learning.learning.repository.CharityLocationRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class BookingService {
     private ReferralRepository referralRepository;
 
     @Autowired
-    private LocationRepository locationRepository;
+    private CharityLocationRepository charityLocationRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -48,8 +48,8 @@ public class BookingService {
             throw new RuntimeException("Can only create bookings for approved referrals");
         }
 
-        // Validate location
-        Location location = locationRepository.findById(bookingDto.getLocationId())
+        // Validate location (now uses CharityLocation)
+        CharityLocation charityLocation = charityLocationRepository.findById(bookingDto.getLocationId())
                 .orElseThrow(() -> new RuntimeException("Location not found"));
 
         // Get user
@@ -67,16 +67,12 @@ public class BookingService {
             throw new RuntimeException("Booking must be for at least 1 night");
         }
 
-        // Calculate cost if not provided
+        // Cost from form (no auto-calc since CharityLocation doesn't have nightly rate)
         BigDecimal cost = bookingDto.getCost();
-        if (cost == null && location.getNightlyRate() != null) {
-            cost = location.getNightlyRate().multiply(BigDecimal.valueOf(nights));
-        }
 
         // Create booking
         Booking booking = new Booking();
         booking.setReferral(referral);
-        booking.setLocation(location);
         booking.setAssignedBy(user);
         booking.setBookedByUser(user);
 
@@ -85,9 +81,9 @@ public class BookingService {
         booking.setParticipantPhone(referral.getParticipantPhone());
         booking.setParticipantEmail(referral.getParticipantEmail());
 
-        // Copy location info (for historical record)
-        booking.setLocationName(location.getLocationName());
-        booking.setLocationAddress(location.getAddress());
+        // Copy location info from CharityLocation (for historical record)
+        booking.setLocationName(charityLocation.getLocationName());
+        booking.setLocationAddress(charityLocation.getAddress());
 
         // Set dates
         booking.setCheckInDate(bookingDto.getCheckInDate());

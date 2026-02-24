@@ -5,9 +5,9 @@ package com.learning.learning.controller;
 
 import com.learning.learning.dto.BookingDto;
 import com.learning.learning.entity.Booking;
-import com.learning.learning.entity.Location;
+import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Referral;
-import com.learning.learning.repository.LocationRepository;
+import com.learning.learning.repository.CharityLocationRepository;
 import com.learning.learning.service.BookingService;
 import com.learning.learning.service.ReferralService;
 import jakarta.validation.Valid;
@@ -33,7 +33,7 @@ public class FacilitatorController {
     private BookingService bookingService;
 
     @Autowired
-    private LocationRepository locationRepository;
+    private CharityLocationRepository charityLocationRepository;
 
     /**
      * Facilitator Dashboard - Overview
@@ -158,8 +158,18 @@ public class FacilitatorController {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setReferralId(referralId);
 
-        // Get all active locations for the dropdown
-        List<Location> locations = locationRepository.findByIsActiveTrueOrderByLocationNameAsc();
+        // Pre-select the location the participant chose (if any)
+        if (referral.getSelectedLocation() != null) {
+            bookingDto.setLocationId(referral.getSelectedLocation().getId());
+        }
+
+        // Get active locations for the referral's charity
+        List<CharityLocation> locations;
+        if (referral.getCharity() != null) {
+            locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(referral.getCharity().getId());
+        } else {
+            locations = charityLocationRepository.findAllActiveLocationsOrderByCharityAndName();
+        }
 
         model.addAttribute("username", username);
         model.addAttribute("bookingDto", bookingDto);
@@ -185,7 +195,12 @@ public class FacilitatorController {
 
         if (bindingResult.hasErrors()) {
             Referral referral = referralService.getReferralById(bookingDto.getReferralId());
-            List<Location> locations = locationRepository.findByIsActiveTrueOrderByLocationNameAsc();
+            List<CharityLocation> locations;
+            if (referral.getCharity() != null) {
+                locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(referral.getCharity().getId());
+            } else {
+                locations = charityLocationRepository.findAllActiveLocationsOrderByCharityAndName();
+            }
             model.addAttribute("username", username);
             model.addAttribute("referral", referral);
             model.addAttribute("locations", locations);

@@ -145,7 +145,8 @@
 
         .action-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
+            white-space: nowrap;
         }
 
         .btn {
@@ -153,11 +154,12 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             transition: transform 0.2s;
             text-decoration: none;
             display: inline-block;
+            white-space: nowrap;
         }
 
         .btn:hover { transform: translateY(-2px); }
@@ -236,6 +238,13 @@
             color: white;
         }
 
+        td.location-cell {
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -245,6 +254,60 @@
         .empty-state h3 {
             color: #333;
             margin-bottom: 10px;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-box {
+            background: white;
+            border-radius: 12px;
+            padding: 40px 50px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #059669;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-box p {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .loading-box .loading-detail {
+            color: #666;
+            font-size: 13px;
+            font-weight: 400;
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -320,9 +383,10 @@
                     <span th:class="'badge badge-' + ${#strings.toLowerCase(referral.status)}"
                           th:text="${referral.status}">PENDING</span>
                 </td>
-                <td>
+                <td class="location-cell"
+                    th:title="${referral.selectedLocation != null} ? ${referral.selectedLocation.locationName} : 'Not selected'">
                     <span th:if="${referral.selectedLocation != null}" th:text="${referral.selectedLocation.locationName}">Location</span>
-                    <span th:if="${referral.selectedLocation == null}" class="text-muted">Not selected</span>
+                    <span th:if="${referral.selectedLocation == null}" style="color: #999;">Not selected</span>
                 </td>
                 <td th:text="${#temporals.format(referral.createdAt, 'yyyy-MM-dd')}">2024-01-01</td>
                 <td>
@@ -400,6 +464,15 @@
     </div>
 </div>
 
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <p id="loadingMessage">Processing...</p>
+        <p class="loading-detail" id="loadingDetail">Sending notification email, please wait.</p>
+    </div>
+</div>
+
 <script>
     function showApproveModal(referralId) {
         const form = document.getElementById('approveForm');
@@ -416,6 +489,28 @@
     function closeModal(modalId) {
         document.getElementById(modalId).style.display = 'none';
     }
+
+    function submitWithLoading(form, message, detail) {
+        // Hide modal, show loading overlay
+        closeModal('approveModal');
+        closeModal('rejectModal');
+        document.getElementById('loadingMessage').textContent = message;
+        document.getElementById('loadingDetail').textContent = detail;
+        document.getElementById('loadingOverlay').classList.add('active');
+
+        // Delay form submit so browser can paint the overlay first
+        setTimeout(function () { form.submit(); }, 50);
+    }
+
+    document.getElementById('approveForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitWithLoading(this, 'Approving Referral...', 'Sending approval notification email, please wait.');
+    });
+
+    document.getElementById('rejectForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        submitWithLoading(this, 'Rejecting Referral...', 'Sending rejection notification email, please wait.');
+    });
 
     window.onclick = function(event) {
         if (event.target.classList.contains('modal')) {
