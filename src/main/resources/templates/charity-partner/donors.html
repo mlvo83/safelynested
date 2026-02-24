@@ -138,7 +138,7 @@
                                         <i class="fas fa-user text-success"></i>
                                     </div>
                                     <div>
-                                        <strong th:text="${(donor.user.firstName ?: '') + ' ' + (donor.user.lastName ?: '')}">Donor Name</strong>
+                                        <strong th:text="${donor.displayName}">Donor Name</strong>
                                     </div>
                                 </div>
                             </td>
