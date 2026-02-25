@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donation Funding Report - Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .filter-bar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 180px;
+        }
+
+        .btn {
+            padding: 8px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+
+        .donation-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .donation-row:hover {
+            background: #f0f2ff;
+        }
+
+        .donation-row td:first-child {
+            position: relative;
+            padding-left: 35px;
+        }
+
+        .expand-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #667eea;
+            transition: transform 0.2s;
+        }
+
+        .donation-row.expanded .expand-icon {
+            transform: translateY(-50%) rotate(90deg);
+        }
+
+        .booking-details {
+            display: none;
+            background: #fafbff;
+        }
+
+        .booking-details.show {
+            display: table-row;
+        }
+
+        .booking-details td {
+            padding: 0 15px 15px 35px;
+        }
+
+        .booking-table {
+            width: 100%;
+            margin-top: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .booking-table th {
+            background: #eef0ff;
+            padding: 8px 12px;
+            font-size: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .booking-table td {
+            padding: 8px 12px;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #28a745; color: white; }
+        .badge-warning { background: #ffc107; color: #333; }
+        .badge-info { background: #17a2b8; color: white; }
+        .badge-danger { background: #dc3545; color: white; }
+        .badge-secondary { background: #6c757d; color: white; }
+        .badge-primary { background: #667eea; color: white; }
+
+        .progress-bar-container {
+            background: #e5e7eb;
+            border-radius: 4px;
+            height: 6px;
+            margin-top: 4px;
+            width: 100px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .progress-bar-fill {
+            border-radius: 4px;
+            height: 6px;
+            background: #10b981;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-bookings {
+            color: #999;
+            font-style: italic;
+            font-size: 13px;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Donation Funding Report</div>
+    <a th:href="@{/home}" class="nav-link">Back to Home</a>
+</nav>
+
+<div class="container">
+    <!-- Stats Row -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-value" th:text="${donationsWithStays}">0</div>
+            <div class="stat-label">Donations with Stays</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" th:text="${totalStaysFunded}">0</div>
+            <div class="stat-label">Total Stays Funded</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" th:text="'$' + ${#numbers.formatDecimal(totalAmountFunded, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+            <div class="stat-label">Total Amount Funded</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" th:text="'$' + ${#numbers.formatDecimal(totalAmountRemaining, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+            <div class="stat-label">Total Amount Remaining</div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <form th:action="@{/admin/funding-report}" method="get" class="filter-bar">
+        <div class="filter-group">
+            <label>Donor Name</label>
+            <input type="text" name="donorSearch" th:value="${donorSearch}" placeholder="Search by donor name...">
+        </div>
+        <div class="filter-group">
+            <label>Charity</label>
+            <select name="charityId">
+                <option value="">All Charities</option>
+                <option th:each="charity : ${charities}"
+                        th:value="${charity.id}"
+                        th:text="${charity.charityName}"
+                        th:selected="${selectedCharityId != null and selectedCharityId == charity.id}">
+                    Charity
+                </option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Status</label>
+            <select name="status">
+                <option value="">All Statuses</option>
+                <option value="PENDING" th:selected="${selectedStatus == 'PENDING'}">Pending</option>
+                <option value="VERIFIED" th:selected="${selectedStatus == 'VERIFIED'}">Verified</option>
+                <option value="ALLOCATED" th:selected="${selectedStatus == 'ALLOCATED'}">Allocated</option>
+                <option value="PARTIALLY_USED" th:selected="${selectedStatus == 'PARTIALLY_USED'}">Partially Used</option>
+                <option value="FULLY_USED" th:selected="${selectedStatus == 'FULLY_USED'}">Fully Used</option>
+                <option value="CANCELLED" th:selected="${selectedStatus == 'CANCELLED'}">Cancelled</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a th:href="@{/admin/funding-report}" class="btn btn-secondary">Clear</a>
+    </form>
+
+    <!-- Donations Table -->
+    <div class="card">
+        <div class="card-header">
+            Donations (<span th:text="${donations.size()}">0</span>)
+        </div>
+        <table th:if="${!donations.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Donor</th>
+                <th>Charity</th>
+                <th>Date</th>
+                <th>Net Amount</th>
+                <th>Amount Used</th>
+                <th>Balance</th>
+                <th>Stays</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            <th:block th:each="donation : ${donations}">
+                <!-- Donation Row -->
+                <tr class="donation-row" th:id="'row-' + ${donation.id}" th:onclick="'toggleBookings(' + ${donation.id} + ')'">
+                    <td>
+                        <span class="expand-icon">&#9654;</span>
+                        <span th:text="${donation.donor.displayName}">Donor Name</span>
+                    </td>
+                    <td th:text="${donation.charity.charityName}">Charity Name</td>
+                    <td th:text="${donation.donatedAt != null} ? ${#temporals.format(donation.donatedAt, 'MMM d, yyyy')} : '-'">Jan 1, 2024</td>
+                    <td th:text="'$' + ${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">$90.00</td>
+                    <td>
+                        <span th:text="'$' + ${#numbers.formatDecimal(donationAmountUsed[donation.id], 1, 'COMMA', 2, 'POINT')}">$0.00</span>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill"
+                                 th:style="'width: ' + ${donation.netAmount.doubleValue() > 0 ? (donationAmountUsed[donation.id].doubleValue() * 100 / donation.netAmount.doubleValue()) : 0} + '%'">
+                            </div>
+                        </div>
+                    </td>
+                    <td th:text="'$' + ${#numbers.formatDecimal(donation.netAmount.subtract(donationAmountUsed[donation.id]).max(T(java.math.BigDecimal).ZERO), 1, 'COMMA', 2, 'POINT')}">$90.00</td>
+                    <td>
+                        <span class="badge badge-primary" th:text="${donationBookings[donation.id].size()}">0</span>
+                    </td>
+                    <td>
+                        <span th:switch="${donation.status.name()}">
+                            <span th:case="'PENDING'" class="badge badge-warning">Pending</span>
+                            <span th:case="'VERIFIED'" class="badge badge-info">Verified</span>
+                            <span th:case="'ALLOCATED'" class="badge badge-info">Allocated</span>
+                            <span th:case="'PARTIALLY_USED'" class="badge badge-success">Partially Used</span>
+                            <span th:case="'FULLY_USED'" class="badge badge-success">Fully Used</span>
+                            <span th:case="'CANCELLED'" class="badge badge-danger">Cancelled</span>
+                            <span th:case="*" class="badge badge-secondary" th:text="${donation.status}">Status</span>
+                        </span>
+                    </td>
+                </tr>
+                <!-- Expanded Booking Details -->
+                <tr class="booking-details" th:id="'bookings-' + ${donation.id}">
+                    <td colspan="8">
+                        <div th:if="${donationBookings[donation.id].isEmpty()}" class="no-bookings">
+                            No stays funded yet from this donation.
+                        </div>
+                        <table th:unless="${donationBookings[donation.id].isEmpty()}" class="booking-table">
+                            <thead>
+                            <tr>
+                                <th>Location</th>
+                                <th>Participant</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Nights</th>
+                                <th>Funded Amount</th>
+                                <th>Booking Status</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="booking : ${donationBookings[donation.id]}">
+                                <td th:text="${booking.displayLocationName}">Location</td>
+                                <td th:text="${booking.displayParticipantName}">Participant</td>
+                                <td th:text="${booking.checkInDate}">2024-01-01</td>
+                                <td th:text="${booking.checkOutDate}">2024-01-03</td>
+                                <td th:text="${booking.nights}">2</td>
+                                <td th:text="${booking.fundedAmount != null} ? '$' + ${#numbers.formatDecimal(booking.fundedAmount, 1, 'COMMA', 2, 'POINT')} : '-'">$75.00</td>
+                                <td>
+                                    <span th:switch="${booking.bookingStatus.name()}">
+                                        <span th:case="'PENDING'" class="badge badge-warning">Pending</span>
+                                        <span th:case="'CONFIRMED'" class="badge badge-info">Confirmed</span>
+                                        <span th:case="'CHECKED_IN'" class="badge badge-primary">Checked In</span>
+                                        <span th:case="'CHECKED_OUT'" class="badge badge-secondary">Checked Out</span>
+                                        <span th:case="'COMPLETED'" class="badge badge-success">Completed</span>
+                                        <span th:case="'NO_SHOW'" class="badge badge-danger">No Show</span>
+                                        <span th:case="*" class="badge badge-secondary" th:text="${booking.bookingStatus}">Status</span>
+                                    </span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </th:block>
+            </tbody>
+        </table>
+        <div th:if="${donations.isEmpty()}" class="no-data">
+            <p>No donations found matching your criteria.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleBookings(donationId) {
+        var row = document.getElementById('row-' + donationId);
+        var details = document.getElementById('bookings-' + donationId);
+        row.classList.toggle('expanded');
+        details.classList.toggle('show');
+    }
+</script>
+</body>
+</html>

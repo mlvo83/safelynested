@@ -1,8 +1,10 @@
 package com.learning.learning.controller;
 
+import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.Donation;
 import com.learning.learning.entity.Donor;
+import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityRepository;
 import com.learning.learning.service.DonationService;
 import com.learning.learning.service.DonorDashboardService;
@@ -14,9 +16,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Controller for the Donor's own dashboard view.
@@ -42,6 +44,9 @@ public class DonorDashboardController {
 
     @Autowired
     private CharityRepository charityRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     // ========================================
     // DASHBOARD
@@ -110,12 +115,20 @@ public class DonorDashboardController {
             stats = donorDashboardService.getDashboardStats(donor.getId());
         }
 
+        // Compute usage per donation
+        java.util.Map<Long, java.math.BigDecimal> donationAmountUsed = new java.util.HashMap<>();
+        for (Donation donation : donations) {
+            java.math.BigDecimal used = bookingRepository.sumFundedAmountByDonationId(donation.getId());
+            donationAmountUsed.put(donation.getId(), used);
+        }
+
         model.addAttribute("donor", donor);
         model.addAttribute("donations", donations);
         model.addAttribute("stats", stats);
         model.addAttribute("charities", donor.getCharities());
         model.addAttribute("selectedCharityId", charityId);
         model.addAttribute("selectedCharity", selectedCharity);
+        model.addAttribute("donationAmountUsed", donationAmountUsed);
 
         return "donor/donations";
     }
@@ -138,9 +151,13 @@ public class DonorDashboardController {
         List<SituationService.DonorSituationView> situations =
                 situationService.getSituationsForDonation(id);
 
+        // Get bookings funded by this donation (privacy-safe: no participant PII)
+        List<Booking> fundedBookings = bookingRepository.findByFundingDonationId(id);
+
         model.addAttribute("donor", donor);
         model.addAttribute("donation", donation);
         model.addAttribute("situations", situations);
+        model.addAttribute("fundedBookings", fundedBookings);
 
         return "donor/donation-detail";
     }
@@ -164,11 +181,87 @@ public class DonorDashboardController {
         // Get overall stats
         DonorDashboardService.DonorDashboardStats stats = donorDashboardService.getDashboardStats(donor.getId());
 
+        // Get all bookings funded by this donor's donations
+        List<Donation> donations = donationService.getDonationsForDonor(donor.getId());
+        List<Booking> fundedBookings = new java.util.ArrayList<>();
+        java.math.BigDecimal totalAmountFunded = java.math.BigDecimal.ZERO;
+        for (Donation donation : donations) {
+            List<Booking> bookings = bookingRepository.findByFundingDonationId(donation.getId());
+            for (Booking b : bookings) {
+                if (b.getBookingStatus() != Booking.BookingStatus.CANCELLED) {
+                    fundedBookings.add(b);
+                    if (b.getFundedAmount() != null) {
+                        totalAmountFunded = totalAmountFunded.add(b.getFundedAmount());
+                    }
+                }
+            }
+        }
+
         model.addAttribute("donor", donor);
         model.addAttribute("situations", situations);
         model.addAttribute("stats", stats);
+        model.addAttribute("fundedBookings", fundedBookings);
+        model.addAttribute("totalAmountFunded", totalAmountFunded);
 
         return "donor/impact";
+    }
+
+    // ========================================
+    // FUNDING REPORT
+    // ========================================
+
+    /**
+     * View funding report - which donations funded which stays (privacy-safe)
+     */
+    @GetMapping("/funding-report")
+    public String fundingReport(Model model, Principal principal) {
+        String username = principal.getName();
+        Donor donor = donorService.getDonorByUsername(username);
+
+        List<Donation> donations = donationService.getDonationsForDonor(donor.getId());
+
+        // Build donation -> bookings map (privacy-safe: no participant PII)
+        Map<Long, List<Booking>> donationBookings = new LinkedHashMap<>();
+        Map<Long, BigDecimal> donationAmountUsed = new HashMap<>();
+        int totalStaysFunded = 0;
+        BigDecimal totalAmountFundedAll = BigDecimal.ZERO;
+        BigDecimal totalAmountUsedAll = BigDecimal.ZERO;
+
+        for (Donation donation : donations) {
+            List<Booking> bookings = bookingRepository.findByFundingDonationId(donation.getId())
+                    .stream()
+                    .filter(b -> b.getBookingStatus() != Booking.BookingStatus.CANCELLED)
+                    .collect(java.util.stream.Collectors.toList());
+            donationBookings.put(donation.getId(), bookings);
+
+            BigDecimal used = bookingRepository.sumFundedAmountByDonationId(donation.getId());
+            donationAmountUsed.put(donation.getId(), used);
+
+            totalStaysFunded += bookings.size();
+            if (donation.getNetAmount() != null) {
+                totalAmountFundedAll = totalAmountFundedAll.add(donation.getNetAmount());
+            }
+            totalAmountUsedAll = totalAmountUsedAll.add(used);
+        }
+
+        BigDecimal totalAmountRemaining = totalAmountFundedAll.subtract(totalAmountUsedAll);
+        if (totalAmountRemaining.compareTo(BigDecimal.ZERO) < 0) {
+            totalAmountRemaining = BigDecimal.ZERO;
+        }
+
+        DonorDashboardService.DonorDashboardStats stats = donorDashboardService.getDashboardStats(donor.getId());
+
+        model.addAttribute("donor", donor);
+        model.addAttribute("donations", donations);
+        model.addAttribute("donationBookings", donationBookings);
+        model.addAttribute("donationAmountUsed", donationAmountUsed);
+        model.addAttribute("totalStaysFunded", totalStaysFunded);
+        model.addAttribute("totalAmountFunded", totalAmountFundedAll);
+        model.addAttribute("totalAmountUsed", totalAmountUsedAll);
+        model.addAttribute("totalAmountRemaining", totalAmountRemaining);
+        model.addAttribute("stats", stats);
+
+        return "donor/funding-report";
     }
 
     // ========================================

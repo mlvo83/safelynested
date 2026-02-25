@@ -171,10 +171,17 @@ public class FacilitatorController {
             locations = charityLocationRepository.findAllActiveLocationsOrderByCharityAndName();
         }
 
+        // Get available donations for this charity
+        List<BookingService.AvailableDonation> availableDonations = java.util.Collections.emptyList();
+        if (referral.getCharity() != null) {
+            availableDonations = bookingService.getAvailableDonationsForCharity(referral.getCharity().getId());
+        }
+
         model.addAttribute("username", username);
         model.addAttribute("bookingDto", bookingDto);
         model.addAttribute("referral", referral);
         model.addAttribute("locations", locations);
+        model.addAttribute("availableDonations", availableDonations);
 
         return "facilitator/booking-form";
     }
@@ -196,14 +203,17 @@ public class FacilitatorController {
         if (bindingResult.hasErrors()) {
             Referral referral = referralService.getReferralById(bookingDto.getReferralId());
             List<CharityLocation> locations;
+            List<BookingService.AvailableDonation> availableDonations = java.util.Collections.emptyList();
             if (referral.getCharity() != null) {
                 locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(referral.getCharity().getId());
+                availableDonations = bookingService.getAvailableDonationsForCharity(referral.getCharity().getId());
             } else {
                 locations = charityLocationRepository.findAllActiveLocationsOrderByCharityAndName();
             }
             model.addAttribute("username", username);
             model.addAttribute("referral", referral);
             model.addAttribute("locations", locations);
+            model.addAttribute("availableDonations", availableDonations);
             return "facilitator/booking-form";
         }
 

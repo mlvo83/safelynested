@@ -304,11 +304,16 @@ public class CharityFacilitatorController {
         // Get active locations for this charity
         List<CharityLocation> locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(charityId);
 
+        // Get available donations for this charity
+        List<BookingService.AvailableDonation> availableDonations =
+                bookingService.getAvailableDonationsForCharity(charityId);
+
         model.addAttribute("username", username);
         model.addAttribute("charity", charity);
         model.addAttribute("bookingDto", bookingDto);
         model.addAttribute("referral", referral);
         model.addAttribute("locations", locations);
+        model.addAttribute("availableDonations", availableDonations);
 
         return "charity-facilitator/booking-form";
     }
@@ -338,10 +343,13 @@ public class CharityFacilitatorController {
 
         if (bindingResult.hasErrors()) {
             List<CharityLocation> locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(charityId);
+            List<BookingService.AvailableDonation> availableDonations =
+                    bookingService.getAvailableDonationsForCharity(charityId);
             model.addAttribute("username", username);
             model.addAttribute("charity", charity);
             model.addAttribute("referral", referral);
             model.addAttribute("locations", locations);
+            model.addAttribute("availableDonations", availableDonations);
             return "charity-facilitator/booking-form";
         }
 

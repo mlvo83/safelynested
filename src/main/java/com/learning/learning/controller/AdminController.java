@@ -1,9 +1,13 @@
 package com.learning.learning.controller;
 
 import com.learning.learning.dto.UserDto;
+import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.Charity;
+import com.learning.learning.entity.Donation;
 import com.learning.learning.entity.User;
+import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityRepository;
+import com.learning.learning.repository.DonationRepository;
 import com.learning.learning.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +17,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -25,6 +30,12 @@ public class AdminController {
 
     @Autowired
     private CharityRepository charityRepository;
+
+    @Autowired
+    private DonationRepository donationRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     // ========================================
     // USER MANAGEMENT
@@ -315,6 +326,91 @@ public class AdminController {
         }
 
         return "redirect:/admin/charities";
+    }
+
+    // ========================================
+    // FUNDING REPORT
+    // ========================================
+
+    @GetMapping("/funding-report")
+    public String fundingReport(
+            @RequestParam(required = false) String donorSearch,
+            @RequestParam(required = false) Long charityId,
+            @RequestParam(required = false) String status,
+            Model model) {
+
+        // Load all donations with donor and charity eagerly fetched
+        List<Donation> allDonations = donationRepository.findAllWithDonorAndCharity();
+
+        // Apply filters
+        List<Donation> filtered = allDonations;
+
+        if (donorSearch != null && !donorSearch.isBlank()) {
+            String search = donorSearch.toLowerCase();
+            filtered = filtered.stream()
+                    .filter(d -> d.getDonor().getDisplayName().toLowerCase().contains(search))
+                    .collect(Collectors.toList());
+        }
+
+        if (charityId != null) {
+            filtered = filtered.stream()
+                    .filter(d -> d.getCharity().getId().equals(charityId))
+                    .collect(Collectors.toList());
+        }
+
+        if (status != null && !status.isBlank()) {
+            filtered = filtered.stream()
+                    .filter(d -> d.getStatus().name().equals(status))
+                    .collect(Collectors.toList());
+        }
+
+        // Build donation -> bookings map and compute stats
+        Map<Long, List<Booking>> donationBookings = new LinkedHashMap<>();
+        Map<Long, BigDecimal> donationAmountUsed = new HashMap<>();
+        int totalStaysFunded = 0;
+        BigDecimal totalAmountFunded = BigDecimal.ZERO;
+        BigDecimal totalAmountUsedAll = BigDecimal.ZERO;
+        int donationsWithStays = 0;
+
+        for (Donation donation : filtered) {
+            List<Booking> bookings = bookingRepository.findByFundingDonationId(donation.getId())
+                    .stream()
+                    .filter(b -> b.getBookingStatus() != Booking.BookingStatus.CANCELLED)
+                    .collect(Collectors.toList());
+            donationBookings.put(donation.getId(), bookings);
+
+            BigDecimal used = bookingRepository.sumFundedAmountByDonationId(donation.getId());
+            donationAmountUsed.put(donation.getId(), used);
+
+            if (!bookings.isEmpty()) {
+                donationsWithStays++;
+                totalStaysFunded += bookings.size();
+            }
+            if (donation.getNetAmount() != null) {
+                totalAmountFunded = totalAmountFunded.add(donation.getNetAmount());
+            }
+            totalAmountUsedAll = totalAmountUsedAll.add(used);
+        }
+
+        BigDecimal totalAmountRemaining = totalAmountFunded.subtract(totalAmountUsedAll);
+        if (totalAmountRemaining.compareTo(BigDecimal.ZERO) < 0) {
+            totalAmountRemaining = BigDecimal.ZERO;
+        }
+
+        model.addAttribute("donations", filtered);
+        model.addAttribute("donationBookings", donationBookings);
+        model.addAttribute("donationAmountUsed", donationAmountUsed);
+        model.addAttribute("donationsWithStays", donationsWithStays);
+        model.addAttribute("totalStaysFunded", totalStaysFunded);
+        model.addAttribute("totalAmountFunded", totalAmountFunded);
+        model.addAttribute("totalAmountRemaining", totalAmountRemaining);
+        model.addAttribute("totalAmountUsed", totalAmountUsedAll);
+        model.addAttribute("charities", charityRepository.findByIsActiveTrue());
+        model.addAttribute("donorSearch", donorSearch);
+        model.addAttribute("selectedCharityId", charityId);
+        model.addAttribute("selectedStatus", status);
+
+        return "admin/funding-report";
     }
 
     // ========================================

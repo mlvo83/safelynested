@@ -34,27 +34,9 @@
                 <div class="col-md-3">
                     <div class="card stat-card shadow-sm h-100">
                         <div class="card-body text-center">
-                            <i class="fas fa-users fa-2x text-success mb-2"></i>
-                            <h3 class="mb-0" th:text="${situations != null ? situations.size() : 0}">0</h3>
-                            <small class="text-muted">Families Helped</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card stat-card shadow-sm h-100">
-                        <div class="card-body text-center">
                             <i class="fas fa-bed fa-2x text-primary mb-2"></i>
-                            <h3 class="mb-0" th:text="${stats.totalNightsFunded}">0</h3>
-                            <small class="text-muted">Total Nights Funded</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card stat-card shadow-sm h-100">
-                        <div class="card-body text-center">
-                            <i class="fas fa-check-circle fa-2x text-info mb-2"></i>
-                            <h3 class="mb-0" th:text="${stats.nightsUsed}">0</h3>
-                            <small class="text-muted">Nights Used</small>
+                            <h3 class="mb-0" th:text="${fundedBookings != null ? fundedBookings.size() : 0}">0</h3>
+                            <small class="text-muted">Stays Funded</small>
                         </div>
                     </div>
                 </div>
@@ -62,6 +44,24 @@
                     <div class="card stat-card shadow-sm h-100">
                         <div class="card-body text-center">
                             <i class="fas fa-dollar-sign fa-2x text-success mb-2"></i>
+                            <h3 class="mb-0" th:text="'$' + ${#numbers.formatDecimal(totalAmountFunded, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
+                            <small class="text-muted">Total Amount Funded</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-donate fa-2x text-info mb-2"></i>
+                            <h3 class="mb-0" th:text="${stats.donationCount}">0</h3>
+                            <small class="text-muted">Total Donations</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-hand-holding-usd fa-2x text-success mb-2"></i>
                             <h3 class="mb-0" th:text="'$' + ${#numbers.formatDecimal(stats.netFunds, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
                             <small class="text-muted">Net to Housing</small>
                         </div>
@@ -76,8 +76,56 @@
                 You'll see general situation descriptions without identifying information.
             </div>
 
+            <!-- Stays Funded by Donations -->
+            <div th:if="${fundedBookings != null and !fundedBookings.isEmpty()}" class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="fas fa-bed me-2 text-primary"></i>Stays Funded by Your Donations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        <small>To protect privacy, participant details are not shown.</small>
+                    </div>
+                    <div class="row g-3">
+                        <div th:each="booking : ${fundedBookings}" class="col-md-6">
+                            <div class="card h-100 border">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-map-marker-alt me-1 text-primary"></i>
+                                            <span th:text="${booking.locationName ?: 'Location'}">Location</span>
+                                        </h6>
+                                        <span th:switch="${booking.bookingStatus.name()}">
+                                            <span th:case="'PENDING'" class="badge bg-warning text-dark">Pending</span>
+                                            <span th:case="'CONFIRMED'" class="badge bg-success">Confirmed</span>
+                                            <span th:case="'CHECKED_IN'" class="badge bg-primary">Checked In</span>
+                                            <span th:case="'COMPLETED'" class="badge bg-success">Completed</span>
+                                            <span th:case="*" class="badge bg-secondary" th:text="${booking.bookingStatus}">Status</span>
+                                        </span>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <div class="mb-1">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            <span th:text="${booking.checkInDate}">2024-01-01</span> to <span th:text="${booking.checkOutDate}">2024-01-03</span>
+                                        </div>
+                                        <div class="mb-1">
+                                            <i class="fas fa-moon me-1"></i>
+                                            <span th:text="${booking.nights}">2</span> nights
+                                        </div>
+                                        <div th:if="${booking.fundedAmount != null}">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            $<span th:text="${#numbers.formatDecimal(booking.fundedAmount, 1, 'COMMA', 2, 'POINT')}">150.00</span> funded
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- No Situations Message -->
-            <div th:if="${situations == null or situations.isEmpty()}" class="text-center py-5">
+            <div th:if="${(situations == null or situations.isEmpty()) and (fundedBookings == null or fundedBookings.isEmpty())}" class="text-center py-5">
                 <i class="fas fa-heart fa-4x text-muted mb-3"></i>
                 <h4 class="text-muted">No Situations Yet</h4>
                 <p class="text-muted">Once your donations are allocated to help families, you'll see their anonymized stories here.</p>

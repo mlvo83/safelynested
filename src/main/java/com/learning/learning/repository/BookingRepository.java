@@ -10,8 +10,10 @@ import com.learning.learning.entity.Referral;
 import com.learning.learning.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -65,4 +67,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT COUNT(b) FROM Booking b WHERE b.referral.charity.id = :charityId AND b.bookingStatus = :status")
     Long countByCharityIdAndStatus(Long charityId, Booking.BookingStatus status);
+
+    // Donation funding queries
+    @Query("SELECT COALESCE(SUM(b.fundedAmount), 0) FROM Booking b WHERE b.fundingDonation.id = :donationId AND b.bookingStatus != 'CANCELLED'")
+    BigDecimal sumFundedAmountByDonationId(@Param("donationId") Long donationId);
+
+    List<Booking> findByFundingDonationId(Long donationId);
+
+    @Query("SELECT COUNT(b) FROM Booking b WHERE b.fundingDonation.id = :donationId AND b.bookingStatus != :status")
+    Long countByFundingDonationIdAndBookingStatusNot(@Param("donationId") Long donationId, @Param("status") Booking.BookingStatus status);
 }

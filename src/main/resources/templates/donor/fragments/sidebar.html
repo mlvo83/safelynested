@@ -5,7 +5,7 @@
 <nav th:fragment="sidebar(activePage)" class="col-md-3 col-lg-2 d-md-block sidebar collapse py-3">
     <div class="text-center mb-4">
         <i class="fas fa-hand-holding-heart text-white fa-3x mb-2"></i>
-        <h6 class="text-white" th:text="${donor?.user?.firstName} ?: 'Donor'">Donor Name</h6>
+        <h6 class="text-white" th:text="${donor?.displayName} ?: 'Donor'">Donor Name</h6>
         <small class="text-white-50">Donor Portal</small>
     </div>
     <ul class="nav flex-column">
@@ -22,6 +22,11 @@
         <li class="nav-item">
             <a th:class="${activePage == 'impact'} ? 'nav-link active' : 'nav-link'" th:href="@{/donor/impact}">
                 <i class="fas fa-heart me-2"></i> My Impact
+            </a>
+        </li>
+        <li class="nav-item">
+            <a th:class="${activePage == 'funding-report'} ? 'nav-link active' : 'nav-link'" th:href="@{/donor/funding-report}">
+                <i class="fas fa-file-invoice-dollar me-2"></i> Funding Report
             </a>
         </li>
         <li class="nav-item">

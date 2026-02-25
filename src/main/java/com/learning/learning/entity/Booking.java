@@ -138,6 +138,14 @@ public class Booking {
     @Column(name = "request_id")
     private Long requestId;
 
+    // Donation funding
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "funding_donation_id")
+    private Donation fundingDonation;
+
+    @Column(name = "funded_amount", precision = 10, scale = 2)
+    private BigDecimal fundedAmount;
+
     // Timestamps
     @Column(name = "created_at")
     private LocalDateTime createdAt;

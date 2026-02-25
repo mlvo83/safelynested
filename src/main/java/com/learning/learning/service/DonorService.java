@@ -331,6 +331,17 @@ public class DonorService {
     }
 
     /**
+     * Update donor password
+     */
+    @Transactional
+    public void updateDonorPassword(Long donorId, String newPassword) {
+        Donor donor = getDonorById(donorId);
+        User user = donor.getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    /**
      * Update all charity assignments at once (replaces existing)
      */
     @Transactional

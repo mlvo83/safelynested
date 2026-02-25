@@ -58,8 +58,8 @@
                 <div class="col-md-3">
                     <div class="card stat-card shadow-sm">
                         <div class="card-body text-center">
-                            <h3 class="text-info mb-0" th:text="${stats.totalNightsFunded}">0</h3>
-                            <small class="text-muted">Nights Funded</small>
+                            <h3 class="text-info mb-0" th:text="${stats.staysFunded}">0</h3>
+                            <small class="text-muted">Stays Funded</small>
                         </div>
                     </div>
                 </div>
@@ -91,7 +91,6 @@
                                     <th>Date</th>
                                     <th>Gross Amount</th>
                                     <th>Net Amount</th>
-                                    <th>Nights</th>
                                     <th>Status</th>
                                 </tr>
                                 </thead>
@@ -103,9 +102,6 @@
                                     </td>
                                     <td class="text-success">
                                         <span th:text="'$' + ${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">$90.00</span>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-primary" th:text="${donation.nightsFunded} + ' nights'">3 nights</span>
                                     </td>
                                     <td>
                                         <span th:switch="${donation.status.name()}">

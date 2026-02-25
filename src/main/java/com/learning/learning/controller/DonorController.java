@@ -1,10 +1,12 @@
 package com.learning.learning.controller;
 
+import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.Donation;
 import com.learning.learning.entity.Donor;
 import com.learning.learning.entity.DonorSetupRequest;
 import com.learning.learning.entity.User;
+import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityRepository;
 import com.learning.learning.repository.UserRepository;
 import com.learning.learning.service.DonationService;
@@ -20,7 +22,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controller for Admin management of Donors and Donations.
@@ -48,6 +52,9 @@ public class DonorController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     // ========================================
     // DONOR LIST
@@ -139,10 +146,26 @@ public class DonorController {
         List<Donation> donations = donationService.getDonationsForDonor(id);
         DonorDashboardService.DonorDashboardStats stats = donorDashboardService.getDashboardStats(id);
 
+        // Compute donation usage stats for each donation
+        Map<Long, Map<String, Object>> donationUsage = new HashMap<>();
+        for (Donation donation : donations) {
+            Map<String, Object> usage = new HashMap<>();
+            Long bookingCount = bookingRepository.countByFundingDonationIdAndBookingStatusNot(
+                    donation.getId(), Booking.BookingStatus.CANCELLED);
+            BigDecimal amountUsed = bookingRepository.sumFundedAmountByDonationId(donation.getId());
+            BigDecimal netAmount = donation.getNetAmount() != null ? donation.getNetAmount() : BigDecimal.ZERO;
+            BigDecimal amountRemaining = netAmount.subtract(amountUsed);
+            usage.put("bookingCount", bookingCount);
+            usage.put("amountUsed", amountUsed);
+            usage.put("amountRemaining", amountRemaining);
+            donationUsage.put(donation.getId(), usage);
+        }
+
         model.addAttribute("donor", donor);
         model.addAttribute("donations", donations);
         model.addAttribute("stats", stats);
         model.addAttribute("charities", charityRepository.findByIsActiveTrue());
+        model.addAttribute("donationUsage", donationUsage);
 
         return "admin/donor-detail";
     }
@@ -178,6 +201,7 @@ public class DonorController {
             // Other
             @RequestParam(required = false) String verificationNotes,
             @RequestParam(required = false) List<Long> charityIds,
+            @RequestParam(required = false) String newPassword,
             RedirectAttributes redirectAttributes) {
 
         try {
@@ -188,6 +212,15 @@ public class DonorController {
                         businessName, contactName, taxId, verificationNotes);
             } else {
                 donorService.updateDonor(id, firstName, lastName, email, phone, verificationNotes);
+            }
+
+            // Update password if provided
+            if (newPassword != null && !newPassword.isBlank()) {
+                if (newPassword.length() < 6) {
+                    redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters.");
+                    return "redirect:/admin/donors/" + id + "/edit";
+                }
+                donorService.updateDonorPassword(id, newPassword);
             }
 
             // Update charity assignments

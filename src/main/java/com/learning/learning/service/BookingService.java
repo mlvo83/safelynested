@@ -3,12 +3,16 @@ package com.learning.learning.service;
 import com.learning.learning.dto.BookingDto;
 import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.CharityLocation;
+import com.learning.learning.entity.Donation;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.entity.User;
 import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityLocationRepository;
+import com.learning.learning.repository.DonationRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +22,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class BookingService {
+
+    private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
 
     @Autowired
     private BookingRepository bookingRepository;
@@ -34,6 +41,12 @@ public class BookingService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private DonationRepository donationRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     /**
      * Create a new booking
@@ -119,6 +132,33 @@ public class BookingService {
         booking.setExternalBookingReference(bookingDto.getExternalBookingReference());
         booking.setExpiresAt(bookingDto.getExpiresAt());
 
+        // Handle donation funding
+        if (bookingDto.getFundingDonationId() != null) {
+            Donation donation = donationRepository.findById(bookingDto.getFundingDonationId())
+                    .orElseThrow(() -> new RuntimeException("Funding donation not found"));
+
+            BigDecimal usedAmount = bookingRepository.sumFundedAmountByDonationId(donation.getId());
+            BigDecimal totalAvailable = donation.getNetAmount() != null ? donation.getNetAmount() : BigDecimal.ZERO;
+            BigDecimal remainingBalance = totalAvailable.subtract(usedAmount);
+
+            BigDecimal bookingCost = cost != null ? cost : BigDecimal.ZERO;
+            if (bookingCost.compareTo(remainingBalance) > 0) {
+                throw new RuntimeException("Not enough donation funds available. Booking cost: $" + bookingCost + ", Available: $" + remainingBalance);
+            }
+
+            booking.setFundingDonation(donation);
+            booking.setFundedAmount(bookingCost);
+            booking.setPaymentStatus(Booking.PaymentStatus.PROGRAM_FUNDED);
+            booking.setPaymentMethod("PROGRAM_FUNDED");
+            booking.setPaidBy(donation.getDonor().getDisplayName());
+
+            // Update donation status
+            if (donation.getStatus() == Donation.DonationStatus.VERIFIED) {
+                donation.setStatus(Donation.DonationStatus.ALLOCATED);
+                donationRepository.save(donation);
+            }
+        }
+
         // Save booking
         Booking savedBooking = bookingRepository.save(booking);
 
@@ -128,6 +168,15 @@ public class BookingService {
             savedBooking.setConfirmationCode(confirmationCode);
             savedBooking.setConfirmationNumber(confirmationCode);
             savedBooking = bookingRepository.save(savedBooking);
+        }
+
+        // Send booking confirmation email
+        if (savedBooking.getParticipantEmail() != null && !savedBooking.getParticipantEmail().isEmpty()) {
+            try {
+                emailService.sendBookingConfirmationEmail(savedBooking);
+            } catch (Exception e) {
+                logger.error("Failed to send booking confirmation email: {}", e.getMessage());
+            }
         }
 
         return savedBooking;
@@ -271,7 +320,14 @@ public class BookingService {
         String existingNotes = booking.getAdminNotes() != null ? booking.getAdminNotes() + "\n\n" : "";
         booking.setAdminNotes(existingNotes + LocalDateTime.now() + ": CANCELLED - " + reason);
 
-        return bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
+
+        // Recalculate donation status if this booking was donation-funded
+        if (booking.getFundingDonation() != null) {
+            recalculateDonationStatus(booking.getFundingDonation().getId());
+        }
+
+        return savedBooking;
     }
 
     /**
@@ -325,6 +381,68 @@ public class BookingService {
         stats.setTotal(bookingRepository.count());
         return stats;
     }
+
+    /**
+     * Get available donations for a charity that can fund bookings
+     */
+    @Transactional(readOnly = true)
+    public List<AvailableDonation> getAvailableDonationsForCharity(Long charityId) {
+        List<Donation> donations = donationRepository.findAvailableDonationsForCharity(charityId);
+        List<AvailableDonation> available = new ArrayList<>();
+
+        for (Donation donation : donations) {
+            BigDecimal usedAmount = bookingRepository.sumFundedAmountByDonationId(donation.getId());
+            BigDecimal totalNet = donation.getNetAmount() != null ? donation.getNetAmount() : BigDecimal.ZERO;
+            BigDecimal remaining = totalNet.subtract(usedAmount);
+
+            if (remaining.compareTo(BigDecimal.ZERO) > 0) {
+                available.add(new AvailableDonation(
+                        donation.getId(),
+                        donation.getDonor().getDisplayName(),
+                        donation.getDonatedAt(),
+                        totalNet,
+                        remaining
+                ));
+            }
+        }
+
+        return available;
+    }
+
+    /**
+     * Recalculate a donation's status after booking changes
+     */
+    private void recalculateDonationStatus(Long donationId) {
+        Donation donation = donationRepository.findById(donationId).orElse(null);
+        if (donation == null) return;
+
+        BigDecimal usedAmount = bookingRepository.sumFundedAmountByDonationId(donationId);
+        BigDecimal totalNet = donation.getNetAmount() != null ? donation.getNetAmount() : BigDecimal.ZERO;
+
+        if (usedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            // No active bookings using this donation - revert to VERIFIED
+            if (donation.getStatus() == Donation.DonationStatus.ALLOCATED ||
+                donation.getStatus() == Donation.DonationStatus.PARTIALLY_USED) {
+                donation.setStatus(Donation.DonationStatus.VERIFIED);
+                donationRepository.save(donation);
+            }
+        } else if (usedAmount.compareTo(totalNet) >= 0) {
+            donation.setStatus(Donation.DonationStatus.FULLY_USED);
+            donationRepository.save(donation);
+        } else {
+            donation.setStatus(Donation.DonationStatus.PARTIALLY_USED);
+            donationRepository.save(donation);
+        }
+    }
+
+    // DTO for available donations
+    public record AvailableDonation(
+            Long donationId,
+            String donorName,
+            LocalDateTime donatedAt,
+            BigDecimal netAmount,
+            BigDecimal remainingBalance
+    ) {}
 
     /**
      * Generate confirmation code

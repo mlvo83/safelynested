@@ -56,6 +56,9 @@ public class BookingDto {
     // Status
     private String bookingStatus;
 
+    // Donation funding
+    private Long fundingDonationId;
+
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime expiresAt;
 }

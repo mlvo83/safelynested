@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funding Report - Donor Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <th:block th:replace="~{donor/fragments/sidebar :: sidebar-styles}"></th:block>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <th:block th:replace="~{donor/fragments/sidebar :: sidebar('funding-report')}"></th:block>
+
+        <!-- Main Content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-1">
+                            <li class="breadcrumb-item"><a th:href="@{/donor/dashboard}">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Funding Report</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2"><i class="fas fa-file-invoice-dollar me-2 text-success"></i>Funding Report</h1>
+                    <p class="text-muted mb-0">See exactly which stays your donations have funded</p>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-donate fa-2x text-success mb-2"></i>
+                            <h3 class="mb-0" th:text="'$' + ${#numbers.formatDecimal(stats.totalDonated, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
+                            <small class="text-muted">Total Donated</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-bed fa-2x text-primary mb-2"></i>
+                            <h3 class="mb-0" th:text="${totalStaysFunded}">0</h3>
+                            <small class="text-muted">Stays Funded</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
+                            <h3 class="mb-0" th:text="'$' + ${#numbers.formatDecimal(totalAmountUsed, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
+                            <small class="text-muted">Amount Used</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card shadow-sm h-100">
+                        <div class="card-body text-center">
+                            <i class="fas fa-wallet fa-2x text-warning mb-2"></i>
+                            <h3 class="mb-0" th:text="'$' + ${#numbers.formatDecimal(totalAmountRemaining, 1, 'COMMA', 2, 'POINT')}">$0.00</h3>
+                            <small class="text-muted">Balance Remaining</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy Note -->
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-shield-alt me-2"></i>
+                <strong>Privacy Protected:</strong> To protect the privacy of those we help, participant details are not shown.
+                You'll see stay locations, dates, and funded amounts only.
+            </div>
+
+            <!-- Donation Cards -->
+            <div th:if="${donations.isEmpty()}" class="text-center py-5">
+                <i class="fas fa-file-invoice-dollar fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No Donations Yet</h4>
+                <p class="text-muted">Once you have donations recorded, you'll see which stays they've funded here.</p>
+                <a th:href="@{/donor/donations}" class="btn btn-outline-success">
+                    <i class="fas fa-donate me-1"></i> View Your Donations
+                </a>
+            </div>
+
+            <div th:each="donation : ${donations}" class="card shadow-sm mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">
+                            <i class="fas fa-hand-holding-usd me-2 text-success"></i>
+                            Donation on <span th:text="${donation.donatedAt != null} ? ${#temporals.format(donation.donatedAt, 'MMM d, yyyy')} : 'N/A'">Jan 1, 2024</span>
+                            <span class="text-muted ms-2" th:text="'to ' + ${donation.charity.charityName}">to Charity</span>
+                        </h6>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">$90.00</span>
+                        <span th:switch="${donation.status.name()}">
+                            <span th:case="'PENDING'" class="badge bg-warning text-dark">Pending</span>
+                            <span th:case="'VERIFIED'" class="badge bg-info">Verified</span>
+                            <span th:case="'ALLOCATED'" class="badge bg-info">Allocated</span>
+                            <span th:case="'PARTIALLY_USED'" class="badge bg-success">Partially Used</span>
+                            <span th:case="'FULLY_USED'" class="badge bg-success">Fully Used</span>
+                            <span th:case="'CANCELLED'" class="badge bg-danger">Cancelled</span>
+                            <span th:case="*" class="badge bg-secondary" th:text="${donation.status}">Status</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Usage Progress -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>
+                                $<span th:text="${#numbers.formatDecimal(donationAmountUsed[donation.id], 1, 'COMMA', 2, 'POINT')}">0.00</span> used
+                                of $<span th:text="${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">90.00</span>
+                            </span>
+                            <span th:text="${donation.netAmount.doubleValue() > 0 ? T(Math).round(donationAmountUsed[donation.id].doubleValue() * 100 / donation.netAmount.doubleValue()) : 0} + '%'">0%</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 th:style="'width: ' + ${donation.netAmount.doubleValue() > 0 ? (donationAmountUsed[donation.id].doubleValue() * 100 / donation.netAmount.doubleValue()) : 0} + '%'">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Funded Stays Table -->
+                    <div th:if="${donationBookings[donation.id] != null and !donationBookings[donation.id].isEmpty()}">
+                        <h6 class="text-muted mb-2"><i class="fas fa-bed me-1"></i> Funded Stays (<span th:text="${donationBookings[donation.id].size()}">0</span>)</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>Nights</th>
+                                    <th>Funded Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="booking : ${donationBookings[donation.id]}">
+                                    <td>
+                                        <i class="fas fa-map-marker-alt me-1 text-primary"></i>
+                                        <span th:text="${booking.displayLocationName}">Location</span>
+                                    </td>
+                                    <td th:text="${booking.checkInDate}">2024-01-01</td>
+                                    <td th:text="${booking.checkOutDate}">2024-01-03</td>
+                                    <td th:text="${booking.nights}">2</td>
+                                    <td th:text="${booking.fundedAmount != null} ? '$' + ${#numbers.formatDecimal(booking.fundedAmount, 1, 'COMMA', 2, 'POINT')} : '-'">$75.00</td>
+                                    <td>
+                                        <span th:switch="${booking.bookingStatus.name()}">
+                                            <span th:case="'PENDING'" class="badge bg-warning text-dark">Pending</span>
+                                            <span th:case="'CONFIRMED'" class="badge bg-success">Confirmed</span>
+                                            <span th:case="'CHECKED_IN'" class="badge bg-primary">Checked In</span>
+                                            <span th:case="'CHECKED_OUT'" class="badge bg-secondary">Checked Out</span>
+                                            <span th:case="'COMPLETED'" class="badge bg-success">Completed</span>
+                                            <span th:case="'NO_SHOW'" class="badge bg-danger">No Show</span>
+                                            <span th:case="*" class="badge bg-secondary" th:text="${booking.bookingStatus}">Status</span>
+                                        </span>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- No Funded Stays -->
+                    <div th:if="${donationBookings[donation.id] == null or donationBookings[donation.id].isEmpty()}" class="text-center text-muted py-3">
+                        <i class="fas fa-info-circle me-1"></i> No stays funded yet from this donation.
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

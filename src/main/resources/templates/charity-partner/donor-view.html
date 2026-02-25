@@ -111,14 +111,14 @@
                                 </div>
                                 <div class="col-6">
                                     <div class="text-center p-3 bg-light rounded">
-                                        <div class="stat-value text-info" th:text="${stats.totalNightsFunded}">0</div>
-                                        <small class="text-muted">Nights Funded</small>
+                                        <div class="stat-value text-info" th:text="${stats.staysFunded}">0</div>
+                                        <small class="text-muted">Stays Funded</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div class="text-center p-3 bg-light rounded">
-                                        <div class="stat-value text-warning" th:text="${stats.nightsUsed}">0</div>
-                                        <small class="text-muted">Nights Used</small>
+                                        <div class="stat-value text-warning" th:text="'$' + ${#numbers.formatDecimal(stats.amountUsed, 1, 'COMMA', 2, 'POINT')}">$0.00</div>
+                                        <small class="text-muted">Amount Used</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
@@ -161,7 +161,6 @@
                                     <th>Gross Amount</th>
                                     <th>Fees</th>
                                     <th>Net Amount</th>
-                                    <th>Nights</th>
                                     <th>Status</th>
                                 </tr>
                                 </thead>
@@ -178,9 +177,6 @@
                                     </td>
                                     <td class="text-success">
                                         <strong th:text="'$' + ${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">$90.00</strong>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info" th:text="${donation.nightsFunded} + ' nights'">3 nights</span>
                                     </td>
                                     <td>
                                         <span th:switch="${donation.status.name()}">

@@ -1,5 +1,6 @@
 package com.learning.learning.service;
 
+import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.Referral;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -204,6 +205,51 @@ public class EmailService {
         }
     }
 
+    /**
+     * Send booking confirmation email to participant (async)
+     */
+    @Async
+    public void sendBookingConfirmationEmail(Booking booking) {
+        String to = booking.getParticipantEmail();
+        if (to == null || to.isEmpty()) {
+            logger.info("No participant email for booking {} - skipping confirmation email", booking.getConfirmationCode());
+            return;
+        }
+
+        String subject = "Your Booking is Confirmed! - SafelyNested (" + booking.getConfirmationCode() + ")";
+        String htmlContent = buildBookingConfirmationEmailHtml(booking);
+
+        // Try Resend first (for cloud deployments)
+        if (useResend()) {
+            resendEmailService.sendHtmlEmail(to, subject, htmlContent);
+            return;
+        }
+
+        // Fall back to SMTP
+        if (mailSender == null) {
+            logger.warn("No email service configured - skipping booking confirmation email");
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            logger.info("Booking confirmation email sent to: {}", to);
+
+        } catch (MessagingException e) {
+            logger.error("Failed to send booking confirmation email to: {}", to, e);
+        } catch (Exception e) {
+            logger.error("Unexpected error sending booking confirmation email to: {}", to, e);
+        }
+    }
+
     // ========================================
     // EMAIL TEMPLATE BUILDERS
     // ========================================
@@ -393,6 +439,98 @@ public class EmailService {
                 viewUrl,
                 baseUrl,
                 baseUrl
+        );
+    }
+
+    private String buildBookingConfirmationEmailHtml(Booking booking) {
+        String locationName = booking.getLocationName() != null ? booking.getLocationName() : "To be confirmed";
+        String locationAddress = booking.getLocationAddress() != null ? booking.getLocationAddress() : "";
+        String checkIn = booking.getCheckInDate() != null ? booking.getCheckInDate().toString() : "TBD";
+        String checkOut = booking.getCheckOutDate() != null ? booking.getCheckOutDate().toString() : "TBD";
+        int nights = booking.getNights() != null ? booking.getNights() : 0;
+        String specialInstructions = booking.getSpecialInstructions() != null && !booking.getSpecialInstructions().isEmpty()
+                ? booking.getSpecialInstructions() : null;
+        String participantName = booking.getParticipantName() != null ? booking.getParticipantName() : "Guest";
+
+        String specialInstructionsHtml = specialInstructions != null
+                ? "<div class=\"info-box\" style=\"background: #fef3c7; border-left-color: #f59e0b;\"><p><strong>Special Instructions:</strong> " + specialInstructions + "</p></div>"
+                : "";
+
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .confirmation-code { background: #d1fae5; color: #065f46; padding: 15px 25px; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 18px; margin: 20px 0; letter-spacing: 2px; }
+                    .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+                    .info-box p { margin: 8px 0; }
+                    .what-to-expect { background: #e0e7ff; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                    .what-to-expect h3 { color: #4338ca; margin-bottom: 10px; }
+                    .what-to-expect ul { margin: 0; padding-left: 20px; }
+                    .what-to-expect li { margin: 5px 0; }
+                    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Your Booking is Confirmed!</h1>
+                    </div>
+                    <div class="content">
+                        <p>Dear <strong>%s</strong>,</p>
+
+                        <p>Your accommodation booking has been confirmed. Please keep this email for your records.</p>
+
+                        <div style="text-align: center;">
+                            <div class="confirmation-code">%s</div>
+                            <p style="font-size: 12px; color: #666;">Your Confirmation Code</p>
+                        </div>
+
+                        <div class="info-box">
+                            <p><strong>Location:</strong> %s</p>
+                            <p><strong>Address:</strong> %s</p>
+                            <p><strong>Check-in:</strong> %s</p>
+                            <p><strong>Check-out:</strong> %s</p>
+                            <p><strong>Number of Nights:</strong> %d</p>
+                        </div>
+
+                        %s
+
+                        <div class="what-to-expect">
+                            <h3>What to Expect</h3>
+                            <ul>
+                                <li>Please have your confirmation code ready at check-in</li>
+                                <li>A coordinator may reach out with additional details</li>
+                                <li>If your plans change, contact the referring organization as soon as possible</li>
+                            </ul>
+                        </div>
+
+                        <p>If you have any questions, please contact the charity or organization that referred you.</p>
+
+                        <p>We wish you a comfortable stay.</p>
+
+                        <p>Warm regards,<br><strong>The SafelyNested Team</strong></p>
+                    </div>
+                    <div class="footer">
+                        <p>This email was sent by SafelyNested Shelter Referral System.<br>
+                        Please do not reply directly to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(
+                participantName,
+                booking.getConfirmationCode(),
+                locationName,
+                locationAddress,
+                checkIn,
+                checkOut,
+                nights,
+                specialInstructionsHtml
         );
     }
 

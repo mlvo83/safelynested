@@ -201,6 +201,12 @@
       <p>Review and manage applications from individuals and businesses wanting to provide temporary housing.</p>
       <a th:href="@{/admin/stay-partner-applications}" class="card-link">View Applications</a>
     </div>
+
+    <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
+      <h3>Funding Report</h3>
+      <p>See which donations funded which stays, with full tracking and accountability.</p>
+      <a th:href="@{/admin/funding-report}" class="card-link">View Report</a>
+    </div>
   </div>
 </div>
 </body>

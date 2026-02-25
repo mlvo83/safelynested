@@ -1,6 +1,8 @@
 package com.learning.learning.service;
 
+import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.Donation;
+import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.DonationRepository;
 import com.learning.learning.repository.SituationFundingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +22,9 @@ public class DonorDashboardService {
 
     @Autowired
     private SituationFundingRepository situationFundingRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     /**
      * Get comprehensive dashboard statistics for a donor
@@ -65,6 +70,25 @@ public class DonorDashboardService {
         int nightsRemaining = totalNightsFunded - nightsUsed;
         if (nightsRemaining < 0) nightsRemaining = 0;
 
+        // Compute money-based stats from funded bookings
+        BigDecimal totalAmountUsed = BigDecimal.ZERO;
+        int staysFunded = 0;
+        for (Donation d : donations) {
+            BigDecimal used = bookingRepository.sumFundedAmountByDonationId(d.getId());
+            if (used != null) {
+                totalAmountUsed = totalAmountUsed.add(used);
+            }
+            Long bookingCount = bookingRepository.countByFundingDonationIdAndBookingStatusNot(
+                    d.getId(), Booking.BookingStatus.CANCELLED);
+            if (bookingCount != null) {
+                staysFunded += bookingCount.intValue();
+            }
+        }
+        BigDecimal amountRemaining = totalNetFunds.subtract(totalAmountUsed);
+        if (amountRemaining.compareTo(BigDecimal.ZERO) < 0) {
+            amountRemaining = BigDecimal.ZERO;
+        }
+
         // Count donations by status
         long pendingCount = donations.stream()
                 .filter(d -> d.getStatus() == Donation.DonationStatus.PENDING)
@@ -88,7 +112,10 @@ public class DonorDashboardService {
                 nightsRemaining,
                 donations.size(),
                 (int) pendingCount,
-                (int) verifiedCount
+                (int) verifiedCount,
+                totalAmountUsed,
+                amountRemaining,
+                staysFunded
         );
     }
 
@@ -133,6 +160,25 @@ public class DonorDashboardService {
         int nightsUsed = 0;
         int nightsRemaining = totalNightsFunded;
 
+        // Compute money-based stats from funded bookings
+        BigDecimal totalAmountUsed = BigDecimal.ZERO;
+        int staysFunded = 0;
+        for (Donation d : donations) {
+            BigDecimal used = bookingRepository.sumFundedAmountByDonationId(d.getId());
+            if (used != null) {
+                totalAmountUsed = totalAmountUsed.add(used);
+            }
+            Long bookingCount = bookingRepository.countByFundingDonationIdAndBookingStatusNot(
+                    d.getId(), Booking.BookingStatus.CANCELLED);
+            if (bookingCount != null) {
+                staysFunded += bookingCount.intValue();
+            }
+        }
+        BigDecimal amountRemaining = totalNetFunds.subtract(totalAmountUsed);
+        if (amountRemaining.compareTo(BigDecimal.ZERO) < 0) {
+            amountRemaining = BigDecimal.ZERO;
+        }
+
         long pendingCount = donations.stream()
                 .filter(d -> d.getStatus() == Donation.DonationStatus.PENDING)
                 .count();
@@ -153,7 +199,10 @@ public class DonorDashboardService {
                 nightsRemaining,
                 donations.size(),
                 (int) pendingCount,
-                (int) verifiedCount
+                (int) verifiedCount,
+                totalAmountUsed,
+                amountRemaining,
+                staysFunded
         );
     }
 
@@ -172,6 +221,9 @@ public class DonorDashboardService {
             int nightsRemaining,
             int donationCount,
             int pendingDonations,
-            int verifiedDonations
+            int verifiedDonations,
+            BigDecimal amountUsed,
+            BigDecimal amountRemaining,
+            int staysFunded
     ) {}
 }
