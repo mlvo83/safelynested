@@ -223,6 +223,7 @@ public class DonorDashboardController {
         // Build donation -> bookings map (privacy-safe: no participant PII)
         Map<Long, List<Booking>> donationBookings = new LinkedHashMap<>();
         Map<Long, BigDecimal> donationAmountUsed = new HashMap<>();
+        Map<Long, Integer> donationPercentUsed = new HashMap<>();
         int totalStaysFunded = 0;
         BigDecimal totalAmountFundedAll = BigDecimal.ZERO;
         BigDecimal totalAmountUsedAll = BigDecimal.ZERO;
@@ -235,7 +236,15 @@ public class DonorDashboardController {
             donationBookings.put(donation.getId(), bookings);
 
             BigDecimal used = bookingRepository.sumFundedAmountByDonationId(donation.getId());
+            if (used == null) used = BigDecimal.ZERO;
             donationAmountUsed.put(donation.getId(), used);
+
+            // Pre-compute percentage used for template
+            BigDecimal net = donation.getNetAmount() != null ? donation.getNetAmount() : BigDecimal.ZERO;
+            int percent = net.compareTo(BigDecimal.ZERO) > 0
+                    ? used.multiply(BigDecimal.valueOf(100)).divide(net, 0, java.math.RoundingMode.HALF_UP).intValue()
+                    : 0;
+            donationPercentUsed.put(donation.getId(), percent);
 
             totalStaysFunded += bookings.size();
             if (donation.getNetAmount() != null) {
@@ -255,6 +264,7 @@ public class DonorDashboardController {
         model.addAttribute("donations", donations);
         model.addAttribute("donationBookings", donationBookings);
         model.addAttribute("donationAmountUsed", donationAmountUsed);
+        model.addAttribute("donationPercentUsed", donationPercentUsed);
         model.addAttribute("totalStaysFunded", totalStaysFunded);
         model.addAttribute("totalAmountFunded", totalAmountFundedAll);
         model.addAttribute("totalAmountUsed", totalAmountUsedAll);

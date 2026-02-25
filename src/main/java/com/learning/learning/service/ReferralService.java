@@ -176,8 +176,10 @@ public class ReferralService {
         referral.setLocationSelectedAt(LocalDateTime.now());
         referral.setAllowedZipCodes(invite.getAllowedZipCodes());
 
-        // Add participant notes as needs description if provided
-        if (invite.getParticipantNotes() != null && !invite.getParticipantNotes().isEmpty()) {
+        // Set needs description: prefer invite's needsDescription, then participant notes
+        if (invite.getNeedsDescription() != null && !invite.getNeedsDescription().isEmpty()) {
+            referral.setNeedsDescription(invite.getNeedsDescription());
+        } else if (invite.getParticipantNotes() != null && !invite.getParticipantNotes().isEmpty()) {
             referral.setNeedsDescription("Participant notes: " + invite.getParticipantNotes());
         } else {
             referral.setNeedsDescription("Referral created from invite");

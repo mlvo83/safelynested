@@ -559,6 +559,7 @@ public class CharityPartnerController {
             @RequestParam(required = false) String recipientPhone,
             @RequestParam ReferralInvite.InviteType inviteType,
             @RequestParam(required = false) String message,
+            @RequestParam(required = false) String needsDescription,
             @RequestParam(required = false) String allowedZipCodes,
             Principal principal,
             RedirectAttributes redirectAttributes
@@ -585,6 +586,7 @@ public class CharityPartnerController {
             invite.setRecipientPhone(recipientPhone);
             invite.setInviteType(inviteType);
             invite.setMessage(message);
+            invite.setNeedsDescription(needsDescription);
             invite.setAllowedZipCodes(allowedZipCodes);
             invite.setStatus(ReferralInvite.InviteStatus.PENDING);
             invite.setInviteToken(UUID.randomUUID().toString());

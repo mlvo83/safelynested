@@ -114,13 +114,13 @@
                         <div class="d-flex justify-content-between small text-muted mb-1">
                             <span>
                                 $<span th:text="${#numbers.formatDecimal(donationAmountUsed[donation.id], 1, 'COMMA', 2, 'POINT')}">0.00</span> used
-                                of $<span th:text="${#numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT')}">90.00</span>
+                                of $<span th:text="${donation.netAmount != null ? #numbers.formatDecimal(donation.netAmount, 1, 'COMMA', 2, 'POINT') : '0.00'}">90.00</span>
                             </span>
-                            <span th:text="${donation.netAmount.doubleValue() > 0 ? T(Math).round(donationAmountUsed[donation.id].doubleValue() * 100 / donation.netAmount.doubleValue()) : 0} + '%'">0%</span>
+                            <span th:text="${donationPercentUsed[donation.id]} + '%'">0%</span>
                         </div>
                         <div class="progress" style="height: 8px;">
                             <div class="progress-bar bg-success" role="progressbar"
-                                 th:style="'width: ' + ${donation.netAmount.doubleValue() > 0 ? (donationAmountUsed[donation.id].doubleValue() * 100 / donation.netAmount.doubleValue()) : 0} + '%'">
+                                 th:style="'width: ' + ${donationPercentUsed[donation.id]} + '%'">
                             </div>
                         </div>
                     </div>
@@ -141,7 +141,8 @@
                                 </tr>
                                 </thead>
                                 <tbody>
-                                <tr th:each="booking : ${donationBookings[donation.id]}">
+                                <th:block th:each="booking : ${donationBookings[donation.id]}">
+                                <tr>
                                     <td>
                                         <i class="fas fa-map-marker-alt me-1 text-primary"></i>
                                         <span th:text="${booking.displayLocationName}">Location</span>
@@ -162,6 +163,15 @@
                                         </span>
                                     </td>
                                 </tr>
+                                <tr th:if="${booking.referral != null and booking.referral.needsDescription != null and !booking.referral.needsDescription.isEmpty()}">
+                                    <td colspan="6" class="border-0 pt-0 pb-2 ps-4">
+                                        <small class="text-muted">
+                                            <i class="fas fa-heart me-1 text-danger"></i>
+                                            <strong>Purpose:</strong> <span th:text="${booking.referral.needsDescription}">Participant needs description</span>
+                                        </small>
+                                    </td>
+                                </tr>
+                                </th:block>
                                 </tbody>
                             </table>
                         </div>

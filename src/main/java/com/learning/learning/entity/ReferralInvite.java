@@ -54,6 +54,9 @@ public class ReferralInvite {
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
 
+    @Column(name = "needs_description", columnDefinition = "TEXT")
+    private String needsDescription;
+
     // Zip codes allowed for this referral
     @Column(name = "allowed_zip_codes", columnDefinition = "TEXT")
     private String allowedZipCodes;
