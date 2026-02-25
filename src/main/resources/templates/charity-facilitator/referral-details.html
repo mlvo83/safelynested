@@ -419,9 +419,13 @@
                         class="btn btn-reject">Reject Referral
                 </button>
 
-                <a th:if="${referral.status.name() == 'APPROVED'}"
+                <a th:if="${referral.status.name() == 'APPROVED' and existingBookingId == null}"
                    th:href="@{/charity-facilitator/bookings/new(referralId=${referral.id})}"
                    class="btn btn-booking">Create Booking</a>
+
+                <a th:if="${referral.status.name() == 'APPROVED' and existingBookingId != null}"
+                   th:href="@{/charity-facilitator/bookings/{id}(id=${existingBookingId})}"
+                   class="btn" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">View Booking</a>
             </div>
         </div>
     </div>

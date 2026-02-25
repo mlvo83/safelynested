@@ -404,9 +404,13 @@
                                 onclick="showRejectModal(this.getAttribute('data-id'))"
                                 class="btn btn-reject">Reject</button>
 
-                        <a th:if="${referral.status.name() == 'APPROVED'}"
+                        <a th:if="${referral.status.name() == 'APPROVED' and referralBookingMap[referral.id] == null}"
                            th:href="@{/charity-facilitator/bookings/new(referralId=${referral.id})}"
                            class="btn btn-approve">Create Booking</a>
+
+                        <a th:if="${referral.status.name() == 'APPROVED' and referralBookingMap[referral.id] != null}"
+                           th:href="@{/charity-facilitator/bookings/{id}(id=${referralBookingMap[referral.id]})}"
+                           class="btn" style="background: #3b82f6; color: white;">View Booking</a>
                     </div>
                 </td>
             </tr>

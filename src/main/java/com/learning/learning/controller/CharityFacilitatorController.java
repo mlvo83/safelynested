@@ -113,9 +113,18 @@ public class CharityFacilitatorController {
             referrals = referralRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
         }
 
+        // Build referralId -> bookingId map for approved referrals
+        List<Long> referralIds = referrals.stream().map(Referral::getId).toList();
+        Map<Long, Long> referralBookingMap = new HashMap<>();
+        if (!referralIds.isEmpty()) {
+            bookingRepository.findActiveBookingsByReferralIds(referralIds)
+                    .forEach(b -> referralBookingMap.putIfAbsent(b.getReferral().getId(), b.getId()));
+        }
+
         model.addAttribute("username", username);
         model.addAttribute("charity", charity);
         model.addAttribute("referrals", referrals);
+        model.addAttribute("referralBookingMap", referralBookingMap);
         model.addAttribute("selectedStatus", status);
 
         return "charity-facilitator/referrals";
@@ -141,9 +150,14 @@ public class CharityFacilitatorController {
             return "redirect:/charity-facilitator/referrals";
         }
 
+        // Check if this referral already has a booking
+        List<Booking> existingBookings = bookingRepository.findActiveBookingsByReferralIds(List.of(id));
+        Long existingBookingId = existingBookings.isEmpty() ? null : existingBookings.get(0).getId();
+
         model.addAttribute("username", username);
         model.addAttribute("charity", charity);
         model.addAttribute("referral", referral);
+        model.addAttribute("existingBookingId", existingBookingId);
 
         return "charity-facilitator/referral-details";
     }

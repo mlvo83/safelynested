@@ -68,6 +68,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT COUNT(b) FROM Booking b WHERE b.referral.charity.id = :charityId AND b.bookingStatus = :status")
     Long countByCharityIdAndStatus(Long charityId, Booking.BookingStatus status);
 
+    // Referral booking lookup - find which referrals already have bookings
+    @Query("SELECT b FROM Booking b WHERE b.referral.id IN :referralIds AND b.bookingStatus != 'CANCELLED'")
+    List<Booking> findActiveBookingsByReferralIds(@Param("referralIds") List<Long> referralIds);
+
     // Donation funding queries
     @Query("SELECT COALESCE(SUM(b.fundedAmount), 0) FROM Booking b WHERE b.fundingDonation.id = :donationId AND b.bookingStatus != 'CANCELLED'")
     BigDecimal sumFundedAmountByDonationId(@Param("donationId") Long donationId);

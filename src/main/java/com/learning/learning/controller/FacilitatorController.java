@@ -7,6 +7,7 @@ import com.learning.learning.dto.BookingDto;
 import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Referral;
+import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityLocationRepository;
 import com.learning.learning.service.BookingService;
 import com.learning.learning.service.ReferralService;
@@ -20,7 +21,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/facilitator")
@@ -31,6 +34,9 @@ public class FacilitatorController {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
     @Autowired
     private CharityLocationRepository charityLocationRepository;
@@ -70,8 +76,17 @@ public class FacilitatorController {
             referrals = referralService.getAllReferrals();
         }
 
+        // Build referralId -> bookingId map for approved referrals
+        List<Long> referralIds = referrals.stream().map(Referral::getId).toList();
+        Map<Long, Long> referralBookingMap = new HashMap<>();
+        if (!referralIds.isEmpty()) {
+            bookingRepository.findActiveBookingsByReferralIds(referralIds)
+                    .forEach(b -> referralBookingMap.putIfAbsent(b.getReferral().getId(), b.getId()));
+        }
+
         model.addAttribute("username", username);
         model.addAttribute("referrals", referrals);
+        model.addAttribute("referralBookingMap", referralBookingMap);
         model.addAttribute("selectedStatus", status);
 
         return "facilitator/referrals";
@@ -87,8 +102,13 @@ public class FacilitatorController {
 
         Referral referral = referralService.getReferralById(id);
 
+        // Check if this referral already has a booking
+        List<Booking> existingBookings = bookingRepository.findActiveBookingsByReferralIds(List.of(id));
+        Long existingBookingId = existingBookings.isEmpty() ? null : existingBookings.get(0).getId();
+
         model.addAttribute("username", username);
         model.addAttribute("referral", referral);
+        model.addAttribute("existingBookingId", existingBookingId);
 
         return "facilitator/referral-details";
     }
