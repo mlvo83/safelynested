@@ -154,6 +154,7 @@
         .role-facilitator { background: #17a2b8; color: white; }
         .role-donor { background: #ffc107; color: #333; }
         .role-location { background: #6c757d; color: white; }
+        .role-global-facilitator { background: #e83e8c; color: white; }
     </style>
 </head>
 <body>
@@ -191,6 +192,10 @@
                        th:href="@{/admin/documentation(section='charity-facilitator')}">
                         <i class="fas fa-user-tie me-2"></i>Charity Facilitator Guide
                     </a>
+                    <a class="nav-link" th:classappend="${activeSection == 'facilitator'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='facilitator')}">
+                        <i class="fas fa-user-cog me-2"></i>Facilitator Guide
+                    </a>
                     <a class="nav-link" th:classappend="${activeSection == 'donor'} ? 'active' : ''"
                        th:href="@{/admin/documentation(section='donor')}">
                         <i class="fas fa-hand-holding-heart me-2"></i>Donor Guide
@@ -198,6 +203,10 @@
                     <a class="nav-link" th:classappend="${activeSection == 'location-admin'} ? 'active' : ''"
                        th:href="@{/admin/documentation(section='location-admin')}">
                         <i class="fas fa-map-marker-alt me-2"></i>Location Admin Guide
+                    </a>
+                    <a class="nav-link" th:classappend="${activeSection == 'stay-partners'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='stay-partners')}">
+                        <i class="fas fa-building me-2"></i>Stay Partners
                     </a>
                 </nav>
             </div>
@@ -207,7 +216,9 @@
         <div class="col-md-9">
             <div class="doc-content">
 
-                <!-- Overview Section -->
+                <!-- ============================================ -->
+                <!-- OVERVIEW SECTION -->
+                <!-- ============================================ -->
                 <div th:if="${activeSection == 'overview'}">
                     <h1><i class="fas fa-home me-2"></i>SafelyNested Platform Overview</h1>
 
@@ -218,28 +229,49 @@
                         <div class="col-md-6">
                             <div class="feature-card">
                                 <h4><i class="fas fa-donate text-success me-2"></i>Donations</h4>
-                                <p>Donors contribute funds to partner charities. A small fee (10% total) supports platform operations, while 90% goes directly to housing nights.</p>
+                                <p>Donors contribute funds to partner charities. A small fee (10% total) supports platform operations, while 90% goes directly to housing.</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="feature-card">
-                                <h4><i class="fas fa-bed text-primary me-2"></i>Housing Nights</h4>
-                                <p>Donations are converted to housing nights based on location rates. These nights are then allocated to situations (people in need).</p>
+                                <h4><i class="fas fa-bed text-primary me-2"></i>Funded Stays</h4>
+                                <p>Donations directly fund accommodation bookings. Each booking tracks which donation funded it and how much was used.</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="feature-card">
                                 <h4><i class="fas fa-user-shield text-info me-2"></i>Privacy Protection</h4>
-                                <p>Beneficiary information is protected. Donors see "Situations" (generic descriptions) without any personally identifiable information.</p>
+                                <p>Beneficiary information is protected. Donors see funded stays without any personally identifiable information about participants.</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="feature-card">
                                 <h4><i class="fas fa-chart-line text-warning me-2"></i>Impact Tracking</h4>
-                                <p>Donors can track their impact - total donations, nights funded, nights used, and the situations they've helped support.</p>
+                                <p>Donors can track their impact through dashboards and funding reports showing exactly which stays their donations funded.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <h4><i class="fas fa-building text-secondary me-2"></i>Stay Partners</h4>
+                                <p>Hotels, property owners, and organisations can apply to become Stay Partners, providing accommodation locations for the platform.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <h4><i class="fas fa-file-invoice-dollar text-danger me-2"></i>Full Accountability</h4>
+                                <p>The Funding Report shows a clear trail from donation to stay, so every dollar is accounted for and transparent.</p>
                             </div>
                         </div>
                     </div>
+
+                    <h2>Platform Flow</h2>
+                    <ol class="step-list">
+                        <li><strong>Donor contributes</strong> &mdash; Admin records the donation against a charity. Fees are calculated and the net amount is available for funding stays.</li>
+                        <li><strong>Charity refers a participant</strong> &mdash; A Charity Partner creates a referral (directly or via an invite link) for someone needing housing.</li>
+                        <li><strong>Facilitator approves and books</strong> &mdash; A Facilitator reviews the referral, approves it, and creates a booking at an available location. The booking can be funded from an available donation.</li>
+                        <li><strong>Participant stays</strong> &mdash; The participant checks in, stays, and checks out. The booking status is updated throughout.</li>
+                        <li><strong>Impact is tracked</strong> &mdash; Donors see funded stays on their dashboard, impact page, and funding report &mdash; all without seeing participant details.</li>
+                    </ol>
 
                     <h2>User Roles</h2>
                     <table class="table table-bordered">
@@ -254,27 +286,32 @@
                             <tr>
                                 <td><span class="role-badge role-admin">Admin</span></td>
                                 <td>System administrator</td>
-                                <td>Manage users, charities, donors, and system settings</td>
+                                <td>Manage users, charities, donors, donations, funding reports, stay partner applications</td>
                             </tr>
                             <tr>
                                 <td><span class="role-badge role-charity">Charity Partner</span></td>
                                 <td>Charity staff member</td>
-                                <td>Create referrals, manage invites, view donors</td>
+                                <td>Create referrals, manage invites, upload documents, manage locations, request donor setup</td>
                             </tr>
                             <tr>
                                 <td><span class="role-badge role-facilitator">Charity Facilitator</span></td>
                                 <td>Charity operations manager</td>
-                                <td>Approve referrals, create bookings, manage operations</td>
+                                <td>Approve referrals, create and manage bookings (including donation-funded), check-in/check-out</td>
+                            </tr>
+                            <tr>
+                                <td><span class="role-badge role-global-facilitator">Facilitator</span></td>
+                                <td>Global operations manager</td>
+                                <td>Same as Charity Facilitator but with system-wide access across all charities</td>
                             </tr>
                             <tr>
                                 <td><span class="role-badge role-donor">Donor</span></td>
                                 <td>Financial contributor</td>
-                                <td>View donations, track impact, see funded situations</td>
+                                <td>View donations, track impact, see funded stays via funding report</td>
                             </tr>
                             <tr>
                                 <td><span class="role-badge role-location">Location Admin</span></td>
                                 <td>Property manager</td>
-                                <td>Manage shelter locations and nightly rates</td>
+                                <td>Manage shelter locations, nightly rates, and availability</td>
                             </tr>
                         </tbody>
                     </table>
@@ -287,11 +324,13 @@
                     <ul>
                         <li><strong>Platform Fee (7%):</strong> Supports SafelyNested operations and technology</li>
                         <li><strong>Facilitator Fee (3%):</strong> Goes to the anchor charity for coordination</li>
-                        <li><strong>Net Amount (90%):</strong> Converted directly to housing nights</li>
+                        <li><strong>Net Amount (90%):</strong> Available to fund accommodation stays</li>
                     </ul>
                 </div>
 
-                <!-- Admin Guide Section -->
+                <!-- ============================================ -->
+                <!-- ADMIN GUIDE SECTION -->
+                <!-- ============================================ -->
                 <div th:if="${activeSection == 'admin'}">
                     <h1><i class="fas fa-user-shield me-2"></i>Administrator Guide</h1>
 
@@ -325,45 +364,113 @@
                     <ol class="step-list">
                         <li>Go to <strong>Charity Management</strong></li>
                         <li>Click <strong>Create New Charity</strong></li>
-                        <li>Enter the charity name and contact information</li>
+                        <li>Enter the charity name, EIN/Tax ID, and contact information</li>
                         <li>Set the maximum referrals per month (optional limit)</li>
                         <li>Save the charity</li>
                     </ol>
 
                     <h3>Verifying Charities</h3>
-                    <p>New charities should be verified before they can fully operate. Verification confirms the charity is legitimate and has agreed to platform terms.</p>
+                    <p>New charities should be verified before they can fully operate. Verification confirms the charity is legitimate and has agreed to platform terms. Use the <strong>Verify</strong> button on the charities list.</p>
+
+                    <h3>Activating/Deactivating Charities</h3>
+                    <p>Use the <strong>Toggle Active</strong> button to enable or disable a charity. Inactive charities cannot create new referrals or bookings.</p>
 
                     <h2>Donor Management</h2>
                     <h3>Creating a Donor Account</h3>
                     <ol class="step-list">
                         <li>Navigate to <strong>Donor Management</strong></li>
                         <li>Click <strong>Create New Donor</strong></li>
-                        <li>Select donor type: <strong>Individual</strong> or <strong>Business</strong></li>
+                        <li>Select donor type: <strong>Individual</strong> or <strong>Business/Organization</strong></li>
                         <li>Fill in contact details and create login credentials</li>
                         <li>Assign the donor to one or more charities they wish to support</li>
                         <li>Save the donor account</li>
                     </ol>
 
+                    <h3>Editing a Donor</h3>
+                    <p>From the donor detail page, click <strong>Edit Donor</strong> to update their information. You can:</p>
+                    <ul>
+                        <li>Change donor type between Individual and Business</li>
+                        <li>Update personal/business details and contact information</li>
+                        <li>Reset the donor's password (leave the password field blank to keep the current one)</li>
+                        <li>Update charity assignments</li>
+                        <li>Add verification notes</li>
+                    </ul>
+
+                    <h3>Donor Verification and Activation</h3>
+                    <p>From the donor detail page you can:</p>
+                    <ul>
+                        <li><strong>Verify / Remove Verification:</strong> Confirms the donor's identity has been validated</li>
+                        <li><strong>Activate / Deactivate Account:</strong> Controls whether the donor can log in</li>
+                    </ul>
+
                     <h3>Recording Donations</h3>
                     <ol class="step-list">
                         <li>Go to the donor's detail page</li>
                         <li>Click <strong>Record Donation</strong></li>
+                        <li>Select which charity the donation is for</li>
                         <li>Enter the gross donation amount</li>
-                        <li>The system automatically calculates fees and nights funded</li>
+                        <li>The system automatically calculates fees, net amount, and estimated nights funded</li>
                         <li>Add any notes and save</li>
                     </ol>
 
                     <div class="warning-box">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Important:</strong> Donations should be recorded only after funds have been received and verified.
+                        <strong>Important:</strong> Donations should be recorded only after funds have been received.
                     </div>
+
+                    <h3>Verifying and Rejecting Donations</h3>
+                    <p>New donations start in <strong>Pending</strong> status. From the donor detail page:</p>
+                    <ul>
+                        <li><strong>Verify:</strong> Confirms the donation has been received. This makes the funds available for booking allocation.</li>
+                        <li><strong>Reject:</strong> Marks the donation as rejected (e.g., if the payment bounced or was fraudulent).</li>
+                    </ul>
+
+                    <h3>Donation Usage Tracking</h3>
+                    <p>The donor detail page shows each donation's usage with a progress bar:</p>
+                    <ul>
+                        <li><strong>Bookings Funded:</strong> How many stays have been funded from this donation</li>
+                        <li><strong>Amount Used / Net Amount:</strong> A visual progress bar showing how much of the donation has been allocated to bookings</li>
+                    </ul>
+
+                    <h2>Funding Report</h2>
+                    <p>The <strong>Funding Report</strong> (accessible from the home page) provides a comprehensive view of all donations and the stays they've funded.</p>
+
+                    <h3>Report Features</h3>
+                    <ul>
+                        <li><strong>Summary stats:</strong> Donations with stays, total stays funded, total amount funded, amount remaining</li>
+                        <li><strong>Filters:</strong> Search by donor name, filter by charity, filter by donation status</li>
+                        <li><strong>Expandable rows:</strong> Click any donation row to see the bookings it funded, including participant name, location, dates, nights, funded amount, and booking status</li>
+                    </ul>
+
+                    <div class="tip-box">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> The admin funding report shows full participant details. The donor version of this report hides participant information for privacy.
+                    </div>
+
+                    <h2>Donor Setup Requests</h2>
+                    <p>Charity Partners can submit requests to link existing donors or create new donor accounts. These requests appear under <strong>Donor Management &rarr; Setup Requests</strong>.</p>
+                    <ul>
+                        <li>Review the request details (donor info, charity, request type)</li>
+                        <li><strong>Approve:</strong> Creates the donor account or links the existing donor to the charity</li>
+                        <li><strong>Reject:</strong> Declines the request with a reason sent back to the charity partner</li>
+                    </ul>
+
+                    <h2>Stay Partner Applications</h2>
+                    <p>Individuals and businesses can apply to become Stay Partners through a public form. Applications appear under <strong>Stay Partner Applications</strong> on the home page.</p>
+                    <ol class="step-list">
+                        <li>Review the application details (property info, contact, availability)</li>
+                        <li>To approve: select a charity to assign the stay partner to, then click <strong>Approve</strong></li>
+                        <li>To reject: provide a reason and click <strong>Reject</strong></li>
+                    </ol>
                 </div>
 
-                <!-- Charity Partner Guide Section -->
+                <!-- ============================================ -->
+                <!-- CHARITY PARTNER GUIDE SECTION -->
+                <!-- ============================================ -->
                 <div th:if="${activeSection == 'charity-partner'}">
                     <h1><i class="fas fa-hands-helping me-2"></i>Charity Partner Guide</h1>
 
-                    <p class="lead">As a Charity Partner, you help connect people in need with housing assistance through referrals and invitations.</p>
+                    <p class="lead">As a Charity Partner, you help connect people in need with housing assistance through referrals, invitations, and coordination.</p>
 
                     <h2>Dashboard Overview</h2>
                     <p>Your dashboard shows key metrics for your charity:</p>
@@ -398,32 +505,70 @@
 
                     <div class="tip-box">
                         <i class="fas fa-lightbulb me-2"></i>
-                        <strong>Tip:</strong> Invite links expire after 30 days. You can see the status and expiration date in your Invites list.
+                        <strong>Tip:</strong> Invite links expire after 30 days. You can resend expired invites from the Invites list. Invites can also be cancelled if no longer needed.
                     </div>
 
-                    <h2>Managing Documents</h2>
-                    <p>Some referrals require documentation (ID, proof of address, etc.):</p>
+                    <h3>Editing and Cancelling Referrals</h3>
                     <ul>
-                        <li>Mark "Documents Required" when creating the referral</li>
-                        <li>Upload documents on behalf of participants if needed</li>
-                        <li>Participants can also upload documents via their invite link</li>
-                        <li>Track document status in the referral details</li>
+                        <li>Referrals in <strong>Pending</strong> status can be edited (update participant info, needs, urgency)</li>
+                        <li>Any referral can be cancelled if the participant no longer needs assistance</li>
                     </ul>
+
+                    <h2>Managing Documents</h2>
+                    <p>Supporting documents (ID, proof of address, etc.) can be managed from the Documents section:</p>
+                    <ul>
+                        <li>Upload documents on behalf of participants</li>
+                        <li>Participants can also upload documents via their invite link</li>
+                        <li>Download previously uploaded documents</li>
+                        <li>Delete documents that are no longer needed</li>
+                    </ul>
+
+                    <h2>Managing Locations</h2>
+                    <p>Charity Partners can manage accommodation locations for their charity:</p>
+                    <ol class="step-list">
+                        <li>Go to <strong>Locations</strong> from the sidebar</li>
+                        <li>Click <strong>Add New Location</strong></li>
+                        <li>Enter the location name, address, and nightly rate</li>
+                        <li>Save the location</li>
+                    </ol>
+                    <p>You can also edit locations, toggle them active/inactive, and delete them if no longer needed.</p>
 
                     <h2>Viewing Donors</h2>
                     <p>You can see donors who support your charity (read-only access):</p>
                     <ul>
                         <li>View donor names and contact information</li>
-                        <li>See verification status</li>
-                        <li>Note: Donation amounts and detailed financials are managed by administrators</li>
+                        <li>See verification status and their donations to your charity</li>
                     </ul>
+
+                    <h2>Donor Setup Requests</h2>
+                    <p>If you need a new donor account created or want to link an existing donor to your charity:</p>
+                    <ol class="step-list">
+                        <li>Go to <strong>Donors &rarr; Setup</strong></li>
+                        <li>Choose to <strong>Link Existing Donor</strong> (search by name) or <strong>Create New Donor</strong></li>
+                        <li>Fill in the details and submit the request</li>
+                        <li>An administrator will review and approve or reject the request</li>
+                        <li>Track your request status under <strong>Setup Requests</strong></li>
+                    </ol>
+
+                    <h2>Charity Profile</h2>
+                    <p>View and edit your charity's profile information including contact details, mission statement, and allowed zip codes.</p>
                 </div>
 
-                <!-- Charity Facilitator Guide Section -->
+                <!-- ============================================ -->
+                <!-- CHARITY FACILITATOR GUIDE SECTION -->
+                <!-- ============================================ -->
                 <div th:if="${activeSection == 'charity-facilitator'}">
                     <h1><i class="fas fa-user-tie me-2"></i>Charity Facilitator Guide</h1>
 
                     <p class="lead">As a Charity Facilitator, you review referrals, approve housing requests, and manage bookings for your charity.</p>
+
+                    <h2>Dashboard</h2>
+                    <p>Your facilitator dashboard provides quick access to:</p>
+                    <ul>
+                        <li><strong>Pending Referrals:</strong> Requests awaiting your review</li>
+                        <li><strong>Active Bookings:</strong> Current and upcoming stays</li>
+                        <li><strong>Key Stats:</strong> Total referrals, bookings, and their statuses</li>
+                    </ul>
 
                     <h2>Reviewing Referrals</h2>
                     <h3>Approval Process</h3>
@@ -440,102 +585,180 @@
                         <strong>Important:</strong> Always provide a clear reason when rejecting a referral so the Charity Partner can address any issues.
                     </div>
 
+                    <p>You can filter referrals by status and search by participant name to find specific cases.</p>
+
                     <h2>Creating Bookings</h2>
                     <p>Once a referral is approved, you can create a booking:</p>
                     <ol class="step-list">
-                        <li>Open the approved referral</li>
-                        <li>Click <strong>Create Booking</strong></li>
+                        <li>Open the approved referral or go to <strong>Bookings &rarr; New Booking</strong></li>
+                        <li>Select the referral (only approved referrals are available)</li>
                         <li>Select the check-in and check-out dates</li>
-                        <li>Confirm the location (or select if not pre-selected)</li>
+                        <li>Confirm or select the location</li>
                         <li>Add any special instructions for the property</li>
-                        <li>Save the booking - a confirmation code is generated automatically</li>
+                        <li>Optionally select a <strong>funding donation</strong> to cover the cost (see below)</li>
+                        <li>Save the booking &mdash; a confirmation code is generated automatically</li>
                     </ol>
 
+                    <h3>Donation-Funded Bookings</h3>
+                    <p>When creating a booking, you can fund it from a verified donation:</p>
+                    <ul>
+                        <li>The booking form shows available donations for the charity (those with remaining balance)</li>
+                        <li>Select a donation to fund the stay &mdash; the system shows the donor name and available balance</li>
+                        <li>The funded amount is automatically calculated based on the nightly rate and number of nights</li>
+                        <li>The donation's usage is updated and tracked on the donor's detail page and the funding report</li>
+                    </ul>
+
+                    <div class="tip-box">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Only donations in Verified, Allocated, or Partially Used status with remaining balance appear as funding options.
+                    </div>
+
+                    <h2>Managing Bookings</h2>
                     <h3>Booking Statuses</h3>
                     <table class="table table-sm">
-                        <tr><td><strong>Pending</strong></td><td>Booking created, awaiting check-in</td></tr>
+                        <tr><td><strong>Pending</strong></td><td>Booking created, awaiting confirmation or check-in</td></tr>
                         <tr><td><strong>Confirmed</strong></td><td>Booking confirmed with the location</td></tr>
-                        <tr><td><strong>Checked In</strong></td><td>Participant has arrived</td></tr>
-                        <tr><td><strong>Checked Out</strong></td><td>Stay completed</td></tr>
+                        <tr><td><strong>Checked In</strong></td><td>Participant has arrived at the location</td></tr>
+                        <tr><td><strong>Checked Out</strong></td><td>Participant has departed</td></tr>
+                        <tr><td><strong>Completed</strong></td><td>Stay fully completed and finalised</td></tr>
                         <tr><td><strong>Cancelled</strong></td><td>Booking was cancelled</td></tr>
                         <tr><td><strong>No Show</strong></td><td>Participant did not arrive</td></tr>
                     </table>
 
-                    <h2>Managing Your Dashboard</h2>
-                    <p>Your facilitator dashboard provides quick access to:</p>
-                    <ul>
-                        <li><strong>Pending Referrals:</strong> Requests awaiting your review</li>
-                        <li><strong>Active Bookings:</strong> Current and upcoming stays</li>
-                        <li><strong>Recent Activity:</strong> Latest actions and updates</li>
-                    </ul>
+                    <h3>Check-in / Check-out</h3>
+                    <p>Use the dedicated <strong>Check In</strong> and <strong>Check Out</strong> buttons on the booking detail page to update the participant's status. The system records the actual check-in and check-out times.</p>
+
+                    <h3>Cancelling a Booking</h3>
+                    <p>Bookings can be cancelled from the booking detail page. Cancelled bookings do not count toward donation usage.</p>
                 </div>
 
-                <!-- Donor Guide Section -->
+                <!-- ============================================ -->
+                <!-- FACILITATOR (GLOBAL) GUIDE SECTION -->
+                <!-- ============================================ -->
+                <div th:if="${activeSection == 'facilitator'}">
+                    <h1><i class="fas fa-user-cog me-2"></i>Facilitator Guide (Global)</h1>
+
+                    <p class="lead">As a Facilitator, you have system-wide access to manage referrals and bookings across all charities.</p>
+
+                    <div class="tip-box">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> The Facilitator role works identically to the Charity Facilitator role, but with access to <strong>all charities</strong> in the system rather than just one.
+                    </div>
+
+                    <h2>Dashboard</h2>
+                    <p>Your dashboard shows system-wide statistics across all charities:</p>
+                    <ul>
+                        <li>Total referrals and bookings across the entire platform</li>
+                        <li>Pending referrals requiring review</li>
+                        <li>Active bookings and upcoming check-ins</li>
+                    </ul>
+
+                    <h2>Referrals</h2>
+                    <p>You can view and manage referrals from <strong>all charities</strong>:</p>
+                    <ul>
+                        <li>Filter referrals by status or search by participant name</li>
+                        <li>Approve or reject referrals with notes</li>
+                        <li>The referral detail shows which charity created it</li>
+                    </ul>
+
+                    <h2>Bookings</h2>
+                    <p>You can create and manage bookings across all charities:</p>
+                    <ul>
+                        <li>Create bookings for any approved referral in the system</li>
+                        <li>Fund bookings from available donations for the relevant charity</li>
+                        <li>Update booking status, check in/out participants, and cancel bookings</li>
+                    </ul>
+
+                    <p>See the <strong>Charity Facilitator Guide</strong> for detailed instructions on the referral approval process, booking creation (including donation-funded bookings), and status management.</p>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- DONOR GUIDE SECTION -->
+                <!-- ============================================ -->
                 <div th:if="${activeSection == 'donor'}">
                     <h1><i class="fas fa-hand-holding-heart me-2"></i>Donor Guide</h1>
 
                     <p class="lead">Thank you for supporting SafelyNested! As a donor, you can track your contributions and see the real impact of your generosity.</p>
 
                     <h2>Your Dashboard</h2>
-                    <p>The donor dashboard shows your contribution summary:</p>
+                    <p>The donor dashboard shows your contribution summary at a glance:</p>
                     <ul>
-                        <li><strong>Total Donated:</strong> Your lifetime contributions</li>
-                        <li><strong>Nights Funded:</strong> How many housing nights your donations have provided</li>
-                        <li><strong>Nights Used:</strong> How many of those nights have been used</li>
-                        <li><strong>Nights Available:</strong> Remaining nights ready to help someone in need</li>
+                        <li><strong>Total Donated:</strong> Your lifetime gross contributions</li>
+                        <li><strong>Net to Housing:</strong> The amount that goes directly to funding stays (after fees)</li>
+                        <li><strong>Stays Funded:</strong> How many accommodation stays your donations have funded</li>
+                        <li><strong>Amount Used:</strong> How much of your net donations has been allocated to stays</li>
+                        <li><strong>Balance Remaining:</strong> Funds still available to fund future stays</li>
                     </ul>
+                    <p>The dashboard also shows your 5 most recent donations and the charities you support.</p>
 
                     <h2>Viewing Your Donations</h2>
-                    <p>The Donations page shows all your contributions with details:</p>
+                    <p>The <strong>My Donations</strong> page shows all your contributions with details:</p>
                     <ul>
-                        <li>Donation date and amount</li>
-                        <li>Fee breakdown (platform fee, facilitator fee, net amount)</li>
+                        <li>Donation date, gross amount, and net amount</li>
+                        <li>Fee breakdown (platform fee + facilitator fee)</li>
                         <li>Which charity received the donation</li>
-                        <li>Nights funded from each donation</li>
+                        <li>Donation status (Pending, Verified, Allocated, Partially Used, Fully Used)</li>
+                        <li>Amount used vs. available &mdash; shown as a progress bar per donation</li>
+                    </ul>
+                    <p>You can filter donations by charity using the dropdown at the top of the page.</p>
+
+                    <h3>Donation Detail</h3>
+                    <p>Click any donation to see its full detail, including:</p>
+                    <ul>
+                        <li>Complete fee breakdown</li>
+                        <li>Situations funded by this donation (if applicable)</li>
+                        <li>Individual stays funded &mdash; showing location, dates, nights, and funded amount (no participant details)</li>
                     </ul>
 
                     <h2>Understanding Your Impact</h2>
-                    <p>The Impact page shows the situations your donations have helped:</p>
+                    <p>The <strong>My Impact</strong> page shows the stays and situations your donations have helped fund:</p>
+                    <ul>
+                        <li><strong>Stays Funded:</strong> Cards showing each accommodation stay with location, dates, nights, and funded amount</li>
+                        <li><strong>Situations:</strong> Anonymised descriptions of the situations your donations have supported, with progress tracking</li>
+                    </ul>
 
                     <div class="tip-box">
                         <i class="fas fa-shield-alt me-2"></i>
-                        <strong>Privacy Protected:</strong> You'll see situation categories (e.g., "Family displaced due to eviction") but never personal details like names or addresses. This protects beneficiary privacy while showing you the real impact of your generosity.
+                        <strong>Privacy Protected:</strong> You'll see location names, dates, and amounts but never personal details like participant names or contact information. This protects beneficiary privacy while showing you the real impact of your generosity.
                     </div>
 
-                    <h3>Situation Categories</h3>
-                    <p>Situations are categorized by type of need:</p>
+                    <h2>Funding Report</h2>
+                    <p>The <strong>Funding Report</strong> is a dedicated page that shows exactly which stays each of your donations has funded:</p>
                     <ul>
-                        <li>Eviction / Housing Loss</li>
-                        <li>Domestic Violence</li>
-                        <li>Medical Emergency</li>
-                        <li>Job Loss</li>
-                        <li>Natural Disaster</li>
-                        <li>Veteran Transition</li>
-                        <li>And more...</li>
+                        <li><strong>Summary stats:</strong> Total donated, stays funded, amount used, and balance remaining</li>
+                        <li><strong>Per-donation breakdown:</strong> Each donation is shown as a card with a usage progress bar</li>
+                        <li><strong>Funded stays table:</strong> For each donation, see a table of stays with location, check-in/check-out dates, nights, funded amount, and status</li>
+                        <li>Donations with no funded stays yet show "No stays funded yet from this donation"</li>
                     </ul>
 
                     <h2>Charities You Support</h2>
-                    <p>View the charities where your donations go:</p>
+                    <p>The <strong>Charities</strong> page lists the charities where your donations go. Click a charity to see:</p>
                     <ul>
-                        <li>Charity name and mission</li>
-                        <li>Your total contributions to each charity</li>
-                        <li>Nights funded per charity</li>
+                        <li>Your total contributions to that charity</li>
+                        <li>Stats specific to that charity (donations, net funds, stays funded)</li>
+                        <li>Your donation history with that charity</li>
                     </ul>
 
                     <h2>Your Profile</h2>
-                    <p>Keep your profile information up to date:</p>
+                    <p>The <strong>My Profile</strong> page shows your account information:</p>
                     <ul>
-                        <li>Contact information for receipts and updates</li>
-                        <li>Business details (for business/organization donors)</li>
-                        <li>Tax ID for donation records</li>
+                        <li>Name and contact information</li>
+                        <li>Business details (for business/organisation donors)</li>
+                        <li>Verification status</li>
                     </ul>
+                    <p>Contact your administrator if you need to update your profile information.</p>
                 </div>
 
-                <!-- Location Admin Guide Section -->
+                <!-- ============================================ -->
+                <!-- LOCATION ADMIN GUIDE SECTION -->
+                <!-- ============================================ -->
                 <div th:if="${activeSection == 'location-admin'}">
                     <h1><i class="fas fa-map-marker-alt me-2"></i>Location Admin Guide</h1>
 
-                    <p class="lead">As a Location Admin, you manage shelter locations and their availability for housing assistance.</p>
+                    <p class="lead">As a Location Admin, you manage shelter locations and their availability for housing assistance across the platform.</p>
+
+                    <h2>Dashboard</h2>
+                    <p>Your dashboard shows an overview of all locations in the system with key stats like total locations, active/inactive counts, and quick links to manage them.</p>
 
                     <h2>Managing Locations</h2>
                     <h3>Adding a New Location</h3>
@@ -543,40 +766,96 @@
                         <li>Go to <strong>Locations</strong> from your dashboard</li>
                         <li>Click <strong>Add New Location</strong></li>
                         <li>Enter the location name and full address</li>
+                        <li>Assign the location to a charity</li>
                         <li>Set the nightly rate</li>
                         <li>Add any special notes or instructions</li>
                         <li>Save the location</li>
                     </ol>
 
+                    <h3>Editing Locations</h3>
+                    <p>Click on any location to view its details, then use the <strong>Edit</strong> button to update:</p>
+                    <ul>
+                        <li>Location name and address</li>
+                        <li>Nightly rate</li>
+                        <li>Notes and special instructions</li>
+                    </ul>
+
                     <h3>Updating Nightly Rates</h3>
-                    <p>Rates can be updated as needed:</p>
-                    <ol class="step-list">
-                        <li>Open the location details</li>
-                        <li>Click <strong>Update Rate</strong></li>
-                        <li>Enter the new nightly rate</li>
-                        <li>The system tracks rate history for accurate donation calculations</li>
-                    </ol>
+                    <p>Rates can be updated as needed. Rate changes apply to new bookings only &mdash; existing bookings keep their original rate.</p>
 
                     <div class="tip-box">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>Note:</strong> Rate changes apply to new bookings. Existing bookings keep their original rate.
+                        <strong>Note:</strong> The nightly rate is used to calculate how many nights a donation can fund, so keep rates accurate and up to date.
                     </div>
 
                     <h2>Location Status</h2>
-                    <p>Locations can be set as active or inactive:</p>
+                    <p>Locations can be toggled active or inactive:</p>
                     <ul>
-                        <li><strong>Active:</strong> Available for new bookings and visible to participants selecting locations</li>
+                        <li><strong>Active:</strong> Available for new bookings and visible to participants selecting locations via invite links</li>
                         <li><strong>Inactive:</strong> Not available for new bookings (existing bookings are unaffected)</li>
                     </ul>
 
-                    <h2>Viewing Bookings</h2>
-                    <p>See all bookings at your locations:</p>
+                    <h2>Filtering and Searching</h2>
+                    <p>The locations list supports filtering by:</p>
                     <ul>
-                        <li>Upcoming check-ins</li>
-                        <li>Current guests</li>
-                        <li>Booking history</li>
-                        <li>Special instructions from facilitators</li>
+                        <li><strong>Charity:</strong> View locations for a specific charity</li>
+                        <li><strong>Status:</strong> Active or inactive locations</li>
+                        <li><strong>Search:</strong> Search by location name or address</li>
                     </ul>
+
+                    <h2>Deleting Locations</h2>
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Caution:</strong> Deleting a location is permanent. Consider deactivating a location instead if it may be needed again in the future. Locations with existing bookings should not be deleted.
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- STAY PARTNERS SECTION -->
+                <!-- ============================================ -->
+                <div th:if="${activeSection == 'stay-partners'}">
+                    <h1><i class="fas fa-building me-2"></i>Stay Partners</h1>
+
+                    <p class="lead">Stay Partners are hotels, property owners, and organisations that provide accommodation locations for SafelyNested participants.</p>
+
+                    <h2>How It Works</h2>
+                    <p>The Stay Partner programme allows accommodation providers to join the SafelyNested platform:</p>
+
+                    <ol class="step-list">
+                        <li><strong>Apply:</strong> Prospective Stay Partners fill out a public application form with their property details, location, availability, and contact information</li>
+                        <li><strong>Review:</strong> An administrator reviews the application and verifies the property information</li>
+                        <li><strong>Approve:</strong> If approved, the administrator assigns the Stay Partner to a charity and their location is added to the platform</li>
+                        <li><strong>Active:</strong> The Stay Partner's location becomes available for bookings by facilitators</li>
+                    </ol>
+
+                    <h2>Public Application Form</h2>
+                    <p>Prospective Stay Partners can access the application at <strong>/stay-partner/apply</strong>. The form collects:</p>
+                    <ul>
+                        <li>Property name and type</li>
+                        <li>Full address and location details</li>
+                        <li>Number of rooms/units available</li>
+                        <li>Nightly rate</li>
+                        <li>Availability and any restrictions</li>
+                        <li>Contact information</li>
+                    </ul>
+
+                    <p>After submitting, applicants receive a confirmation page with an application number. They can check the status of their application at <strong>/stay-partner/status</strong>.</p>
+
+                    <h2>Admin Review Process</h2>
+                    <p>Administrators review Stay Partner applications from the <strong>Stay Partner Applications</strong> card on the home page:</p>
+                    <ul>
+                        <li>View all applications, filterable by status (Pending, Approved, Rejected)</li>
+                        <li>Click an application to see full details</li>
+                        <li><strong>Approve:</strong> Select a charity to assign the Stay Partner to, creating their location in the system</li>
+                        <li><strong>Reject:</strong> Provide a reason for rejection</li>
+                    </ul>
+
+                    <h2>Application Statuses</h2>
+                    <table class="table table-sm">
+                        <tr><td><strong>Pending</strong></td><td>Application submitted, awaiting admin review</td></tr>
+                        <tr><td><strong>Approved</strong></td><td>Application approved, location added to the platform</td></tr>
+                        <tr><td><strong>Rejected</strong></td><td>Application declined with a reason</td></tr>
+                    </table>
                 </div>
 
             </div>
