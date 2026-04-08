@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply as a Charity Partner - SafelyNested</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+        .nav-links { display: flex; gap: 10px; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; transition: background 0.3s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
+        .card-header { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #eee; }
+        .card-header h3 { color: #333; font-size: 18px; }
+        .card-body { padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .required::after { content: " *"; color: #dc3545; }
+        .help-text { font-size: 12px; color: #888; margin-top: 3px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 14px 28px; border-radius: 5px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; transition: opacity 0.3s; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        .page-header { text-align: center; margin-bottom: 30px; }
+        .page-header h1 { font-size: 28px; color: #333; margin-bottom: 10px; }
+        .page-header p { color: #666; font-size: 16px; }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 768px) { .form-row, .form-row-3 { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">SafelyNested</div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/login" class="nav-link">Partner Login</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Apply as a Charity Partner</h1>
+            <p>Join SafelyNested and help connect families in need with safe, temporary housing.</p>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <form action="/charity-application/apply" method="post" id="applicationForm" th:action="@{/charity-application/apply}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <!-- Organization Information -->
+            <div class="card">
+                <div class="card-header"><h3>Organization Information</h3></div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="required">Organization Name</label>
+                        <input type="text" name="charityName" required maxlength="200" placeholder="e.g., Hope Family Services">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Organization Type</label>
+                            <select name="organizationType">
+                                <option value="">Select type...</option>
+                                <option value="Nonprofit">Nonprofit</option>
+                                <option value="School">School</option>
+                                <option value="Church">Church / Religious Organization</option>
+                                <option value="Government">Government Agency</option>
+                                <option value="Community">Community Organization</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>EIN / Tax ID</label>
+                            <input type="text" name="einTaxId" maxlength="20" placeholder="XX-XXXXXXX">
+                            <div class="help-text">Optional. Used for verification purposes.</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Website</label>
+                        <input type="url" name="website" maxlength="255" placeholder="https://www.yourorganization.org">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card">
+                <div class="card-header"><h3>Primary Contact</h3></div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="required">Contact Name</label>
+                        <input type="text" name="contactName" required maxlength="200" placeholder="Full name of primary contact">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="required">Email Address</label>
+                            <input type="email" name="contactEmail" required maxlength="100" placeholder="contact@organization.org">
+                            <div class="help-text">This will be used to create your account after approval.</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" name="contactPhone" maxlength="20" placeholder="(555) 123-4567">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address -->
+            <div class="card">
+                <div class="card-header"><h3>Organization Address</h3></div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Street Address</label>
+                        <input type="text" name="address" maxlength="500" placeholder="123 Main Street">
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" name="city" maxlength="100" placeholder="City">
+                        </div>
+                        <div class="form-group">
+                            <label>State / Province</label>
+                            <input type="text" name="state" maxlength="50" placeholder="State">
+                        </div>
+                        <div class="form-group">
+                            <label>ZIP / Postal Code</label>
+                            <input type="text" name="zipCode" maxlength="20" placeholder="ZIP Code">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Country</label>
+                        <select name="country">
+                            <option value="USA" selected>United States</option>
+                            <option value="CAN">Canada</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Your Organization -->
+            <div class="card">
+                <div class="card-header"><h3>About Your Organization</h3></div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" rows="3" placeholder="Briefly describe your organization and the communities you serve..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Mission Statement</label>
+                        <textarea name="missionStatement" rows="3" placeholder="Your organization's mission statement..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Estimated Referrals Per Month</label>
+                        <input type="number" name="estimatedReferralsPerMonth" min="1" max="500" placeholder="How many families do you expect to refer per month?">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn-primary" id="submitBtn">Submit Application</button>
+        </form>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        document.getElementById('applicationForm').addEventListener('submit', function() {
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitBtn').textContent = 'Submitting...';
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        });
+    </script>
+</body>
+</html>

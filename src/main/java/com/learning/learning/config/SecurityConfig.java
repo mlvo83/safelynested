@@ -57,6 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/invite/**").permitAll()
                         .requestMatchers("/referral/invite/**").permitAll()
                         .requestMatchers("/stay-partner/**").permitAll()
+                        .requestMatchers("/charity-application/**").permitAll()
                         // Role-based access control
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/facilitator/**").hasRole("FACILITATOR")

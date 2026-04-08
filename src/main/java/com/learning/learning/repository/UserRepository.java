@@ -22,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByEnabledTrue();
 
     List<User> findByEnabledFalse();
+
+    List<User> findByCharityId(Long charityId);
 }

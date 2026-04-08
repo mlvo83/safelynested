@@ -9,6 +9,7 @@ import com.learning.learning.service.DonorDashboardService;
 import com.learning.learning.service.DonorService;
 import com.learning.learning.service.DonorSetupRequestService;
 import com.learning.learning.service.InviteService;
+import com.learning.learning.service.TeamInviteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -67,6 +68,9 @@ public class CharityPartnerController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private TeamInviteService teamInviteService;
+
     // Adds pending donor setup request count to all charity-partner views for sidebar badge
     @ModelAttribute("pendingDonorSetupCount")
     public Long pendingDonorSetupCount(Principal principal) {
@@ -76,6 +80,20 @@ public class CharityPartnerController {
             return donorSetupRequestService.countPendingRequestsForCharity(charityId);
         } catch (Exception e) {
             return 0L;
+        }
+    }
+
+    @ModelAttribute("isPrimaryContact")
+    public Boolean isPrimaryContact(Principal principal) {
+        try {
+            String username = principal.getName();
+            Charity charity = charityService.getCharityForUser(username);
+            User user = userRepository.findByUsername(username).orElse(null);
+            return charity.getPrimaryContact() != null
+                    && user != null
+                    && charity.getPrimaryContact().getId().equals(user.getId());
+        } catch (Exception e) {
+            return false;
         }
     }
 
@@ -1283,5 +1301,85 @@ public class CharityPartnerController {
         model.addAttribute("charity", charity);
 
         return "charity-partner/location-view";
+    }
+
+    // ========================================
+    // TEAM MANAGEMENT
+    // ========================================
+
+    @GetMapping("/team")
+    public String teamPage(Model model, Principal principal, RedirectAttributes redirectAttributes) {
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+        User user = userRepository.findByUsername(username).orElse(null);
+
+        // Only primary contact can access team page
+        boolean isPrimary = charity.getPrimaryContact() != null
+                && user != null
+                && charity.getPrimaryContact().getId().equals(user.getId());
+
+        if (!isPrimary) {
+            redirectAttributes.addFlashAttribute("error", "Only the primary contact can manage team members.");
+            return "redirect:/charity-partner/dashboard";
+        }
+
+        // Get team members (all users linked to this charity)
+        List<User> teamMembers = userRepository.findByCharityId(charity.getId());
+
+        // Get team invites
+        List<TeamInvite> invites = teamInviteService.getInvitesForCharity(charity.getId());
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("teamMembers", teamMembers);
+        model.addAttribute("invites", invites);
+        model.addAttribute("allowedDomain", charity.getAllowedEmailDomain());
+        model.addAttribute("activePage", "team");
+
+        return "charity-partner/team";
+    }
+
+    @PostMapping("/team/invite")
+    public String sendTeamInvite(
+            @RequestParam String email,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String message,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            String username = principal.getName();
+            Charity charity = charityService.getCharityForUser(username);
+            User invitedBy = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            teamInviteService.sendTeamInvite(charity, invitedBy, email.trim().toLowerCase(),
+                    firstName, lastName, message);
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Invitation sent to " + email + " successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/charity-partner/team";
+    }
+
+    @PostMapping("/team/invite/{id}/cancel")
+    public String cancelTeamInvite(
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            String username = principal.getName();
+            Long charityId = charityService.getCharityIdForUser(username);
+            teamInviteService.cancelInvite(id, charityId);
+            redirectAttributes.addFlashAttribute("success", "Invitation cancelled.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/charity-partner/team";
     }
 }

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Management - SafelyNested</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <th:block th:replace="~{charity-partner/fragments/sidebar :: sidebar-styles}"></th:block>
+    <style>
+        .invite-card { border: 2px solid #667eea; border-radius: 10px; overflow: hidden; }
+        .invite-card .card-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .domain-badge { background: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; }
+        .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .status-PENDING { background: #fef3c7; color: #92400e; }
+        .status-ACCEPTED { background: #d1fae5; color: #065f46; }
+        .status-EXPIRED { background: #e5e7eb; color: #6b7280; }
+        .status-CANCELLED { background: #fee2e2; color: #991b1b; }
+        .primary-badge { background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+        /* Modal styles */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+        .modal-overlay.active { display: flex; }
+        .custom-modal { background: white; border-radius: 12px; max-width: 480px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        .custom-modal .modal-header { padding: 20px 24px; background: #fee2e2; display: flex; align-items: center; gap: 12px; }
+        .custom-modal .modal-body { padding: 20px 24px; }
+        .custom-modal .modal-footer { padding: 16px 24px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #eee; }
+        .btn-modal { padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; border: none; }
+        .btn-modal-cancel { background: #e5e7eb; color: #374151; }
+        .btn-modal-danger { background: #ef4444; color: white; }
+        /* Processing */
+        .processing { display: none; }
+        .processing.active { display: block; }
+        .processing .spinner-border { width: 1.5rem; height: 1.5rem; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <th:block th:replace="~{charity-partner/fragments/sidebar :: sidebar('team')}"></th:block>
+
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-users me-2"></i> Team Management</h1>
+            </div>
+
+            <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${success}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <div class="row">
+                <!-- Invite Form -->
+                <div class="col-lg-5 mb-4">
+                    <div class="card invite-card">
+                        <div class="card-header py-3">
+                            <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i> Invite Team Member</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted mb-2">
+                                Invites are restricted to
+                                <span class="domain-badge" th:text="'@' + ${allowedDomain}">@domain.com</span>
+                                email addresses.
+                            </p>
+                            <form th:action="@{/charity-partner/team/invite}" method="post" id="inviteForm">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Email Address <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                        <input type="email" class="form-control" name="email" required
+                                               th:placeholder="'colleague@' + ${allowedDomain}">
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <label class="form-label fw-semibold">First Name</label>
+                                        <input type="text" class="form-control" name="firstName" placeholder="First name">
+                                    </div>
+                                    <div class="col">
+                                        <label class="form-label fw-semibold">Last Name</label>
+                                        <input type="text" class="form-control" name="lastName" placeholder="Last name">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Personal Message (optional)</label>
+                                    <textarea class="form-control" name="message" rows="2"
+                                              placeholder="Add a personal note to the invitation..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100" id="inviteBtn">
+                                    <i class="fas fa-paper-plane me-2"></i> Send Invitation
+                                </button>
+                                <div class="processing text-center mt-3" id="inviteProcessing">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <span class="ms-2 text-muted">Sending invitation...</span>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Members -->
+                <div class="col-lg-7 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">
+                                <i class="fas fa-users me-2"></i> Current Team Members
+                                <span class="badge bg-primary ms-2" th:text="${teamMembers.size()}">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Username</th>
+                                            <th>Email</th>
+                                            <th>Role</th>
+                                            <th>Joined</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="member : ${teamMembers}">
+                                            <td>
+                                                <span th:text="${member.fullName}"></span>
+                                                <span th:if="${charity.primaryContact != null && charity.primaryContact.id == member.id}"
+                                                      class="primary-badge ms-1">Primary</span>
+                                            </td>
+                                            <td th:text="${member.username}"></td>
+                                            <td th:text="${member.email}"></td>
+                                            <td th:text="${member.primaryRole}"></td>
+                                            <td th:text="${member.createdAt != null} ? ${#temporals.format(member.createdAt, 'MMM d, yyyy')} : 'N/A'"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div th:if="${teamMembers.isEmpty()}" class="text-center py-4 text-muted">
+                                <i class="fas fa-user-friends fa-2x mb-2 d-block"></i>
+                                No team members yet. Send an invitation to get started.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Invites -->
+                    <div class="card mt-4" th:if="${!invites.isEmpty()}">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0">
+                                <i class="fas fa-envelope-open me-2"></i> Invitations
+                                <span class="badge bg-secondary ms-2" th:text="${invites.size()}">0</span>
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Status</th>
+                                            <th>Sent</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="invite : ${invites}">
+                                            <td th:text="${invite.fullName}"></td>
+                                            <td th:text="${invite.email}"></td>
+                                            <td>
+                                                <span class="status-badge"
+                                                      th:classappend="'status-' + ${invite.status.name()}"
+                                                      th:text="${invite.status.displayName}"></span>
+                                            </td>
+                                            <td th:text="${#temporals.format(invite.createdAt, 'MMM d, yyyy')}"></td>
+                                            <td>
+                                                <button th:if="${invite.pending}"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        onclick="showCancelModal(this)"
+                                                        th:data-id="${invite.id}"
+                                                        th:data-email="${invite.email}">
+                                                    <i class="fas fa-times"></i> Cancel
+                                                </button>
+                                                <span th:if="${!invite.pending}" class="text-muted">—</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Cancel Invite Modal -->
+<div class="modal-overlay" id="cancelModal">
+    <div class="custom-modal">
+        <div class="modal-header">
+            <i class="fas fa-exclamation-triangle text-danger fa-lg"></i>
+            <h5 class="mb-0">Cancel Invitation</h5>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to cancel the invitation to <strong id="cancelEmail"></strong>?</p>
+            <p class="text-muted mb-0">They will no longer be able to use the registration link.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal btn-modal-cancel" onclick="hideCancelModal()">Keep Invite</button>
+            <form id="cancelForm" method="post" style="display:inline;">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button type="submit" class="btn-modal btn-modal-danger">Yes, Cancel Invite</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Invite form processing
+    document.getElementById('inviteForm').addEventListener('submit', function() {
+        document.getElementById('inviteBtn').disabled = true;
+        document.getElementById('inviteBtn').style.display = 'none';
+        document.getElementById('inviteProcessing').classList.add('active');
+    });
+
+    // Cancel modal
+    function showCancelModal(btn) {
+        var id = btn.getAttribute('data-id');
+        var email = btn.getAttribute('data-email');
+        document.getElementById('cancelEmail').textContent = email;
+        document.getElementById('cancelForm').action = '/charity-partner/team/invite/' + id + '/cancel';
+        document.getElementById('cancelModal').classList.add('active');
+    }
+
+    function hideCancelModal() {
+        document.getElementById('cancelModal').classList.remove('active');
+    }
+
+    document.getElementById('cancelModal').addEventListener('click', function(e) {
+        if (e.target === this) hideCancelModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') hideCancelModal();
+    });
+</script>
+</body>
+</html>

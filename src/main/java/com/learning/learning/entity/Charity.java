@@ -90,6 +90,13 @@ public class Charity {
     @JoinColumn(name = "verified_by")
     private User verifiedBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "primary_contact_id")
+    private User primaryContact;
+
+    @Column(name = "allowed_email_domain", length = 100)
+    private String allowedEmailDomain;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

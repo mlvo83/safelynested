@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Submitted - SafelyNested</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+        .nav-links { display: flex; gap: 10px; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; transition: background 0.3s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 700px; margin: 60px auto; padding: 0 20px; text-align: center; }
+        .success-icon { width: 80px; height: 80px; background: #d1fae5; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; animation: scaleIn 0.5s ease; }
+        .success-icon svg { width: 40px; height: 40px; color: #059669; }
+        @keyframes scaleIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 40px; }
+        h1 { font-size: 28px; color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; font-size: 16px; margin-bottom: 30px; }
+        .app-number { background: #d1fae5; color: #065f46; padding: 12px 24px; border-radius: 8px; font-size: 20px; font-weight: bold; display: inline-block; margin-bottom: 30px; }
+        .steps { text-align: left; margin: 30px 0; }
+        .step { display: flex; gap: 15px; margin-bottom: 20px; }
+        .step-number { width: 32px; height: 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; flex-shrink: 0; }
+        .step-content h4 { color: #333; margin-bottom: 4px; }
+        .step-content p { color: #666; font-size: 14px; }
+        .btn { display: inline-block; padding: 12px 24px; border-radius: 5px; text-decoration: none; font-weight: 600; margin: 5px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-outline { background: white; color: #667eea; border: 2px solid #667eea; }
+        .actions { margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">SafelyNested</div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/login" class="nav-link">Partner Login</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <div class="success-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+
+            <h1>Application Submitted!</h1>
+            <p class="subtitle">Thank you for applying to join SafelyNested as a Charity Partner.</p>
+
+            <div class="app-number" th:text="${applicationNumber}">CA-2026-0001</div>
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Please save this number for your records.</p>
+
+            <div class="steps">
+                <h3 style="margin-bottom: 15px; color: #333;">What Happens Next?</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Application Review</h4>
+                        <p>Our team will review your application within a few business days.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Approval & Account Setup</h4>
+                        <p>Once approved, you'll receive an email with a link to create your account.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Start Helping Families</h4>
+                        <p>Access your dashboard to manage referrals, invite team members, and connect families with safe housing.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <a href="/charity-application/status" class="btn btn-primary">Check Application Status</a>
+                <a href="/" class="btn btn-outline">Return Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
