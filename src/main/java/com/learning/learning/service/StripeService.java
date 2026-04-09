@@ -82,6 +82,8 @@ public class StripeService {
         // Build Stripe Checkout Session
         SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.US_BANK_ACCOUNT)
                 .setSuccessUrl(baseUrl + "/donate/success?session_id={CHECKOUT_SESSION_ID}")
                 .setCancelUrl(baseUrl + "/donate/cancel")
                 .addLineItem(
