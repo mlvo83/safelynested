@@ -150,7 +150,7 @@ public class BookingService {
             booking.setFundedAmount(bookingCost);
             booking.setPaymentStatus(Booking.PaymentStatus.PROGRAM_FUNDED);
             booking.setPaymentMethod("PROGRAM_FUNDED");
-            booking.setPaidBy(donation.getDonor().getDisplayName());
+            booking.setPaidBy(donation.getDonorDisplayName());
 
             // Update donation status
             if (donation.getStatus() == Donation.DonationStatus.VERIFIED) {
@@ -398,7 +398,7 @@ public class BookingService {
             if (remaining.compareTo(BigDecimal.ZERO) > 0) {
                 available.add(new AvailableDonation(
                         donation.getId(),
-                        donation.getDonor().getDisplayName(),
+                        donation.getDonorDisplayName(),
                         donation.getDonatedAt(),
                         totalNet,
                         remaining

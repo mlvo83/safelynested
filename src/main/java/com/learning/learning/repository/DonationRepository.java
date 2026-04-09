@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DonationRepository extends JpaRepository<Donation, Long> {
@@ -106,18 +107,23 @@ public interface DonationRepository extends JpaRepository<Donation, Long> {
     List<Donation> findPendingVerificationByCharityId(@Param("charityId") Long charityId);
 
     // Find donations available for funding bookings (verified/allocated/partially used with net amount > 0)
-    @Query("SELECT d FROM Donation d JOIN FETCH d.donor WHERE d.charity.id = :charityId " +
+    @Query("SELECT d FROM Donation d LEFT JOIN FETCH d.donor WHERE d.charity.id = :charityId " +
            "AND d.status IN ('VERIFIED', 'ALLOCATED', 'PARTIALLY_USED') " +
            "AND d.netAmount > 0 ORDER BY d.donatedAt ASC")
     List<Donation> findAvailableDonationsForCharity(@Param("charityId") Long charityId);
 
     // Find all donations that have at least one funded booking (for admin funding report)
-    @Query("SELECT DISTINCT d FROM Donation d JOIN FETCH d.donor JOIN FETCH d.charity " +
+    @Query("SELECT DISTINCT d FROM Donation d LEFT JOIN FETCH d.donor JOIN FETCH d.charity " +
            "WHERE EXISTS (SELECT b FROM Booking b WHERE b.fundingDonation.id = d.id AND b.bookingStatus != 'CANCELLED') " +
            "ORDER BY d.donatedAt DESC")
     List<Donation> findDonationsWithFundedBookings();
 
     // Find all donations with eager fetch of donor and charity (for admin funding report)
-    @Query("SELECT d FROM Donation d JOIN FETCH d.donor JOIN FETCH d.charity ORDER BY d.donatedAt DESC")
+    @Query("SELECT d FROM Donation d LEFT JOIN FETCH d.donor JOIN FETCH d.charity ORDER BY d.donatedAt DESC")
     List<Donation> findAllWithDonorAndCharity();
+
+    // Stripe lookup
+    Optional<Donation> findByStripeSessionId(String stripeSessionId);
+
+    Optional<Donation> findByStripePaymentIntentId(String stripePaymentIntentId);
 }

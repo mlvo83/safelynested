@@ -22,7 +22,7 @@ public class Donation {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "donor_id", nullable = false)
+    @JoinColumn(name = "donor_id")
     private Donor donor;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -81,6 +81,31 @@ public class Donation {
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
+
+    // Stripe integration fields
+    @Column(name = "stripe_session_id")
+    private String stripeSessionId;
+
+    @Column(name = "stripe_payment_intent_id")
+    private String stripePaymentIntentId;
+
+    // Anonymous donor info (for online donations without a Donor entity)
+    @Column(name = "donor_email")
+    private String donorEmail;
+
+    @Column(name = "donor_name")
+    private String donorName;
+
+    // Payment source tracking
+    @Column(name = "payment_source", length = 50)
+    private String paymentSource = "MANUAL";
+
+    // Fee coverage tracking
+    @Column(name = "cover_fees")
+    private Boolean coverFees = false;
+
+    @Column(name = "original_amount", precision = 10, scale = 2)
+    private BigDecimal originalAmount;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -160,6 +185,16 @@ public class Donation {
     public int getNightsRemaining() {
         int funded = nightsFunded != null ? nightsFunded : 0;
         return funded - getNightsUsed();
+    }
+
+    public String getDonorDisplayName() {
+        if (donor != null) {
+            return donor.getDisplayName();
+        }
+        if (donorName != null && !donorName.isEmpty()) {
+            return donorName;
+        }
+        return "Anonymous";
     }
 
     public boolean isFullyAllocated() {
