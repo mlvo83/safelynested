@@ -2,8 +2,10 @@ package com.learning.learning.service;
 
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.Donation;
+import com.learning.learning.entity.User;
 import com.learning.learning.repository.CharityRepository;
 import com.learning.learning.repository.DonationRepository;
+import com.learning.learning.repository.UserRepository;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -44,6 +47,9 @@ public class StripeService {
 
     @Autowired
     private CharityRepository charityRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private EmailService emailService;
@@ -124,6 +130,74 @@ public class StripeService {
     }
 
     // ========================================
+    // CREATE FEE PAYMENT SESSION (for charity partners)
+    // ========================================
+
+    public String createFeePaymentSession(Long charityId, BigDecimal donationAmount,
+                                           String donorName, String donorEmail,
+                                           LocalDate dateReceived, String notes,
+                                           String recorderUsername) throws Exception {
+        Charity charity = charityRepository.findById(charityId)
+                .orElseThrow(() -> new RuntimeException("Charity not found"));
+
+        if (!Boolean.TRUE.equals(charity.getIsActive())) {
+            throw new RuntimeException("This charity is not currently active.");
+        }
+
+        // Calculate the 10% fee
+        BigDecimal feeAmount = donationAmount.multiply(TOTAL_FEE_RATE).setScale(2, RoundingMode.HALF_UP);
+
+        // Convert fee to cents for Stripe
+        long feeInCents = feeAmount.multiply(new BigDecimal("100")).longValue();
+
+        if (feeInCents < 50) {
+            throw new RuntimeException("Minimum donation amount is $5.00 (fee must be at least $0.50).");
+        }
+
+        // Truncate notes to 500 chars (Stripe metadata limit)
+        String truncatedNotes = notes != null && notes.length() > 500 ? notes.substring(0, 500) : notes;
+
+        SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
+                .setMode(SessionCreateParams.Mode.PAYMENT)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
+                .addPaymentMethodType(SessionCreateParams.PaymentMethodType.US_BANK_ACCOUNT)
+                .setSuccessUrl(baseUrl + "/charity-partner/donations/record/success?session_id={CHECKOUT_SESSION_ID}")
+                .setCancelUrl(baseUrl + "/charity-partner/donations/record/cancel")
+                .addLineItem(
+                        SessionCreateParams.LineItem.builder()
+                                .setQuantity(1L)
+                                .setPriceData(
+                                        SessionCreateParams.LineItem.PriceData.builder()
+                                                .setCurrency("usd")
+                                                .setUnitAmount(feeInCents)
+                                                .setProductData(
+                                                        SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                                .setName("Platform Fee - " + charity.getCharityName())
+                                                                .setDescription("10% platform fee (7% platform + 3% facilitator) for recording a $" + donationAmount.toPlainString() + " donation")
+                                                                .build()
+                                                )
+                                                .build()
+                                )
+                                .build()
+                )
+                .putMetadata("session_type", "FEE_PAYMENT")
+                .putMetadata("charity_id", charityId.toString())
+                .putMetadata("donation_amount", donationAmount.toPlainString())
+                .putMetadata("donor_name", donorName != null ? donorName : "")
+                .putMetadata("donor_email", donorEmail != null ? donorEmail : "")
+                .putMetadata("date_received", dateReceived.toString())
+                .putMetadata("notes", truncatedNotes != null ? truncatedNotes : "")
+                .putMetadata("recorder_username", recorderUsername)
+                .putMetadata("fee_structure_version", "v1.0");
+
+        Session session = Session.create(paramsBuilder.build());
+        logger.info("Created fee payment session {} for charity {} (donation: {}, fee: {})",
+                session.getId(), charity.getCharityName(), donationAmount, feeAmount);
+
+        return session.getUrl();
+    }
+
+    // ========================================
     // WEBHOOK HANDLING
     // ========================================
 
@@ -133,16 +207,45 @@ public class StripeService {
 
         logger.info("Received Stripe webhook event: {} ({})", event.getType(), event.getId());
 
-        if ("checkout.session.completed".equals(event.getType())) {
-            Session session = (Session) event.getDataObjectDeserializer()
-                    .getObject()
-                    .orElseThrow(() -> new RuntimeException("Failed to deserialize session from webhook"));
+        if ("checkout.session.completed".equals(event.getType()) ||
+            "checkout.session.async_payment_succeeded".equals(event.getType())) {
 
-            handleCheckoutCompleted(session);
+            // Extract session ID from the raw event JSON and retrieve the full session via API
+            // This is more reliable than deserializing from the event payload
+            try {
+                String rawJson = event.getDataObjectDeserializer().getRawJson();
+                // Find the session ID (starts with "cs_") in the raw JSON
+                int idx = rawJson.indexOf("\"id\"");
+                if (idx < 0) {
+                    logger.error("No id field found in webhook event data");
+                    return;
+                }
+                int colonIdx = rawJson.indexOf(":", idx);
+                int quoteStart = rawJson.indexOf("\"", colonIdx + 1);
+                int quoteEnd = rawJson.indexOf("\"", quoteStart + 1);
+                String sessionId = rawJson.substring(quoteStart + 1, quoteEnd);
+
+                logger.info("Retrieving session {} from Stripe API", sessionId);
+                Session session = Session.retrieve(sessionId);
+                handleCheckoutCompleted(session);
+            } catch (Exception e) {
+                logger.error("Failed to process checkout session from webhook: {}", e.getMessage());
+            }
         }
     }
 
     private void handleCheckoutCompleted(Session session) {
+        Map<String, String> metadata = session.getMetadata();
+        String sessionType = metadata.getOrDefault("session_type", "PUBLIC_DONATION");
+
+        if ("FEE_PAYMENT".equals(sessionType)) {
+            handleFeePaymentCompleted(session);
+        } else {
+            handlePublicDonationCompleted(session);
+        }
+    }
+
+    private void handlePublicDonationCompleted(Session session) {
         String sessionId = session.getId();
 
         // Idempotency check
@@ -182,7 +285,7 @@ public class StripeService {
 
         // Build donation record
         Donation donation = new Donation();
-        donation.setDonor(null); // Anonymous online donation
+        donation.setDonor(null);
         donation.setCharity(charity);
         donation.setGrossAmount(grossAmount);
         donation.setPlatformFee(breakdown.platformFee());
@@ -209,13 +312,84 @@ public class StripeService {
         logger.info("Created donation {} from Stripe session {} for charity {} (gross: {}, net: {})",
                 donation.getId(), sessionId, charity.getCharityName(), grossAmount, breakdown.netAmount());
 
-        // Send confirmation email
         if (donorEmail != null && !donorEmail.isEmpty()) {
             try {
                 sendDonationConfirmationEmail(donation, charity);
             } catch (Exception e) {
                 logger.error("Failed to send donation confirmation email to {}: {}", donorEmail, e.getMessage());
             }
+        }
+    }
+
+    private void handleFeePaymentCompleted(Session session) {
+        String sessionId = session.getId();
+
+        // Idempotency check
+        if (donationRepository.findByFeeStripeSessionId(sessionId).isPresent()) {
+            logger.info("Donation already exists for fee session {}, skipping (duplicate webhook)", sessionId);
+            return;
+        }
+
+        Map<String, String> metadata = session.getMetadata();
+        Long charityId = Long.parseLong(metadata.get("charity_id"));
+        BigDecimal donationAmount = new BigDecimal(metadata.get("donation_amount"));
+        String donorName = metadata.getOrDefault("donor_name", "");
+        String donorEmail = metadata.getOrDefault("donor_email", "");
+        String dateReceivedStr = metadata.get("date_received");
+        String notes = metadata.getOrDefault("notes", "");
+        String recorderUsername = metadata.get("recorder_username");
+
+        Charity charity = charityRepository.findById(charityId)
+                .orElseThrow(() -> new RuntimeException("Charity not found: " + charityId));
+
+        // Calculate fees on the full donation amount
+        DonationService.DonationBreakdown breakdown = donationService.calculateFees(donationAmount);
+
+        // Calculate nights funded
+        int nightsFunded = donationService.calculateNightsFunded(breakdown.netAmount(), charityId);
+        BigDecimal avgRate = donationService.getAverageNightlyRate(charityId);
+
+        // Look up recorder
+        User recorder = userRepository.findByUsername(recorderUsername).orElse(null);
+
+        // Parse date received
+        LocalDate dateReceived = dateReceivedStr != null ? LocalDate.parse(dateReceivedStr) : null;
+
+        // Build donation record
+        Donation donation = new Donation();
+        donation.setDonor(null);
+        donation.setCharity(charity);
+        donation.setGrossAmount(donationAmount);
+        donation.setPlatformFee(breakdown.platformFee());
+        donation.setFacilitatorFee(breakdown.facilitatorFee());
+        donation.setProcessingFee(BigDecimal.ZERO);
+        donation.setNetAmount(breakdown.netAmount());
+        donation.setNightsFunded(nightsFunded);
+        donation.setAvgNightlyRateAtDonation(avgRate);
+        donation.setStatus(Donation.DonationStatus.VERIFIED);
+        donation.setVerificationStatus(Donation.VerificationStatus.VERIFIED);
+        donation.setFeeStructureVersion("v1.0");
+        donation.setDonatedAt(LocalDateTime.now());
+        donation.setVerifiedAt(LocalDateTime.now());
+        donation.setRecordedBy(recorder);
+        donation.setNotes(notes.isEmpty() ? "Donation recorded by charity partner" : notes);
+        donation.setDonorEmail(donorEmail.isEmpty() ? null : donorEmail);
+        donation.setDonorName(donorName.isEmpty() ? null : donorName);
+        donation.setPaymentSource("CHARITY_RECORDED");
+        donation.setOriginalAmount(donationAmount);
+        donation.setDateReceived(dateReceived);
+        donation.setFeeStripeSessionId(sessionId);
+        donation.setFeeStripePaymentIntentId(session.getPaymentIntent());
+
+        donation = donationRepository.save(donation);
+        logger.info("Created charity-recorded donation {} from fee session {} for charity {} (donation: {}, fee paid: {})",
+                donation.getId(), sessionId, charity.getCharityName(), donationAmount, breakdown.totalFees());
+
+        // Send fee receipt email to charity contact
+        try {
+            sendFeeReceiptEmail(donation, charity, recorder);
+        } catch (Exception e) {
+            logger.error("Failed to send fee receipt email for charity {}: {}", charity.getCharityName(), e.getMessage());
         }
     }
 
@@ -308,5 +482,74 @@ public class StripeService {
         );
 
         emailService.sendHtmlEmail(donation.getDonorEmail(), subject, html);
+    }
+
+    private void sendFeeReceiptEmail(Donation donation, Charity charity, User recorder) {
+        String to = charity.getContactEmail();
+        if (to == null || to.isEmpty()) return;
+
+        String recorderName = recorder != null ? recorder.getFullName() : "A team member";
+        String subject = "Fee Payment Receipt - Donation Recorded - SafelyNested";
+
+        String html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .success-badge { background: #d1fae5; color: #065f46; padding: 10px 20px; border-radius: 20px; display: inline-block; font-weight: bold; margin: 20px 0; }
+                    .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
+                    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Donation Recorded</h1>
+                    </div>
+                    <div class="content">
+                        <p>Dear <strong>%s</strong>,</p>
+
+                        <div class="success-badge">Fee Payment Confirmed</div>
+
+                        <p>%s has recorded a donation and the platform fee has been paid successfully.</p>
+
+                        <div class="info-box">
+                            <p><strong>Donation Amount:</strong> $%s</p>
+                            <p><strong>Platform Fee (7%%):</strong> $%s</p>
+                            <p><strong>Facilitator Fee (3%%):</strong> $%s</p>
+                            <p><strong>Total Fee Paid:</strong> $%s</p>
+                            <p><strong>Net Amount Credited:</strong> $%s</p>
+                            <p><strong>Donor:</strong> %s</p>
+                            <p><strong>Recorded By:</strong> %s</p>
+                        </div>
+
+                        <p>This donation is now verified and recorded in the SafelyNested system.</p>
+
+                        <p>Warm regards,<br><strong>The SafelyNested Team</strong></p>
+                    </div>
+                    <div class="footer">
+                        <p>SafelyNested - A Safe Place, Every Night<br>
+                        Please do not reply directly to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(
+                charity.getCharityName(),
+                recorderName,
+                donation.getGrossAmount().toPlainString(),
+                donation.getPlatformFee().toPlainString(),
+                donation.getFacilitatorFee().toPlainString(),
+                donation.getPlatformFee().add(donation.getFacilitatorFee()).toPlainString(),
+                donation.getNetAmount().toPlainString(),
+                donation.getDonorDisplayName(),
+                recorderName
+        );
+
+        emailService.sendHtmlEmail(to, subject, html);
     }
 }

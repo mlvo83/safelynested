@@ -126,4 +126,7 @@ public interface DonationRepository extends JpaRepository<Donation, Long> {
     Optional<Donation> findByStripeSessionId(String stripeSessionId);
 
     Optional<Donation> findByStripePaymentIntentId(String stripePaymentIntentId);
+
+    // Fee payment lookup
+    Optional<Donation> findByFeeStripeSessionId(String feeStripeSessionId);
 }

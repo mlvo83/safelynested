@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,6 +107,17 @@ public class Donation {
 
     @Column(name = "original_amount", precision = 10, scale = 2)
     private BigDecimal originalAmount;
+
+    // Date charity received the donation from the donor
+    @Column(name = "date_received")
+    private LocalDate dateReceived;
+
+    // Fee payment Stripe tracking (separate from public donation payment)
+    @Column(name = "fee_stripe_session_id")
+    private String feeStripeSessionId;
+
+    @Column(name = "fee_stripe_payment_intent_id")
+    private String feeStripePaymentIntentId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

@@ -58,7 +58,8 @@ public class SecurityConfig {
                         .requestMatchers("/referral/invite/**").permitAll()
                         .requestMatchers("/stay-partner/**").permitAll()
                         .requestMatchers("/charity-application/**").permitAll()
-                        .requestMatchers("/donate/**").permitAll()
+                        // Public donate page disabled — donations are recorded by charity partners
+                        // .requestMatchers("/donate/**").permitAll()
                         .requestMatchers("/api/stripe/**").permitAll()
                         // Role-based access control
                         .requestMatchers("/admin/**").hasRole("ADMIN")

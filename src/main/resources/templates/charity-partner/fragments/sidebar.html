@@ -45,6 +45,11 @@
             </a>
         </li>
         <li class="nav-item">
+            <a th:class="${activePage == 'donations'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/donations}">
+                <i class="fas fa-dollar-sign me-2"></i> Donations
+            </a>
+        </li>
+        <li class="nav-item">
             <a th:class="${activePage == 'profile'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/profile}">
                 <i class="fas fa-building me-2"></i> Profile
             </a>
