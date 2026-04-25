@@ -2,6 +2,8 @@ package com.learning.learning.service;
 
 import com.learning.learning.entity.*;
 import com.learning.learning.repository.CharityLocationRepository;
+import com.learning.learning.repository.LocationPartnerRepository;
+import com.learning.learning.repository.PartnerLocationRepository;
 import com.learning.learning.repository.StayPartnerApplicationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +26,15 @@ public class StayPartnerApplicationService {
 
     @Autowired
     private CharityLocationRepository charityLocationRepository;
+
+    @Autowired
+    private LocationPartnerRepository locationPartnerRepository;
+
+    @Autowired
+    private PartnerLocationRepository partnerLocationRepository;
+
+    @Autowired
+    private RegistrationTokenService registrationTokenService;
 
     @Autowired
     private EmailService emailService;
@@ -103,6 +114,80 @@ public class StayPartnerApplicationService {
             sendApprovalEmail(application);
         } catch (Exception e) {
             logger.error("Failed to send approval email for {}: {}", application.getApplicationNumber(), e.getMessage());
+        }
+
+        return application;
+    }
+
+    @Transactional
+    public StayPartnerApplication approveApplicationAsLocationPartner(Long id, User adminUser, String adminNotes) {
+        StayPartnerApplication application = getApplicationById(id);
+
+        if (!application.isPending() && application.getStatus() != StayPartnerApplication.ApplicationStatus.UNDER_REVIEW) {
+            throw new RuntimeException("Application is not in a reviewable status.");
+        }
+
+        String email = application.getPrimaryEmail();
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Cannot invite as Location Partner: application has no contact email.");
+        }
+
+        // Create LocationPartner profile from application contact info
+        LocationPartner partner = new LocationPartner();
+        partner.setStayPartnerApplication(application);
+        partner.setApplicantType(application.getApplicantType());
+        partner.setFirstName(application.getFirstName());
+        partner.setLastName(application.getLastName());
+        partner.setBusinessName(application.getBusinessName());
+        partner.setContactEmail(email);
+        partner.setContactPhone(application.getPrimaryPhone());
+        partner.setEinTaxId(application.getTaxId());
+        partner.setIsVerified(true);
+        partner.setIsActive(true);
+        partner = locationPartnerRepository.save(partner);
+        logger.info("Created LocationPartner {} for application {}", partner.getId(), application.getApplicationNumber());
+
+        // Create the partner's first PartnerLocation from the property info on the application
+        PartnerLocation location = new PartnerLocation();
+        location.setLocationPartner(partner);
+        location.setName(application.getPropertyName() != null ? application.getPropertyName() : "My Property");
+        if (application.getPropertyType() != null) {
+            location.setPropertyType(application.getPropertyType());
+        }
+        location.setAddress(application.getStreetAddress());
+        location.setCity(application.getCity());
+        location.setState(application.getState());
+        location.setZipCode(application.getZipCode());
+        location.setCountry(application.getCountry());
+        location.setNumberOfBedrooms(application.getNumberOfBedrooms());
+        location.setMaxGuests(application.getMaxGuests());
+        location.setNightlyRate(application.getNightlyRate());
+        location.setAmenities(application.getAmenities());
+        location.setAccessibilityFeatures(application.getAccessibilityFeatures());
+        location.setPetsAllowed(Boolean.TRUE.equals(application.getPetsAllowed()));
+        location.setDescription(application.getDescription());
+        location.setIsActive(true);
+        partnerLocationRepository.save(location);
+        logger.info("Created PartnerLocation for partner {}", partner.getId());
+
+        // Create registration token
+        RegistrationToken token = registrationTokenService.createLocationPartnerToken(partner, application, email);
+        logger.info("Created LOCATION_PARTNER registration token for {}", email);
+
+        // Update application
+        application.setStatus(StayPartnerApplication.ApplicationStatus.APPROVED);
+        application.setReviewedBy(adminUser);
+        application.setReviewedAt(LocalDateTime.now());
+        application.setAdminNotes(adminNotes);
+        application = applicationRepository.save(application);
+        logger.info("Approved application {} as Location Partner", application.getApplicationNumber());
+
+        // Send approval email with registration link
+        try {
+            sendLocationPartnerApprovalEmail(application, token, partner);
+        } catch (Exception e) {
+            logger.error("Failed to send Location Partner approval email for {}: {}",
+                    application.getApplicationNumber(), e.getMessage());
         }
 
         return application;
@@ -368,6 +453,76 @@ public class StayPartnerApplicationService {
                 application.getApplicationNumber(),
                 application.getPropertyName(),
                 application.getRejectionReason()
+        );
+    }
+
+    private void sendLocationPartnerApprovalEmail(StayPartnerApplication application, RegistrationToken token, LocationPartner partner) {
+        String registrationUrl = baseUrl + "/location-partner/register/" + token.getToken();
+        String subject = "Application Approved: " + application.getApplicationNumber() + " - SafelyNested";
+        String html = buildLocationPartnerApprovalEmailHtml(application, registrationUrl);
+        emailService.sendHtmlEmail(application.getPrimaryEmail(), subject, html);
+    }
+
+    private String buildLocationPartnerApprovalEmailHtml(StayPartnerApplication application, String registrationUrl) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .success-badge { background: #d1fae5; color: #065f46; padding: 10px 20px; border-radius: 20px; display: inline-block; font-weight: bold; margin: 20px 0; }
+                    .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981; }
+                    .btn { display: inline-block; background: #10b981; color: white; padding: 14px 28px; text-decoration: none; border-radius: 5px; margin-top: 20px; font-size: 16px; font-weight: bold; }
+                    .warning { background: #fef3c7; padding: 12px; border-radius: 8px; margin: 15px 0; font-size: 13px; }
+                    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Application Approved!</h1>
+                    </div>
+                    <div class="content">
+                        <p>Dear <strong>%s</strong>,</p>
+
+                        <div class="success-badge">Your Application Has Been Approved</div>
+
+                        <p>We're excited to welcome you as a SafelyNested Location Partner! Your property has been added to our network, and you're ready to create your account.</p>
+
+                        <div class="info-box">
+                            <p><strong>Application Number:</strong> %s</p>
+                            <p><strong>Property:</strong> %s</p>
+                            <p><strong>Status:</strong> Approved</p>
+                        </div>
+
+                        <h3>Create Your Account</h3>
+                        <p>Click the button below to set up your username and password. Once registered, you'll have access to your Location Partner dashboard where you can mark the dates and times your property is available.</p>
+
+                        <a href="%s" class="btn">Create Your Account</a>
+
+                        <div class="warning">
+                            <strong>Note:</strong> This link will expire in 7 days. If it expires, please contact us for a new invitation.
+                        </div>
+
+                        <p>Thank you for opening your doors to families in need.</p>
+
+                        <p>Warm regards,<br><strong>The SafelyNested Team</strong></p>
+                    </div>
+                    <div class="footer">
+                        <p>SafelyNested - A Safe Place, Every Night<br>
+                        Please do not reply directly to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(
+                application.getApplicantDisplayName(),
+                application.getApplicationNumber(),
+                application.getPropertyName(),
+                registrationUrl
         );
     }
 }

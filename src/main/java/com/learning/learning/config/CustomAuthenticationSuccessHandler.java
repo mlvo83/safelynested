@@ -51,6 +51,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             redirectUrl = "/donor/dashboard";
         } else if (roles.contains("ROLE_LOCATION_ADMIN")) {
             redirectUrl = "/location-admin/dashboard";
+        } else if (roles.contains("ROLE_LOCATION_PARTNER")) {
+            redirectUrl = "/location-partner/dashboard";
         } else if (roles.contains("ROLE_USER")) {
             redirectUrl = "/user/dashboard";
         }

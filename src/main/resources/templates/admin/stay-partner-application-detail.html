@@ -242,10 +242,13 @@
     <!-- Action Section (PENDING or UNDER_REVIEW) -->
     <div th:if="${app.status != null and app.status.name() == 'PENDING' or (app.status != null and app.status.name() == 'UNDER_REVIEW')}">
         <div class="action-cards">
-            <!-- Approve -->
+            <!-- Approve as Passive Listing (existing flow) -->
             <div class="card" style="border-top: 3px solid #28a745;">
-                <div class="card-header" style="color: #28a745;">Approve Application</div>
+                <div class="card-header" style="color: #28a745;">Approve as Passive Listing</div>
                 <div class="card-body">
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                        Adds this property to a charity's inventory. The charity's team books families in. <strong>No applicant account is created.</strong>
+                    </p>
                     <form th:action="@{/admin/stay-partner-applications/{id}/approve(id=${app.id})}" method="post">
                         <div class="form-group">
                             <label for="charityId">Assign to Charity <span style="color: red;">*</span></label>
@@ -260,8 +263,29 @@
                                       placeholder="Optional notes about the approval..."></textarea>
                         </div>
                         <button type="submit" class="btn btn-success"
-                                onclick="return confirm('Approve this application? This will create a location for the assigned charity.');">
-                            Approve Application
+                                onclick="return confirm('Approve as passive listing? This will create a location for the assigned charity.');">
+                            Approve as Listing
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Invite as Location Partner (new self-service flow) -->
+            <div class="card" style="border-top: 3px solid #667eea;">
+                <div class="card-header" style="color: #667eea;">Invite as Location Partner</div>
+                <div class="card-body">
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">
+                        Sends the applicant a login invitation. They create their own account and manage their property's availability on their own dashboard.
+                    </p>
+                    <form th:action="@{/admin/stay-partner-applications/{id}/approve-as-partner(id=${app.id})}" method="post">
+                        <div class="form-group">
+                            <label for="partnerAdminNotes">Admin Notes (optional)</label>
+                            <textarea id="partnerAdminNotes" name="adminNotes" class="form-control" rows="3"
+                                      placeholder="Optional notes about the approval..."></textarea>
+                        </div>
+                        <button type="submit" class="btn" style="background: #667eea; color: white;"
+                                onclick="return confirm('Invite as Location Partner? This will create a user account and send a registration link to the applicant.');">
+                            Invite as Location Partner
                         </button>
                     </form>
                 </div>

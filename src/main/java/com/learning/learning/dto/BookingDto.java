@@ -16,8 +16,19 @@ public class BookingDto {
     @NotNull(message = "Referral ID is required")
     private Long referralId;
 
-    @NotNull(message = "Location is required")
+    // One of locationId / partnerLocationId must be set (server-side validation).
+    // Removed @NotNull because the form now selects a CharityLocation OR a PartnerLocation.
     private Long locationId;
+
+    private Long partnerLocationId;
+
+    /**
+     * The single dropdown sends a prefixed value:
+     *   "charity:{id}"  → CharityLocation
+     *   "partner:{id}"  → PartnerLocation
+     * BookingService parses this on submit.
+     */
+    private String locationSelection;
 
     @NotNull(message = "Check-in date is required")
     @DateTimeFormat(pattern = "yyyy-MM-dd")

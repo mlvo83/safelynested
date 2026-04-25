@@ -4,11 +4,14 @@ import com.learning.learning.dto.BookingDto;
 import com.learning.learning.entity.Booking;
 import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Donation;
+import com.learning.learning.entity.PartnerLocation;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.entity.User;
 import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityLocationRepository;
 import com.learning.learning.repository.DonationRepository;
+import com.learning.learning.repository.PartnerLocationCharityRepository;
+import com.learning.learning.repository.PartnerLocationRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.repository.UserRepository;
 import org.slf4j.Logger;
@@ -40,6 +43,15 @@ public class BookingService {
     private CharityLocationRepository charityLocationRepository;
 
     @Autowired
+    private PartnerLocationRepository partnerLocationRepository;
+
+    @Autowired
+    private PartnerLocationCharityRepository partnerLocationCharityRepository;
+
+    @Autowired
+    private LocationAvailabilityService locationAvailabilityService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -61,9 +73,41 @@ public class BookingService {
             throw new RuntimeException("Can only create bookings for approved referrals");
         }
 
-        // Validate location (now uses CharityLocation)
-        CharityLocation charityLocation = charityLocationRepository.findById(bookingDto.getLocationId())
-                .orElseThrow(() -> new RuntimeException("Location not found"));
+        // Resolve which kind of location was chosen.
+        // The form posts a prefixed value via locationSelection ("charity:{id}" or "partner:{id}").
+        // Fallback: if the form submitted only locationId (legacy or pre-selected), treat as charity.
+        resolveLocationSelection(bookingDto);
+
+        boolean usingPartner = bookingDto.getPartnerLocationId() != null;
+
+        CharityLocation charityLocation = null;
+        PartnerLocation partnerLocation = null;
+        String displayLocationName;
+        String displayLocationAddress;
+
+        if (usingPartner) {
+            partnerLocation = partnerLocationRepository.findById(bookingDto.getPartnerLocationId())
+                    .orElseThrow(() -> new RuntimeException("Partner location not found"));
+            if (!Boolean.TRUE.equals(partnerLocation.getIsActive())) {
+                throw new RuntimeException("That partner property is not active.");
+            }
+            // The partner property must be linked to the referral's charity
+            Long charityId = referral.getCharity() != null ? referral.getCharity().getId() : null;
+            if (charityId == null
+                    || !partnerLocationCharityRepository.existsByPartnerLocationIdAndCharityId(partnerLocation.getId(), charityId)) {
+                throw new RuntimeException("Your charity is not linked to that partner property.");
+            }
+            displayLocationName = partnerLocation.getName();
+            displayLocationAddress = partnerLocation.getAddress();
+        } else {
+            if (bookingDto.getLocationId() == null) {
+                throw new RuntimeException("Please select a location.");
+            }
+            charityLocation = charityLocationRepository.findById(bookingDto.getLocationId())
+                    .orElseThrow(() -> new RuntimeException("Location not found"));
+            displayLocationName = charityLocation.getLocationName();
+            displayLocationAddress = charityLocation.getAddress();
+        }
 
         // Get user
         User user = userRepository.findByUsername(username)
@@ -88,15 +132,18 @@ public class BookingService {
         booking.setReferral(referral);
         booking.setAssignedBy(user);
         booking.setBookedByUser(user);
+        if (usingPartner) {
+            booking.setPartnerLocation(partnerLocation);
+        }
 
         // Copy participant info from referral (for historical record)
         booking.setParticipantName(referral.getParticipantName());
         booking.setParticipantPhone(referral.getParticipantPhone());
         booking.setParticipantEmail(referral.getParticipantEmail());
 
-        // Copy location info from CharityLocation (for historical record)
-        booking.setLocationName(charityLocation.getLocationName());
-        booking.setLocationAddress(charityLocation.getAddress());
+        // Copy location info (for historical record)
+        booking.setLocationName(displayLocationName);
+        booking.setLocationAddress(displayLocationAddress);
 
         // Set dates
         booking.setCheckInDate(bookingDto.getCheckInDate());
@@ -168,6 +215,17 @@ public class BookingService {
             savedBooking.setConfirmationCode(confirmationCode);
             savedBooking.setConfirmationNumber(confirmationCode);
             savedBooking = bookingRepository.save(savedBooking);
+        }
+
+        // For partner-location bookings, consume the matching availability window.
+        // Throws if the dates don't fall within an AVAILABLE window.
+        if (usingPartner) {
+            locationAvailabilityService.bookWindow(
+                    partnerLocation,
+                    savedBooking.getCheckInDate(),
+                    savedBooking.getCheckOutDate(),
+                    savedBooking
+            );
         }
 
         // Send booking confirmation email
@@ -322,6 +380,16 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
+        // Release the partner availability window (if this was a partner-location booking)
+        if (booking.getPartnerLocation() != null) {
+            try {
+                locationAvailabilityService.releaseWindowForBooking(savedBooking);
+            } catch (Exception e) {
+                logger.error("Failed to release partner availability for cancelled booking_id={}: {}",
+                        bookingId, e.getMessage());
+            }
+        }
+
         // Recalculate donation status if this booking was donation-funded
         if (booking.getFundingDonation() != null) {
             recalculateDonationStatus(booking.getFundingDonation().getId());
@@ -450,6 +518,41 @@ public class BookingService {
     private String generateConfirmationCode(Long bookingId) {
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         return "CONF-" + date + "-" + String.format("%06d", bookingId);
+    }
+
+    /**
+     * Parse the form's prefixed locationSelection ("charity:{id}" or "partner:{id}")
+     * and populate either locationId or partnerLocationId on the DTO. Idempotent —
+     * if the legacy locationId is already set and no selection is provided, leaves it.
+     */
+    private void resolveLocationSelection(BookingDto dto) {
+        String sel = dto.getLocationSelection();
+        if (sel == null || sel.isBlank()) {
+            return; // no prefixed selection — fall back to existing locationId
+        }
+        int colon = sel.indexOf(':');
+        if (colon < 0) {
+            throw new RuntimeException("Invalid location selection.");
+        }
+        String type = sel.substring(0, colon).trim().toLowerCase();
+        String idStr = sel.substring(colon + 1).trim();
+        Long id;
+        try {
+            id = Long.parseLong(idStr);
+        } catch (NumberFormatException e) {
+            throw new RuntimeException("Invalid location id.");
+        }
+        switch (type) {
+            case "charity" -> {
+                dto.setLocationId(id);
+                dto.setPartnerLocationId(null);
+            }
+            case "partner" -> {
+                dto.setPartnerLocationId(id);
+                dto.setLocationId(null);
+            }
+            default -> throw new RuntimeException("Unknown location type: " + type);
+        }
     }
 
     // Inner class for statistics

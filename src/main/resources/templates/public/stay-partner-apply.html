@@ -508,23 +508,59 @@
         var isIndividual = document.getElementById('typeIndividual').checked;
         var individualFields = document.getElementById('individualFields');
         var businessFields = document.getElementById('businessFields');
+
+        var firstName = document.getElementById('firstName');
+        var lastName = document.getElementById('lastName');
         var emailField = document.getElementById('email');
+        var phone = document.getElementById('phone');
+
+        var businessName = document.getElementById('businessName');
+        var contactName = document.getElementById('contactName');
+        var businessEmail = document.getElementById('businessEmail');
+        var businessPhone = document.getElementById('businessPhone');
+        var taxId = document.getElementById('taxId');
         var businessEmailHidden = document.getElementById('businessEmailHidden');
 
         if (isIndividual) {
             individualFields.style.display = 'block';
             businessFields.style.display = 'none';
-            emailField.required = true;
-            emailField.disabled = false;
+
+            // Enable + require individual fields
+            firstName.disabled = false; firstName.required = true;
+            lastName.disabled = false;  lastName.required = true;
+            emailField.disabled = false; emailField.required = true;
+            phone.disabled = false;
+
+            // Disable business fields so they neither validate nor submit
+            businessName.disabled = true;  businessName.required = false;
+            contactName.disabled = true;
+            businessEmail.disabled = true; businessEmail.required = false;
+            businessPhone.disabled = true;
+            taxId.disabled = true;
             businessEmailHidden.disabled = true;
         } else {
             individualFields.style.display = 'none';
             businessFields.style.display = 'block';
-            emailField.required = false;
-            emailField.disabled = true;
+
+            // Disable individual fields so their hidden required status doesn't block submit
+            firstName.disabled = true;  firstName.required = false;
+            lastName.disabled = true;   lastName.required = false;
+            emailField.disabled = true; emailField.required = false;
+            phone.disabled = true;
+
+            // Enable + require business fields
+            businessName.disabled = false;  businessName.required = true;
+            contactName.disabled = false;
+            businessEmail.disabled = false; businessEmail.required = true;
+            businessPhone.disabled = false;
+            taxId.disabled = false;
             businessEmailHidden.disabled = false;
         }
     }
+
+    // Initialize on page load so the toggle state is consistent
+    // (handles browser back/forward restoring the Business radio as checked)
+    toggleApplicantType();
 
     // Sync business email to hidden field for form submission
     var businessEmailInput = document.getElementById('businessEmail');

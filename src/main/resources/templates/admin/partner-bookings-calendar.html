@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Bookings Calendar - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; transition: background 0.3s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1300px; margin: 32px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .header h1 { color: #333; font-size: 24px; }
+        .header p { color: #666; font-size: 14px; margin-top: 4px; }
+        .filter-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 18px 22px; margin-bottom: 18px; }
+        .filter-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: end; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; min-width: 180px; flex: 1; }
+        .filter-group label { font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+        .filter-group select { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; background: white; }
+        .filter-group select:focus { outline: none; border-color: #667eea; }
+        .toggle-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+        .toggle-row input[type="checkbox"] { width: 16px; height: 16px; }
+        .toggle-row label { font-size: 14px; color: #333; cursor: pointer; }
+        .calendar-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 18px; }
+        .legend { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 12px; padding: 12px 16px; background: #f8fafc; border-radius: 8px; font-size: 13px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; color: #4b5563; }
+        .legend-swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+        .legend-swatch.booked { background: #667eea; }
+        .partner-legend { margin-top: 10px; padding: 12px 16px; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
+        .partner-legend-title { color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; font-size: 11px; margin-bottom: 8px; }
+        .partner-legend-hint { font-weight: 400; text-transform: none; letter-spacing: normal; color: #9ca3af; }
+        .partner-legend-row { display: flex; flex-wrap: wrap; gap: 10px; }
+        .partner-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #f8fafc; border-radius: 16px; border: 1px solid #e5e7eb; cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.1s; user-select: none; }
+        .partner-chip:hover { background: #eef2ff; border-color: #c7d2fe; }
+        .partner-chip:active { transform: scale(0.97); }
+        .partner-chip.active { background: #4338ca; border-color: #4338ca; }
+        .partner-chip.active .partner-chip-name { color: white; font-weight: 600; }
+        .partner-chip-swatch { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1px rgba(0,0,0,0.05); }
+        .partner-chip-name { color: #374151; font-weight: 500; font-size: 12px; }
+
+        /* Modal */
+        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; justify-content: center; align-items: center; z-index: 9999; padding: 20px; }
+        .modal-backdrop.active { display: flex; }
+        .modal { background: white; border-radius: 10px; max-width: 540px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .modal-header { padding: 16px 22px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .modal-header h3 { color: #333; font-size: 18px; flex: 1; }
+        .modal-close { background: transparent; border: none; font-size: 24px; cursor: pointer; color: #9ca3af; line-height: 1; }
+        .modal-close:hover { color: #333; }
+        .modal-body { padding: 18px 22px; }
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; gap: 16px; font-size: 14px; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #6b7280; min-width: 130px; }
+        .info-value { color: #333; font-weight: 500; text-align: right; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+        .badge.booked { background: #d1fae5; color: #065f46; }
+        .modal-actions { padding: 14px 22px; border-top: 1px solid #e5e7eb; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn { padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 13px; border: none; cursor: pointer; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+
+        /* FullCalendar tweaks */
+        #calendar { min-height: 600px; }
+        .fc .fc-toolbar-title { font-size: 18px; }
+        .fc .fc-button { background: #667eea; border-color: #667eea; }
+        .fc .fc-button-primary:not(:disabled).fc-button-active,
+        .fc .fc-button-primary:not(:disabled):active { background: #5468cc; border-color: #5468cc; }
+
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Partner Bookings Calendar</div>
+    <a th:href="@{/home}" class="nav-link">← Back to Home</a>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>Partner Bookings Calendar</h1>
+            <p>See bookings and availability across all Location Partners. Filter by partner or charity, click any event for details.</p>
+        </div>
+    </div>
+
+    <div class="filter-card">
+        <div class="filter-row">
+            <div class="filter-group">
+                <label for="partnerFilter">Partner</label>
+                <select id="partnerFilter">
+                    <option value="">All partners</option>
+                    <option th:each="p : ${partners}" th:value="${p.id}" th:text="${p.displayName}">Partner</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="charityFilter">Charity (booked-only)</label>
+                <select id="charityFilter">
+                    <option value="">All charities</option>
+                    <option th:each="c : ${charities}" th:value="${c.id}" th:text="${c.charityName}">Charity</option>
+                </select>
+            </div>
+        </div>
+        <div class="legend">
+            <div class="legend-item"><span class="legend-swatch booked"></span> Booked (click for details)</div>
+            <div class="legend-item" style="color: #9ca3af;">Each partner has its own color &mdash; see below.</div>
+        </div>
+
+        <div class="partner-legend" th:if="${not #lists.isEmpty(partnerLegend)}">
+            <div class="partner-legend-title">Partner Colors <span class="partner-legend-hint">— click a chip to filter the calendar to that partner</span></div>
+            <div class="partner-legend-row">
+                <div th:each="entry : ${partnerLegend}" class="partner-chip"
+                     th:data-partner-id="${entry.id()}"
+                     th:title="'Click to filter to ' + ${entry.name()}">
+                    <span class="partner-chip-swatch" th:style="'background:' + ${entry.color()}"></span>
+                    <span class="partner-chip-name" th:text="${entry.name()}">Partner</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="calendar-card">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">Event Details</h3>
+            <button type="button" class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <!-- Filled by JS -->
+        </div>
+        <div class="modal-actions">
+            <a href="#" id="modalPartnerLink" class="btn btn-secondary">View Partner</a>
+            <button type="button" class="btn btn-primary" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript" src="/js/vendor/fullcalendar/index.global.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var partnerFilter = document.getElementById('partnerFilter');
+        var charityFilter = document.getElementById('charityFilter');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+            },
+            buttonText: {
+                today: 'today',
+                month: 'month',
+                week: 'week',
+                day: 'day',
+                list: 'list'
+            },
+            height: 'auto',
+            eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+            events: function(info, successCallback, failureCallback) {
+                var params = new URLSearchParams();
+                params.set('start', info.startStr);
+                params.set('end', info.endStr);
+                if (partnerFilter.value) params.set('partnerId', partnerFilter.value);
+                if (charityFilter.value) params.set('charityId', charityFilter.value);
+
+                fetch('/admin/partner-bookings-calendar/events.json?' + params.toString())
+                    .then(function(r) {
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        return r.json();
+                    })
+                    .then(successCallback)
+                    .catch(failureCallback);
+            },
+            eventClick: function(info) {
+                openModal(info.event);
+            },
+            eventDidMount: function(info) {
+                // Hover tooltip — booked events only.
+                var ext = info.event.extendedProps || {};
+                var label = ext.partnerLocationName + ' — booked by ' + (ext.charityName || 'unknown')
+                    + '\n' + (ext.checkInDate || '') + ' to ' + (ext.checkOutDate || '');
+                info.el.setAttribute('title', label);
+            }
+        });
+        calendar.render();
+
+        partnerFilter.addEventListener('change', function() {
+            updateChipActiveState();
+            calendar.refetchEvents();
+        });
+        charityFilter.addEventListener('change', function() { calendar.refetchEvents(); });
+
+        // Click a partner chip to filter the calendar to that partner.
+        // Click the same chip again (or change the dropdown to "All") to clear.
+        document.querySelectorAll('.partner-chip').forEach(function(chip) {
+            chip.addEventListener('click', function() {
+                var pid = chip.getAttribute('data-partner-id');
+                if (partnerFilter.value === pid) {
+                    partnerFilter.value = '';
+                } else {
+                    partnerFilter.value = pid;
+                }
+                updateChipActiveState();
+                calendar.refetchEvents();
+            });
+        });
+
+        function updateChipActiveState() {
+            var current = partnerFilter.value;
+            document.querySelectorAll('.partner-chip').forEach(function(chip) {
+                if (chip.getAttribute('data-partner-id') === current && current !== '') {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+        }
+        updateChipActiveState();
+
+        window._calendar = calendar; // for debugging
+    });
+
+    function fmt(val) { return (val == null || val === '') ? '—' : val; }
+
+    function openModal(event) {
+        var ext = event.extendedProps || {};
+        document.getElementById('modalTitle').textContent = 'Booking on ' + fmt(ext.partnerLocationName);
+
+        var rows = [];
+        rows.push(row('Partner', fmt(ext.partnerName)));
+        rows.push(row('Property', fmt(ext.partnerLocationName)));
+        rows.push(row('Location', fmt(ext.city) + ', ' + fmt(ext.state) + ' ' + fmt(ext.zipCode)));
+        rows.push(row('Charity', fmt(ext.charityName)));
+        rows.push(row('Confirmation', fmt(ext.confirmationCode)));
+        rows.push(row('Participant', fmt(ext.participantName)));
+        rows.push(row('Check-in', fmt(ext.checkInDate)));
+        rows.push(row('Check-out', fmt(ext.checkOutDate)));
+        rows.push(row('Nights', fmt(ext.nights)));
+        rows.push(row('Booking status', fmt(ext.bookingStatus)));
+        rows.push(row('Partner contact', fmt(ext.partnerEmail)));
+
+        document.getElementById('modalBody').innerHTML = rows.join('');
+
+        var partnerLink = document.getElementById('modalPartnerLink');
+        if (ext.partnerId != null) {
+            partnerLink.href = '/admin/location-partners/' + ext.partnerId;
+            partnerLink.style.display = '';
+        } else {
+            partnerLink.style.display = 'none';
+        }
+
+        document.getElementById('modalBackdrop').classList.add('active');
+    }
+
+    function row(label, value) {
+        return '<div class="info-row"><span class="info-label">' + label + '</span><span class="info-value">' + value + '</span></div>';
+    }
+
+    function escapeHtml(s) {
+        if (s == null) return '';
+        return String(s).replace(/[&<>"']/g, function(c) {
+            return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+        });
+    }
+
+    function closeModal() {
+        document.getElementById('modalBackdrop').classList.remove('active');
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('modalBackdrop').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+    // Close on Esc
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

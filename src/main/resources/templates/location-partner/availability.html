@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Availability - Location Partner - SafelyNested</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; display: flex; }
+        .lp-sidebar { width: 240px; background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); color: white; display: flex; flex-direction: column; padding: 24px 16px; position: sticky; top: 0; height: 100vh; }
+        .lp-sidebar-brand { font-size: 20px; font-weight: bold; margin-bottom: 32px; text-align: center; }
+        .lp-sidebar-nav { display: flex; flex-direction: column; gap: 6px; height: 100%; }
+        .lp-sidebar-link { color: rgba(255,255,255,0.85); text-decoration: none; padding: 10px 14px; border-radius: 6px; font-size: 14px; font-weight: 500; }
+        .lp-sidebar-link:hover { background: rgba(255,255,255,0.1); color: white; }
+        .lp-sidebar-link.active { background: rgba(255,255,255,0.18); color: white; }
+        .lp-sidebar-logout { background: transparent; color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.3); padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; width: 100%; }
+        .lp-sidebar-logout:hover { background: rgba(255,255,255,0.1); }
+        .main { flex: 1; padding: 32px 48px; }
+        .header { margin-bottom: 24px; }
+        .header h1 { color: #333; font-size: 24px; }
+        .header p { color: #666; font-size: 14px; margin-top: 4px; }
+        .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 24px; }
+        .card h3 { color: #333; margin-bottom: 16px; font-size: 16px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; font-size: 13px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .required::after { content: " *"; color: #dc3545; }
+        .help-text { font-size: 12px; color: #888; margin-top: 3px; }
+        .btn { display: inline-block; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; border: none; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; width: 100%; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-danger { background: #dc3545; color: white; padding: 6px 12px; font-size: 12px; }
+        .btn-danger:hover { opacity: 0.9; }
+        .windows-list { display: flex; flex-direction: column; gap: 10px; }
+        .window { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #10b981; }
+        .window.booked { border-left-color: #f59e0b; background: #fffbeb; }
+        .status-pill { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+        .status-pill.available { background: #d1fae5; color: #065f46; }
+        .status-pill.booked { background: #fde68a; color: #92400e; }
+        .window-info .range { font-weight: 600; color: #333; font-size: 14px; }
+        .window-info .times { color: #666; font-size: 12px; margin-top: 2px; }
+        .window-info .notes { color: #888; font-size: 12px; margin-top: 2px; }
+        .empty { color: #888; font-style: italic; font-size: 14px; padding: 12px 0; }
+        .no-property { text-align: center; padding: 40px 20px; color: #888; }
+    </style>
+</head>
+<body>
+<div th:replace="~{location-partner/fragments/sidebar :: sidebar('availability')}"></div>
+
+<main class="main">
+    <div class="header">
+        <h1>Availability</h1>
+        <p>Mark the dates and times your property is empty and available.</p>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div th:if="${primaryLocation == null}" class="card no-property">
+        <p>No property is attached to your account. Please contact support.</p>
+    </div>
+
+    <div th:if="${primaryLocation != null}" class="grid">
+        <!-- Add window form -->
+        <div class="card">
+            <h3>Add Availability Window</h3>
+            <p style="color:#666; font-size: 13px; margin-bottom: 16px;">
+                For <strong th:text="${primaryLocation.name}">Property</strong>
+            </p>
+            <form th:action="@{/location-partner/availability}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="locationId" th:value="${primaryLocation.id}"/>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required">Start Date</label>
+                        <input type="date" name="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="required">End Date</label>
+                        <input type="date" name="endDate" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Check-in Time (optional)</label>
+                        <input type="time" name="startTime">
+                    </div>
+                    <div class="form-group">
+                        <label>Check-out Time (optional)</label>
+                        <input type="time" name="endTime">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes (optional)</label>
+                    <textarea name="notes" rows="2" placeholder="e.g., flexible check-in, no pets during this window..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Availability</button>
+            </form>
+        </div>
+
+        <!-- Existing windows list -->
+        <div class="card">
+            <h3>Current Availability</h3>
+            <div class="windows-list" th:if="${not #lists.isEmpty(windows)}">
+                <div th:each="w : ${windows}" class="window"
+                     th:classappend="${w.status.name() == 'BOOKED' ? 'booked' : ''}">
+                    <div class="window-info">
+                        <div class="range">
+                            <span th:text="${#temporals.format(w.startDate, 'MMM d, yyyy')}">Start</span>
+                            – <span th:text="${#temporals.format(w.endDate, 'MMM d, yyyy')}">End</span>
+                            <span class="status-pill"
+                                  th:classappend="${w.status.name() == 'BOOKED' ? 'booked' : 'available'}"
+                                  th:text="${w.status.displayName}"
+                                  style="margin-left: 8px;">Available</span>
+                        </div>
+                        <div class="times" th:if="${w.startTime != null or w.endTime != null}">
+                            <span th:if="${w.startTime != null}" th:text="${#temporals.format(w.startTime, 'HH:mm')}">10:00</span>
+                            <span th:if="${w.startTime != null and w.endTime != null}">–</span>
+                            <span th:if="${w.endTime != null}" th:text="${#temporals.format(w.endTime, 'HH:mm')}">18:00</span>
+                        </div>
+                        <div class="notes" th:if="${w.notes}" th:text="${w.notes}">Notes</div>
+                    </div>
+                    <form th:if="${w.status.name() != 'BOOKED'}"
+                          th:action="@{/location-partner/availability/{id}/delete(id=${w.id})}" method="post"
+                          onsubmit="return confirm('Remove this availability window?');">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="locationId" th:value="${primaryLocation.id}"/>
+                        <button type="submit" class="btn btn-danger">Remove</button>
+                    </form>
+                </div>
+            </div>
+            <div class="empty" th:if="${#lists.isEmpty(windows)}">
+                No availability windows yet. Add your first one using the form.
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

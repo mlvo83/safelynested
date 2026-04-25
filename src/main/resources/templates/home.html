@@ -203,6 +203,18 @@
     </div>
 
     <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
+      <h3>Location Partners</h3>
+      <p>Manage approved Location Partners and assign their properties to one or more charities.</p>
+      <a th:href="@{/admin/location-partners}" class="card-link">Manage Partners</a>
+    </div>
+
+    <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
+      <h3>Partner Bookings Calendar</h3>
+      <p>Visual calendar of bookings and availability across all Location Partners. Filter by partner or charity.</p>
+      <a th:href="@{/admin/partner-bookings-calendar}" class="card-link">Open Calendar</a>
+    </div>
+
+    <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
       <h3>Funding Report</h3>
       <p>See which donations funded which stays, with full tracking and accountability.</p>
       <a th:href="@{/admin/funding-report}" class="card-link">View Report</a>
