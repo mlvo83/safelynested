@@ -19,25 +19,31 @@
         .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; flex-wrap: wrap; gap: 12px; }
         .header h1 { color: #333; font-size: 24px; }
         .header p { color: #666; font-size: 14px; margin-top: 4px; }
-        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 24px; margin-bottom: 20px; }
-        .card h3 { color: #333; margin-bottom: 12px; font-size: 16px; }
+        .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .stat-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .stat-card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-card .value { font-size: 24px; font-weight: 700; color: #333; margin-top: 4px; }
-        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-        .info-row:last-child { border-bottom: none; }
-        .info-label { color: #666; }
-        .info-value { color: #333; font-weight: 500; }
+        .properties-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+        .property-card { background: white; border-radius: 10px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 10px; }
+        .property-card.inactive { opacity: 0.6; }
+        .property-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .property-card h3 { color: #333; font-size: 16px; }
+        .property-card .meta { color: #666; font-size: 13px; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-inactive { background: #e5e7eb; color: #4b5563; }
+        .property-card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid #f3f4f6; }
+        .property-card-actions .btn-link { color: #667eea; text-decoration: none; font-weight: 600; font-size: 13px; padding: 6px 0; }
+        .property-card-actions .btn-link:hover { text-decoration: underline; }
         .btn { display: inline-block; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; border: none; cursor: pointer; }
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .btn-primary:hover { opacity: 0.9; }
         .empty { color: #666; font-style: italic; padding: 12px 0; }
-        .windows-list { margin-top: 8px; }
-        .window { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
-        .window:last-child { border-bottom: none; }
-        .window-range { color: #333; font-weight: 500; }
-        .window-notes { color: #888; font-size: 12px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .section-header h2 { color: #333; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -49,17 +55,20 @@
             <h1>Welcome, <span th:text="${partner.displayName}">Partner</span></h1>
             <p>Location Partner Dashboard</p>
         </div>
-        <a th:href="@{/location-partner/availability}" class="btn btn-primary">Manage Availability</a>
+        <a th:href="@{/location-partner/properties/new}" class="btn btn-primary">+ Add Property</a>
     </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
     <div class="stat-row">
         <div class="stat-card">
-            <div class="label">Your Property</div>
-            <div class="value" th:text="${primaryLocation != null ? primaryLocation.name : 'None yet'}">Property</div>
+            <div class="label">Total Properties</div>
+            <div class="value" th:text="${#lists.size(locations)}">0</div>
         </div>
         <div class="stat-card">
-            <div class="label">Availability Windows</div>
-            <div class="value" th:text="${#lists.size(upcomingWindows)}">0</div>
+            <div class="label">Active</div>
+            <div class="value" th:text="${activeCount}">0</div>
         </div>
         <div class="stat-card">
             <div class="label">Status</div>
@@ -67,59 +76,40 @@
         </div>
     </div>
 
-    <div th:if="${primaryLocation != null}" class="card">
-        <h3>Your Property</h3>
-        <div class="info-row">
-            <span class="info-label">Name</span>
-            <span class="info-value" th:text="${primaryLocation.name}">Property Name</span>
-        </div>
-        <div class="info-row" th:if="${primaryLocation.propertyType != null}">
-            <span class="info-label">Type</span>
-            <span class="info-value" th:text="${primaryLocation.propertyType.displayName}">Hotel</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Address</span>
-            <span class="info-value">
-                <span th:text="${primaryLocation.address}">Address</span>,
-                <span th:text="${primaryLocation.city}">City</span>,
-                <span th:text="${primaryLocation.state}">State</span>
-                <span th:text="${primaryLocation.zipCode}">ZIP</span>
-            </span>
-        </div>
-        <div class="info-row" th:if="${primaryLocation.maxGuests != null}">
-            <span class="info-label">Max Guests</span>
-            <span class="info-value" th:text="${primaryLocation.maxGuests}">0</span>
-        </div>
-        <div class="info-row" th:if="${primaryLocation.numberOfBedrooms != null}">
-            <span class="info-label">Bedrooms</span>
-            <span class="info-value" th:text="${primaryLocation.numberOfBedrooms}">0</span>
-        </div>
+    <div class="section-header">
+        <h2>Your Properties</h2>
+        <a th:href="@{/location-partner/properties}" style="color: #667eea; text-decoration: none; font-weight: 600; font-size: 14px;">Manage all →</a>
     </div>
 
-    <div th:if="${primaryLocation == null}" class="card">
-        <h3>No Property Configured</h3>
-        <p class="empty">Your account is set up, but no property was attached. Please contact support.</p>
+    <div th:if="${#lists.isEmpty(locations)}" style="background: white; border-radius: 10px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+        <p class="empty">No properties yet. Add your first one to get started.</p>
+        <a th:href="@{/location-partner/properties/new}" class="btn btn-primary" style="margin-top: 8px;">+ Add Your First Property</a>
     </div>
 
-    <div class="card">
-        <h3>Upcoming Availability</h3>
-        <div class="windows-list" th:if="${not #lists.isEmpty(upcomingWindows)}">
-            <div th:each="w : ${upcomingWindows}" class="window">
-                <div>
-                    <div class="window-range">
-                        <span th:text="${#temporals.format(w.startDate, 'MMM d, yyyy')}">Start</span>
-                        –
-                        <span th:text="${#temporals.format(w.endDate, 'MMM d, yyyy')}">End</span>
-                    </div>
-                    <div class="window-notes" th:if="${w.notes}" th:text="${w.notes}">Notes</div>
-                </div>
-                <div style="color: #10b981; font-weight: 600; font-size: 13px;"
-                     th:text="${w.status.displayName}">Available</div>
+    <div th:if="${not #lists.isEmpty(locations)}" class="properties-grid">
+        <div th:each="loc : ${locations}" class="property-card"
+             th:classappend="${loc.isActive != null and loc.isActive ? '' : 'inactive'}">
+            <div class="property-card-header">
+                <h3 th:text="${loc.name}">Property Name</h3>
+                <span class="badge"
+                      th:classappend="${loc.isActive != null and loc.isActive ? 'badge-active' : 'badge-inactive'}"
+                      th:text="${loc.isActive != null and loc.isActive ? 'Active' : 'Inactive'}">Active</span>
             </div>
-        </div>
-        <div class="empty" th:if="${#lists.isEmpty(upcomingWindows)}">
-            No availability windows set yet.
-            <a th:href="@{/location-partner/availability}" style="color: #667eea; text-decoration: none; font-weight: 600;">Add one →</a>
+            <div class="meta" th:if="${loc.propertyType != null}" th:text="${loc.propertyType.displayName}">Type</div>
+            <div class="meta">
+                <span th:text="${loc.address}">Address</span>,
+                <span th:text="${loc.city}">City</span>,
+                <span th:text="${loc.state}">State</span>
+                <span th:text="${loc.zipCode}">ZIP</span>
+            </div>
+            <div class="meta" th:if="${loc.maxGuests != null}">
+                Max guests: <span th:text="${loc.maxGuests}">0</span>
+                <span th:if="${loc.numberOfBedrooms != null}"> · <span th:text="${loc.numberOfBedrooms}">0</span> bedroom(s)</span>
+            </div>
+            <div class="property-card-actions">
+                <a th:href="@{/location-partner/availability(propertyId=${loc.id})}" class="btn-link">Availability →</a>
+                <a th:href="@{/location-partner/properties/{id}/edit(id=${loc.id})}" class="btn-link">Edit</a>
+            </div>
         </div>
     </div>
 </main>

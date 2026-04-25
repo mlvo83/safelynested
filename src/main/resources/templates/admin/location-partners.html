@@ -42,6 +42,19 @@
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
+    <div th:if="${unlinkedCount != null and unlinkedCount > 0}"
+         style="background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 14px 18px; border-radius: 8px; margin-bottom: 22px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+        <div>
+            <strong style="color: #78350f;" th:text="${unlinkedCount}">N</strong>
+            active partner <span th:text="${unlinkedCount == 1 ? 'property has' : 'properties have'}">properties have</span>
+            no charity links yet — invisible to all charities until linked.
+        </div>
+        <a th:href="@{/admin/location-partners/unlinked}"
+           style="background: #b45309; color: white; padding: 8px 16px; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 13px;">
+            Review &amp; Fix →
+        </a>
+    </div>
+
     <div class="header">
         <h1>Approved Location Partners</h1>
     </div>
