@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/referral/invite/**").permitAll()
                         .requestMatchers("/stay-partner/**").permitAll()
                         .requestMatchers("/charity-application/**").permitAll()
+                        .requestMatchers("/location-partner/register/**").permitAll()
                         // Role-based access control
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/facilitator/**").hasRole("FACILITATOR")
@@ -65,7 +66,8 @@ public class SecurityConfig {
                         .requestMatchers("/charity-partner/**").hasAnyRole("CHARITY_PARTNER", "CHARITY_FACILITATOR")
                         .requestMatchers("/donor/**").hasRole("DONOR")
                         .requestMatchers("/location-admin/**").hasAnyRole("ADMIN", "LOCATION_ADMIN")
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "CHARITY_FACILITATOR", "LOCATION_ADMIN", "DONOR")
+                        .requestMatchers("/location-partner/**").hasRole("LOCATION_PARTNER")
+                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "CHARITY_FACILITATOR", "LOCATION_ADMIN", "LOCATION_PARTNER", "DONOR")
                         // Dashboard requires authentication
                         .requestMatchers("/home").authenticated()
 

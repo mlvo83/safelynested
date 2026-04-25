@@ -112,6 +112,32 @@ public class StayPartnerAdminController {
     }
 
     /**
+     * Approve application and invite the applicant as a self-service Location Partner.
+     * Creates User + LocationPartner + PartnerLocation + RegistrationToken, sends registration email.
+     */
+    @PostMapping("/{id}/approve-as-partner")
+    public String approveAsLocationPartner(
+            @PathVariable Long id,
+            @RequestParam(required = false) String adminNotes,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            User adminUser = userRepository.findByUsername(principal.getName())
+                    .orElseThrow(() -> new RuntimeException("Admin user not found"));
+
+            StayPartnerApplication application = applicationService.approveApplicationAsLocationPartner(
+                    id, adminUser, adminNotes);
+            redirectAttributes.addFlashAttribute("success",
+                    "Application " + application.getApplicationNumber() + " approved as Location Partner. Registration email sent.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/admin/stay-partner-applications/" + id;
+    }
+
+    /**
      * Reject application with reason
      */
     @PostMapping("/{id}/reject")

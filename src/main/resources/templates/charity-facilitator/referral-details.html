@@ -305,6 +305,11 @@
 </nav>
 
 <div class="container">
+    <div th:if="${success}" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;"
+         th:text="${success}">Success</div>
+    <div th:if="${error}" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;"
+         th:text="${error}">Error</div>
+
     <div class="card">
         <div class="status-header">
             <div>

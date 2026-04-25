@@ -232,18 +232,28 @@
                 <h3>📍 Location Details</h3>
 
                 <div class="form-group">
-                    <label for="locationId">Location <span class="required">*</span></label>
-                    <select id="locationId" th:field="*{locationId}" required>
+                    <label for="locationSelection">Location <span class="required">*</span></label>
+                    <select id="locationSelection" th:field="*{locationSelection}" required>
                         <option value="">Select a location</option>
-                        <option th:each="location : ${locations}"
-                                th:value="${location.id}"
-                                th:text="${location.locationName + ' - ' + location.city + ', ' + location.state}">
-                            Location Name
-                        </option>
+                        <optgroup label="Our Locations" th:if="${not #lists.isEmpty(locations)}">
+                            <option th:each="location : ${locations}"
+                                    th:value="${'charity:' + location.id}"
+                                    th:text="${location.locationName + ' - ' + location.city + ', ' + location.state}">
+                                Location Name
+                            </option>
+                        </optgroup>
+                        <optgroup label="Partner Properties" th:if="${partnerLocations != null and not #lists.isEmpty(partnerLocations)}">
+                            <option th:each="pl : ${partnerLocations}"
+                                    th:value="${'partner:' + pl.id}"
+                                    th:text="${pl.name + ' — ' + pl.city + ', ' + pl.state + ' (Partner)'}">
+                                Partner Property
+                            </option>
+                        </optgroup>
                     </select>
-                    <div class="error" th:if="${#fields.hasErrors('locationId')}" th:errors="*{locationId}">Location
-                        error
-                    </div>
+                    <small style="color: #666; font-size: 12px; display: block; margin-top: 4px;"
+                           th:if="${partnerLocations != null and not #lists.isEmpty(partnerLocations)}">
+                        Partner properties require an availability window covering the selected dates.
+                    </small>
                 </div>
             </div>
 

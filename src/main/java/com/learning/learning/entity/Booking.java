@@ -46,6 +46,12 @@ public class Booking {
     @JoinColumn(name = "location_id")
     private Location location;
 
+    // Optional reference to a Location Partner's property, when the booking
+    // was made against a partner-owned location instead of a CharityLocation.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "partner_location_id")
+    private PartnerLocation partnerLocation;
+
     // Store location info directly for historical purposes
     @Column(name = "location_name", length = 200)
     private String locationName;

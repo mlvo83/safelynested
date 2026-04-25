@@ -155,6 +155,7 @@
         .role-donor { background: #ffc107; color: #333; }
         .role-location { background: #6c757d; color: white; }
         .role-global-facilitator { background: #e83e8c; color: white; }
+        .role-location-partner { background: #fd7e14; color: white; }
     </style>
 </head>
 <body>
@@ -208,6 +209,10 @@
                        th:href="@{/admin/documentation(section='stay-partners')}">
                         <i class="fas fa-building me-2"></i>Stay Partners
                     </a>
+                    <a class="nav-link" th:classappend="${activeSection == 'location-partners'} ? 'active' : ''"
+                       th:href="@{/admin/documentation(section='location-partners')}">
+                        <i class="fas fa-house-user me-2"></i>Location Partners
+                    </a>
                 </nav>
             </div>
         </div>
@@ -254,6 +259,12 @@
                             <div class="feature-card">
                                 <h4><i class="fas fa-building text-secondary me-2"></i>Stay Partners</h4>
                                 <p>Hotels, property owners, and organisations can apply to become Stay Partners, providing accommodation locations for the platform.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <h4><i class="fas fa-house-user text-warning me-2"></i>Location Partners</h4>
+                                <p>Approved applicants can become self-service Location Partners with their own login. They manage their own properties and mark availability windows for charity bookings.</p>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -312,6 +323,11 @@
                                 <td><span class="role-badge role-location">Location Admin</span></td>
                                 <td>Property manager</td>
                                 <td>Manage shelter locations, nightly rates, and availability</td>
+                            </tr>
+                            <tr>
+                                <td><span class="role-badge role-location-partner">Location Partner</span></td>
+                                <td>Independent property owner</td>
+                                <td>Self-service login. Manages their own property and marks availability windows for charities they're linked to</td>
                             </tr>
                         </tbody>
                     </table>
@@ -846,15 +862,173 @@
                     <ul>
                         <li>View all applications, filterable by status (Pending, Approved, Rejected)</li>
                         <li>Click an application to see full details</li>
-                        <li><strong>Approve:</strong> Select a charity to assign the Stay Partner to, creating their location in the system</li>
                         <li><strong>Reject:</strong> Provide a reason for rejection</li>
                     </ul>
+
+                    <h2>Two Approval Paths</h2>
+                    <p>On the application detail page, administrators choose between two approval outcomes depending on how the applicant wants to be involved:</p>
+
+                    <div class="feature-card">
+                        <h4><i class="fas fa-list-alt text-success me-2"></i>Approve as Passive Listing</h4>
+                        <p>Adds the property to a charity's inventory as a <code>CharityLocation</code>. The charity's team books families into it directly. <strong>The applicant gets no login or dashboard.</strong> Best for property owners who want to be hands-off.</p>
+                        <p><strong>Charity assignment:</strong> Required <em>at approval time</em>. The admin picks a charity from a dropdown on the application detail page. One property, one charity, decided up front.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h4><i class="fas fa-house-user text-warning me-2"></i>Invite as Location Partner</h4>
+                        <p>Creates a self-service Location Partner account. The applicant receives an email with a 7-day registration link, sets up a username and password, and lands on their own dashboard where they manage their property's availability windows. Charities then book against those windows. Best for hotel owners or active property managers.</p>
+                        <p><strong>Charity assignment:</strong> Done <em>after</em> approval, on a separate page (<code>/admin/location-partners/{id}</code>). One property can be linked to <strong>many charities</strong>, so admins don't pick at approval time — see the next section for the full step-by-step.</p>
+                        <p>See the <a th:href="@{/admin/documentation(section='location-partners')}">Location Partners</a> guide for the full flow.</p>
+                    </div>
+
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Important — two-step flow for Location Partners.</strong> "Invite as Location Partner" only sends the registration email; it does <strong>NOT</strong> assign the property to any charity. Until you complete step 2 (link the partner to one or more charities at <code>/admin/location-partners</code>), the property will not appear in any charity's booking dropdown. See the <a th:href="@{/admin/documentation(section='location-partners')}">Location Partners</a> guide.
+                    </div>
 
                     <h2>Application Statuses</h2>
                     <table class="table table-sm">
                         <tr><td><strong>Pending</strong></td><td>Application submitted, awaiting admin review</td></tr>
-                        <tr><td><strong>Approved</strong></td><td>Application approved, location added to the platform</td></tr>
+                        <tr><td><strong>Approved</strong></td><td>Application approved (either as a passive listing or a Location Partner)</td></tr>
                         <tr><td><strong>Rejected</strong></td><td>Application declined with a reason</td></tr>
+                    </table>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- LOCATION PARTNERS SECTION -->
+                <!-- ============================================ -->
+                <div th:if="${activeSection == 'location-partners'}">
+                    <h1><i class="fas fa-house-user me-2"></i>Location Partners</h1>
+
+                    <p class="lead">Location Partners are property owners who self-manage their properties on SafelyNested. They have their own login, their own dashboard, and they mark the dates and times their property is available for charity bookings.</p>
+
+                    <div class="tip-box">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Distinct from Location Admins.</strong> A <em>Location Admin</em> manages shelter locations owned by a charity. A <em>Location Partner</em> is an independent property owner who self-services their own listings.
+                    </div>
+
+                    <h2 id="assign-charity-after-invite"><i class="fas fa-link me-2"></i>Assigning a Location Partner to Charities (Two-Step Process)</h2>
+                    <p>Unlike a passive listing, a Location Partner is approved <strong>without</strong> picking a charity. This is intentional &mdash; one Location Partner property can serve <strong>multiple</strong> charities at the same time. Admins assign charities <strong>after</strong> the invitation, on a dedicated page.</p>
+
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Until you assign at least one charity, the partner's property will NOT appear in any charity's booking dropdown.</strong> The applicant can register and log in just fine, and they can mark availability &mdash; but until step 2 below is complete, no charity can book them.
+                    </div>
+
+                    <h3>Step 1 &mdash; Invite as Location Partner</h3>
+                    <ol class="step-list">
+                        <li>Go to <strong>Stay Partner Applications</strong> from the admin home.</li>
+                        <li>Open the application you want to approve.</li>
+                        <li>Click <strong>Invite as Location Partner</strong> (the purple-bordered card on the application detail page).</li>
+                        <li>Optionally add admin notes &rarr; click the button.</li>
+                        <li>The system creates the <code>LocationPartner</code> profile, copies the property info, and emails the applicant a 7-day registration link. <strong>No charity is assigned yet.</strong></li>
+                    </ol>
+
+                    <h3>Step 2 &mdash; Link the partner to one or more charities</h3>
+                    <ol class="step-list">
+                        <li>Go to the admin home page.</li>
+                        <li>Click the <strong>Location Partners</strong> card (or visit <code>/admin/location-partners</code> directly).</li>
+                        <li>You'll see a table of every approved Location Partner. The "Charities Linked" column will show <code>0</code> for any partner who hasn't been linked yet &mdash; that's the cue to take action.</li>
+                        <li>Click the partner's name to open their detail page.</li>
+                        <li>Scroll to the <strong>Property &amp; Charity Assignments</strong> card.</li>
+                        <li>Under <strong>Add Charity</strong>, pick a charity from the dropdown &rarr; click <strong>Add Link</strong>.</li>
+                        <li>The charity now appears in the <strong>Linked Charities</strong> list with a timestamp and the admin who linked it.</li>
+                        <li>Repeat to link additional charities &mdash; the dropdown automatically excludes any charity that's already linked.</li>
+                    </ol>
+
+                    <h3>Removing a charity link</h3>
+                    <p>On the partner's detail page, each row in the <strong>Linked Charities</strong> list has a <strong>Remove</strong> button (with a confirmation prompt). Removing a link prevents that charity from making <em>new</em> bookings against this property, but does NOT cancel any existing bookings.</p>
+
+                    <h3>Why two steps?</h3>
+                    <ul>
+                        <li><strong>Multi-charity support.</strong> A Location Partner property can be linked to as many charities as you want, simultaneously. Picking just one at approval time would lock the partner to that single charity.</li>
+                        <li><strong>Flexibility over time.</strong> Charity relationships change. You can add, remove, or swap charity links at any point without re-applying or re-approving the partner.</li>
+                        <li><strong>Audit trail.</strong> Every link records who created it and when, so charity-property relationships are traceable.</li>
+                    </ul>
+
+                    <h2>The End-to-End Flow</h2>
+                    <ol class="step-list">
+                        <li><strong>Apply:</strong> Anyone can submit a public Stay Partner application at <code>/stay-partner/apply</code> (the same form used for passive listings).</li>
+                        <li><strong>Admin invites as Location Partner</strong> (Step 1 of the two-step assignment described <a href="#assign-charity-after-invite">above</a>). On the application detail page, click <strong>"Invite as Location Partner"</strong>. The system creates a <code>LocationPartner</code> profile, copies the property info into a <code>PartnerLocation</code> record, and emails a 7-day registration link. <em>No charity is linked at this step.</em></li>
+                        <li><strong>Admin links the property to one or more charities</strong> (Step 2 of the two-step assignment). From <code>/admin/location-partners</code>, open the partner's detail page and use the <strong>Add Charity</strong> form. <strong>This step is required</strong> &mdash; without it, no charity can book the partner's property.</li>
+                        <li><strong>Applicant registers:</strong> They click the link from their email, set a username and password, and land on their dashboard at <code>/location-partner/dashboard</code>. (Steps 2 and 3 can happen in either order &mdash; the registration link doesn't depend on charity links existing yet.)</li>
+                        <li><strong>Partner marks availability:</strong> The partner logs in, goes to <strong>Availability</strong>, and adds date-range windows when their property is empty. Each window has start date, end date, optional check-in/check-out times, and notes.</li>
+                        <li><strong>Charity books a family:</strong> When a charity facilitator creates a booking for an approved referral, the location dropdown shows their charity's own locations <em>plus</em> any linked partner properties under a "Partner Properties" group. They pick a partner property and submit.</li>
+                        <li><strong>Window splits automatically:</strong> The partner's availability window is split: prefix AVAILABLE / BOOKED middle / suffix AVAILABLE. The BOOKED slice carries a foreign key to the booking and shows in amber on the partner's availability page.</li>
+                        <li><strong>Cancel restores availability:</strong> If the booking is cancelled, the BOOKED slice flips back to AVAILABLE.</li>
+                    </ol>
+
+                    <h2>Admin Pages</h2>
+
+                    <h3>List of Location Partners</h3>
+                    <p><strong>URL:</strong> <code>/admin/location-partners</code></p>
+                    <p>Reached from the <strong>Location Partners</strong> card on the admin home page. Shows every approved Location Partner with their property summary, city/state, and how many charities each property is linked to.</p>
+
+                    <h3>Partner Detail &amp; Charity Assignment</h3>
+                    <p><strong>URL:</strong> <code>/admin/location-partners/{id}</code></p>
+                    <ul>
+                        <li>Shows partner profile (name, email, phone, type, status)</li>
+                        <li>Shows the property's full details (name, type, address)</li>
+                        <li><strong>Linked Charities</strong> table — every charity currently linked to this property, with a Remove button for each</li>
+                        <li><strong>Add Charity</strong> dropdown — pick a charity that's not yet linked and click <strong>Add Link</strong></li>
+                    </ul>
+
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Many-to-many.</strong> A property can be linked to as many charities as you want. Each charity sees the property in their booking dropdown. Removing a link does NOT cancel any bookings already made by that charity.
+                    </div>
+
+                    <h2>What Charities See</h2>
+                    <p>On the <strong>Create Booking</strong> form (<code>/charity-facilitator/bookings/new</code> or <code>/facilitator/bookings/new</code>), the location dropdown is split into two groups:</p>
+                    <ul>
+                        <li><strong>Our Locations</strong> &mdash; the charity's own <code>CharityLocation</code> rows (existing behaviour, unchanged)</li>
+                        <li><strong>Partner Properties</strong> &mdash; partner properties linked to this charity. Only appears if there are linked partners.</li>
+                    </ul>
+
+                    <h3>Booking Validation</h3>
+                    <p>When a charity selects a partner property and submits, the system validates:</p>
+                    <ul>
+                        <li>The partner property is active (<code>is_active = true</code>)</li>
+                        <li>The partner property is linked to this referral's charity</li>
+                        <li>The booking dates fall fully within a single AVAILABLE window on that property</li>
+                    </ul>
+                    <p>If any check fails, the booking is rejected with a clear error message and no data is changed.</p>
+
+                    <h2>What Location Partners See</h2>
+
+                    <h3>Dashboard</h3>
+                    <p><strong>URL:</strong> <code>/location-partner/dashboard</code></p>
+                    <p>Welcome card with the partner's name, their property card (read-only — pulled from their original application), and a count of upcoming availability windows.</p>
+
+                    <h3>Availability Management</h3>
+                    <p><strong>URL:</strong> <code>/location-partner/availability</code></p>
+                    <ul>
+                        <li>Form to add a new availability window (start date, end date, optional times, notes)</li>
+                        <li>List of all current windows, color-coded:
+                            <ul>
+                                <li><span style="color: #10b981; font-weight: 600;">Green border</span> = AVAILABLE</li>
+                                <li><span style="color: #f59e0b; font-weight: 600;">Amber border</span> = BOOKED (no Remove button — must cancel the booking first)</li>
+                            </ul>
+                        </li>
+                        <li>Overlap protection &mdash; new windows that overlap an existing AVAILABLE window are rejected</li>
+                    </ul>
+
+                    <h2>Application Number Format</h2>
+                    <p>Stay Partner applications use the format <code>SPA-YYYY-NNNN</code>. This applies whether the application is approved as a passive listing or as a Location Partner.</p>
+
+                    <h2>Database Schema (Reference)</h2>
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr><th>Table</th><th>Purpose</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>location_partners</code></td><td>Partner profile, linked to a <code>users</code> row and the source <code>stay_partner_applications</code> row</td></tr>
+                            <tr><td><code>partner_locations</code></td><td>Partner-owned property records (separate from <code>charity_locations</code>)</td></tr>
+                            <tr><td><code>partner_location_charities</code></td><td>Many-to-many join table: which charities can book which partner properties</td></tr>
+                            <tr><td><code>location_availability</code></td><td>Date-range windows per partner property; status AVAILABLE / BOOKED / BLOCKED. BOOKED rows reference the booking that consumed them.</td></tr>
+                            <tr><td><code>registration_tokens</code></td><td>Reused infrastructure; the <code>LOCATION_PARTNER</code> token type sends an applicant their account-creation link.</td></tr>
+                            <tr><td><code>bookings.partner_location_id</code></td><td>Set on bookings made against a partner property (mutually exclusive with <code>location_id</code> for charity locations)</td></tr>
+                        </tbody>
                     </table>
                 </div>
 

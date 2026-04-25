@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside th:fragment="sidebar(active)" class="lp-sidebar">
+    <div class="lp-sidebar-brand">SafelyNested</div>
+    <nav class="lp-sidebar-nav">
+        <a th:href="@{/location-partner/dashboard}"
+           th:classappend="${active == 'dashboard' ? 'active' : ''}"
+           class="lp-sidebar-link">Dashboard</a>
+        <a th:href="@{/location-partner/availability}"
+           th:classappend="${active == 'availability' ? 'active' : ''}"
+           class="lp-sidebar-link">Availability</a>
+        <form th:action="@{/logout}" method="post" style="margin-top: auto;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" class="lp-sidebar-logout">Log Out</button>
+        </form>
+    </nav>
+</aside>
+</body>
+</html>

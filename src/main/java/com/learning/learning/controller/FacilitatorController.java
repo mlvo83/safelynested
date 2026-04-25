@@ -9,6 +9,7 @@ import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityLocationRepository;
+import com.learning.learning.repository.PartnerLocationRepository;
 import com.learning.learning.service.BookingService;
 import com.learning.learning.service.ReferralService;
 import jakarta.validation.Valid;
@@ -40,6 +41,9 @@ public class FacilitatorController {
 
     @Autowired
     private CharityLocationRepository charityLocationRepository;
+
+    @Autowired
+    private PartnerLocationRepository partnerLocationRepository;
 
     /**
      * Facilitator Dashboard - Overview
@@ -181,12 +185,15 @@ public class FacilitatorController {
         // Pre-select the location the participant chose (if any)
         if (referral.getSelectedLocation() != null) {
             bookingDto.setLocationId(referral.getSelectedLocation().getId());
+            bookingDto.setLocationSelection("charity:" + referral.getSelectedLocation().getId());
         }
 
         // Get active locations for the referral's charity
         List<CharityLocation> locations;
+        List<com.learning.learning.entity.PartnerLocation> partnerLocations = java.util.Collections.emptyList();
         if (referral.getCharity() != null) {
             locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(referral.getCharity().getId());
+            partnerLocations = partnerLocationRepository.findActiveLinkedToCharity(referral.getCharity().getId());
         } else {
             locations = charityLocationRepository.findAllActiveLocationsOrderByCharityAndName();
         }
@@ -201,6 +208,7 @@ public class FacilitatorController {
         model.addAttribute("bookingDto", bookingDto);
         model.addAttribute("referral", referral);
         model.addAttribute("locations", locations);
+        model.addAttribute("partnerLocations", partnerLocations);
         model.addAttribute("availableDonations", availableDonations);
 
         return "facilitator/booking-form";
@@ -223,9 +231,11 @@ public class FacilitatorController {
         if (bindingResult.hasErrors()) {
             Referral referral = referralService.getReferralById(bookingDto.getReferralId());
             List<CharityLocation> locations;
+            List<com.learning.learning.entity.PartnerLocation> partnerLocations = java.util.Collections.emptyList();
             List<BookingService.AvailableDonation> availableDonations = java.util.Collections.emptyList();
             if (referral.getCharity() != null) {
                 locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(referral.getCharity().getId());
+                partnerLocations = partnerLocationRepository.findActiveLinkedToCharity(referral.getCharity().getId());
                 availableDonations = bookingService.getAvailableDonationsForCharity(referral.getCharity().getId());
             } else {
                 locations = charityLocationRepository.findAllActiveLocationsOrderByCharityAndName();
@@ -233,6 +243,7 @@ public class FacilitatorController {
             model.addAttribute("username", username);
             model.addAttribute("referral", referral);
             model.addAttribute("locations", locations);
+            model.addAttribute("partnerLocations", partnerLocations);
             model.addAttribute("availableDonations", availableDonations);
             return "facilitator/booking-form";
         }
