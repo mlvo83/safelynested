@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Properties - Location Partner - SafelyNested</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; display: flex; }
+        .lp-sidebar { width: 240px; background: linear-gradient(180deg, #667eea 0%, #764ba2 100%); color: white; display: flex; flex-direction: column; padding: 24px 16px; position: sticky; top: 0; height: 100vh; }
+        .lp-sidebar-brand { font-size: 20px; font-weight: bold; margin-bottom: 32px; text-align: center; }
+        .lp-sidebar-nav { display: flex; flex-direction: column; gap: 6px; height: 100%; }
+        .lp-sidebar-link { color: rgba(255,255,255,0.85); text-decoration: none; padding: 10px 14px; border-radius: 6px; font-size: 14px; font-weight: 500; }
+        .lp-sidebar-link:hover { background: rgba(255,255,255,0.1); color: white; }
+        .lp-sidebar-link.active { background: rgba(255,255,255,0.18); color: white; }
+        .lp-sidebar-logout { background: transparent; color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.3); padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; width: 100%; }
+        .lp-sidebar-logout:hover { background: rgba(255,255,255,0.1); }
+        .main { flex: 1; padding: 32px 48px; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .header h1 { color: #333; font-size: 24px; }
+        .header p { color: #666; font-size: 14px; margin-top: 4px; }
+        .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .info-banner { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 18px; text-align: left; font-size: 14px; }
+        th { background: #f8f9fa; color: #333; font-weight: 600; border-bottom: 1px solid #dee2e6; }
+        tr:not(:last-child) td { border-bottom: 1px solid #f0f0f0; }
+        tr.inactive td { color: #9ca3af; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-inactive { background: #e5e7eb; color: #4b5563; }
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn { display: inline-block; padding: 6px 12px; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 12px; border: none; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary { background: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { opacity: 0.9; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { opacity: 0.9; }
+        .btn-large { padding: 10px 18px; font-size: 14px; }
+        .empty { padding: 40px; text-align: center; color: #888; }
+    </style>
+</head>
+<body>
+<div th:replace="~{location-partner/fragments/sidebar :: sidebar('properties')}"></div>
+
+<main class="main">
+    <div class="header">
+        <div>
+            <h1>Your Properties</h1>
+            <p>Add, edit, and manage all the properties you offer through SafelyNested.</p>
+        </div>
+        <a th:href="@{/location-partner/properties/new}" class="btn btn-primary btn-large">+ Add Property</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="info-banner">
+        New properties are visible to charities only after an admin links the property to one or more charities.
+        Until then, you can still mark availability so the property is ready when admin completes the link.
+    </div>
+
+    <div class="card">
+        <table th:if="${not #lists.isEmpty(locations)}">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Capacity</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="loc : ${locations}"
+                th:classappend="${loc.isActive != null and loc.isActive ? '' : 'inactive'}">
+                <td>
+                    <strong th:text="${loc.name}">Name</strong>
+                </td>
+                <td th:text="${loc.propertyType != null ? loc.propertyType.displayName : '—'}">Type</td>
+                <td>
+                    <span th:text="${loc.city}">City</span>,
+                    <span th:text="${loc.state}">ST</span>
+                    <span th:text="${loc.zipCode}">ZIP</span>
+                </td>
+                <td>
+                    <span th:if="${loc.maxGuests != null}" th:text="${loc.maxGuests + ' guests'}">0 guests</span>
+                    <span th:if="${loc.maxGuests == null}">—</span>
+                </td>
+                <td>
+                    <span class="badge"
+                          th:classappend="${loc.isActive != null and loc.isActive ? 'badge-active' : 'badge-inactive'}"
+                          th:text="${loc.isActive != null and loc.isActive ? 'Active' : 'Inactive'}">Active</span>
+                </td>
+                <td>
+                    <div class="actions" style="justify-content: flex-end;">
+                        <a th:href="@{/location-partner/availability(propertyId=${loc.id})}" class="btn btn-secondary">Availability</a>
+                        <a th:href="@{/location-partner/properties/{id}/edit(id=${loc.id})}" class="btn btn-secondary">Edit</a>
+                        <form th:if="${loc.isActive != null and loc.isActive}"
+                              th:action="@{/location-partner/properties/{id}/deactivate(id=${loc.id})}" method="post"
+                              onsubmit="return confirm('Deactivate this property? Charities will no longer see it. You can reactivate later.');"
+                              style="display: inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-warning">Deactivate</button>
+                        </form>
+                        <form th:if="${loc.isActive == null or !loc.isActive}"
+                              th:action="@{/location-partner/properties/{id}/activate(id=${loc.id})}" method="post"
+                              style="display: inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <button type="submit" class="btn btn-success">Activate</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div th:if="${#lists.isEmpty(locations)}" class="empty">
+            <p style="margin-bottom: 16px;">No properties yet.</p>
+            <a th:href="@{/location-partner/properties/new}" class="btn btn-primary btn-large">+ Add Your First Property</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

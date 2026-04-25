@@ -179,3 +179,24 @@ Complete as of 2026-04-24. After Option A cleanup, Phase 1 now includes:
   - `templates/admin/partner-bookings-calendar.html` (NEW) — calendar shell with month/week/list views, partner + charity filters, "Show available windows" toggle (default ON), legend, and click-event modal showing booking + partner details with a "View Partner" link to `/admin/location-partners/{id}`.
   - `templates/home.html` — added "Partner Bookings Calendar" admin card.
   - `templates/admin/documentation.html` — added "Location Partners" sidebar nav + content section, refreshed Stay Partners section to describe the two approval paths, added Location Partner role badge style and overview row/card.
+- [x] 2026-04-25: **Phase 6 (multi-property) complete on `feature/location-partner-multi-property` branch.** Partners can now self-add additional properties from their dashboard. Files:
+  - `service/LocationPartnerService.java` — added `createPropertyForPartner`, `updatePropertyForPartner`, `setActive`, `getActiveLocationsForPartner`. Sorted properties active-first then alphabetical.
+  - `controller/LocationPartnerController.java` — added /properties (list), /properties/new (form), POST /properties (create), /properties/{id}/edit, POST /properties/{id} (update), POST /properties/{id}/deactivate, POST /properties/{id}/activate. Availability page now takes optional `propertyId` query param to scope to a chosen property.
+  - `templates/location-partner/properties.html` (new) — table view with status badges and per-row Activate/Deactivate buttons.
+  - `templates/location-partner/property-form.html` (new) — shared add/edit form. Address fields are read-only when editing (admin-only change to preserve charity-link geography assumptions).
+  - `templates/location-partner/dashboard.html` — rewritten to show ALL properties as cards (instead of a single "Your Property"). Stats show total + active count.
+  - `templates/location-partner/availability.html` — added property selector at the top; redirects with `?propertyId=` after add/delete to keep the user scoped.
+  - `templates/location-partner/fragments/sidebar.html` — added "Properties" nav item between Dashboard and Availability.
+- **Phase 6 design choices:**
+  - New properties default to `is_active=true` so partners can immediately mark availability.
+  - Phase 3 charity-link gate still protects unauthorized booking — a new property is invisible to charities until admin links it.
+  - Address edits go through admin (not self-serve) to avoid invalidating charity-link geography assumptions.
+  - Deactivate, not delete (FK preservation for old bookings/availability/charity-links).
+  - Existing single-property partners migrate transparently — their existing row is just the first entry in the new list.
+- **No DB migration needed** — schema already supported the 1:N relationship (`partner_locations.location_partner_id`).
+- [x] 2026-04-25: **Maintenance queue added** — admin can see and act on partner properties that lack any charity link.
+  - `repository/PartnerLocationRepository.java` — added `findActiveWithNoCharityLinks()` (returns active properties with zero `partner_location_charities` rows, oldest-first) and `countActiveWithNoCharityLinks()`.
+  - `controller/AdminLocationPartnerController.java` — added `GET /admin/location-partners/unlinked` rendering the maintenance page; injects `unlinkedCount` model attribute into the existing partners list view for badge display.
+  - `templates/admin/location-partner-unlinked.html` (new) — maintenance queue table with partner, property, location, age, and "Manage Links" action button. Shows green "all caught up" state when count = 0.
+  - `templates/admin/location-partners.html` — yellow banner at the top when unlinked properties exist, with a "Review & Fix" button linking to the maintenance page.
+  - **No DB changes** — uses NOT EXISTS subquery against existing `partner_location_charities` join table.

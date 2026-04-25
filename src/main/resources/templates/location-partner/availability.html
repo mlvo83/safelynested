@@ -22,6 +22,10 @@
         .alert { padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; }
         .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .property-picker { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 16px 20px; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .property-picker label { font-weight: 600; color: #555; font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .property-picker select { flex: 1; min-width: 240px; padding: 9px 11px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; background: white; }
+        .property-picker select:focus { outline: none; border-color: #667eea; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
         @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
         .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 24px; }
@@ -57,26 +61,40 @@
 <main class="main">
     <div class="header">
         <h1>Availability</h1>
-        <p>Mark the dates and times your property is empty and available.</p>
+        <p>Mark the dates and times your properties are empty and available.</p>
     </div>
 
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-    <div th:if="${primaryLocation == null}" class="card no-property">
-        <p>No property is attached to your account. Please contact support.</p>
+    <div th:if="${#lists.isEmpty(locations)}" class="card no-property">
+        <p>You don't have any properties yet.</p>
+        <p style="margin-top: 8px;"><a th:href="@{/location-partner/properties/new}" style="color: #667eea; text-decoration: none; font-weight: 600;">Add your first property →</a></p>
     </div>
 
-    <div th:if="${primaryLocation != null}" class="grid">
+    <!-- Property selector (only shown when there are 2+ properties OR for clarity even with one) -->
+    <div th:if="${not #lists.isEmpty(locations)}" class="property-picker">
+        <label for="propertyPicker">Property:</label>
+        <select id="propertyPicker" onchange="window.location.href='/location-partner/availability?propertyId=' + this.value">
+            <option th:each="loc : ${locations}"
+                    th:value="${loc.id}"
+                    th:text="${loc.name + (loc.isActive != null and loc.isActive ? '' : ' (inactive)')}"
+                    th:selected="${selectedLocation != null and selectedLocation.id == loc.id}">
+                Property
+            </option>
+        </select>
+    </div>
+
+    <div th:if="${selectedLocation != null}" class="grid">
         <!-- Add window form -->
         <div class="card">
             <h3>Add Availability Window</h3>
             <p style="color:#666; font-size: 13px; margin-bottom: 16px;">
-                For <strong th:text="${primaryLocation.name}">Property</strong>
+                For <strong th:text="${selectedLocation.name}">Property</strong>
             </p>
             <form th:action="@{/location-partner/availability}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                <input type="hidden" name="locationId" th:value="${primaryLocation.id}"/>
+                <input type="hidden" name="locationId" th:value="${selectedLocation.id}"/>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -135,13 +153,13 @@
                           th:action="@{/location-partner/availability/{id}/delete(id=${w.id})}" method="post"
                           onsubmit="return confirm('Remove this availability window?');">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <input type="hidden" name="locationId" th:value="${primaryLocation.id}"/>
+                        <input type="hidden" name="locationId" th:value="${selectedLocation.id}"/>
                         <button type="submit" class="btn btn-danger">Remove</button>
                     </form>
                 </div>
             </div>
             <div class="empty" th:if="${#lists.isEmpty(windows)}">
-                No availability windows yet. Add your first one using the form.
+                No availability windows yet for this property. Add your first one using the form.
             </div>
         </div>
     </div>

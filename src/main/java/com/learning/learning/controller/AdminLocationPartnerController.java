@@ -62,10 +62,25 @@ public class AdminLocationPartnerController {
             linkCounts.put(partner.getId(), total);
         }
 
+        long unlinkedCount = partnerLocationRepository.countActiveWithNoCharityLinks();
+
         model.addAttribute("partners", partners);
         model.addAttribute("locationsByPartner", locationsByPartner);
         model.addAttribute("linkCounts", linkCounts);
+        model.addAttribute("unlinkedCount", unlinkedCount);
         return "admin/location-partners";
+    }
+
+    /**
+     * Maintenance queue — properties that are active but have no charity links.
+     * These are invisible to every charity's booking dropdown until admin links them.
+     */
+    @GetMapping("/unlinked")
+    public String unlinked(Model model) {
+        List<PartnerLocation> unlinkedLocations = partnerLocationRepository.findActiveWithNoCharityLinks();
+        model.addAttribute("unlinkedLocations", unlinkedLocations);
+        model.addAttribute("totalCount", unlinkedLocations.size());
+        return "admin/location-partner-unlinked";
     }
 
     @GetMapping("/{id}")

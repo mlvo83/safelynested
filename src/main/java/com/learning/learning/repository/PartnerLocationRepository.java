@@ -27,4 +27,25 @@ public interface PartnerLocationRepository extends JpaRepository<PartnerLocation
             "WHERE plc.charity.id = :charityId AND pl.isActive = true " +
             "ORDER BY pl.name ASC")
     List<PartnerLocation> findActiveLinkedToCharity(@Param("charityId") Long charityId);
+
+    /**
+     * Maintenance queue — active partner properties that have not yet been
+     * linked to ANY charity. These are invisible to every charity's booking
+     * dropdown until admin links at least one charity.
+     * Returned oldest-first so admins work the queue in FIFO order.
+     */
+    @Query("SELECT pl FROM PartnerLocation pl " +
+            "WHERE pl.isActive = true " +
+            "  AND NOT EXISTS (" +
+            "        SELECT 1 FROM PartnerLocationCharity plc WHERE plc.partnerLocation = pl" +
+            "      ) " +
+            "ORDER BY pl.createdAt ASC")
+    List<PartnerLocation> findActiveWithNoCharityLinks();
+
+    @Query("SELECT COUNT(pl) FROM PartnerLocation pl " +
+            "WHERE pl.isActive = true " +
+            "  AND NOT EXISTS (" +
+            "        SELECT 1 FROM PartnerLocationCharity plc WHERE plc.partnerLocation = pl" +
+            "      )")
+    long countActiveWithNoCharityLinks();
 }
