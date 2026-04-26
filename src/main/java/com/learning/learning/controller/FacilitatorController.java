@@ -182,10 +182,14 @@ public class FacilitatorController {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setReferralId(referralId);
 
-        // Pre-select the location the participant chose (if any)
+        // Pre-select the location the participant chose on the invite —
+        // either a CharityLocation OR a PartnerLocation (mutually exclusive).
         if (referral.getSelectedLocation() != null) {
             bookingDto.setLocationId(referral.getSelectedLocation().getId());
             bookingDto.setLocationSelection("charity:" + referral.getSelectedLocation().getId());
+        } else if (referral.getSelectedPartnerLocation() != null) {
+            bookingDto.setPartnerLocationId(referral.getSelectedPartnerLocation().getId());
+            bookingDto.setLocationSelection("partner:" + referral.getSelectedPartnerLocation().getId());
         }
 
         // Get active locations for the referral's charity

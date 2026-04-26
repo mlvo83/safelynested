@@ -173,6 +173,7 @@ public class ReferralService {
         referral.setUrgencyLevel(Referral.UrgencyLevel.MEDIUM);
         referral.setStatus(Referral.ReferralStatus.PENDING);
         referral.setSelectedLocation(selectedLocation);
+        referral.setSelectedPartnerLocation(null);  // mutually exclusive
         referral.setLocationSelectedAt(LocalDateTime.now());
         referral.setAllowedZipCodes(invite.getAllowedZipCodes());
 
@@ -209,22 +210,80 @@ public class ReferralService {
                 referral.getReferralNumber(), selectedLocation.getLocationName());
 
         referral.setSelectedLocation(selectedLocation);
+        referral.setSelectedPartnerLocation(null);  // mutually exclusive
         referral.setLocationSelectedAt(LocalDateTime.now());
+        appendParticipantNotes(referral, participantNotes);
 
-        // Append participant notes to needs description if provided
-        if (participantNotes != null && !participantNotes.isEmpty()) {
-            String existingDescription = referral.getNeedsDescription();
-            if (existingDescription != null && !existingDescription.isEmpty()) {
-                referral.setNeedsDescription(existingDescription + "\n\nParticipant notes: " + participantNotes);
-            } else {
-                referral.setNeedsDescription("Participant notes: " + participantNotes);
-            }
+        Referral savedReferral = referralRepository.save(referral);
+        logger.info("Updated referral {} with charity-location selection", savedReferral.getReferralNumber());
+        return savedReferral;
+    }
+
+    /**
+     * Create a new Referral from a completed invite where the participant
+     * picked a partner property (PartnerLocation linked to the charity).
+     */
+    @Transactional
+    public Referral createReferralFromInvite(ReferralInvite invite, com.learning.learning.entity.PartnerLocation selectedPartnerLocation) {
+        logger.info("Creating referral from invite {} for participant {} (partner location)",
+                invite.getId(), invite.getRecipientName());
+
+        Referral referral = new Referral();
+        referral.setReferralNumber(generateReferralNumber());
+        referral.setParticipantName(invite.getRecipientName());
+        referral.setParticipantEmail(invite.getRecipientEmail());
+        referral.setParticipantPhone(invite.getRecipientPhone());
+        referral.setCharity(invite.getCharity());
+        referral.setReferredByUser(invite.getCreatedBy());
+        referral.setReferredByCharity(invite.getCharity().getCharityName());
+        referral.setUrgencyLevel(Referral.UrgencyLevel.MEDIUM);
+        referral.setStatus(Referral.ReferralStatus.PENDING);
+        referral.setSelectedPartnerLocation(selectedPartnerLocation);
+        referral.setLocationSelectedAt(LocalDateTime.now());
+        referral.setAllowedZipCodes(invite.getAllowedZipCodes());
+
+        if (invite.getNeedsDescription() != null && !invite.getNeedsDescription().isEmpty()) {
+            referral.setNeedsDescription(invite.getNeedsDescription());
+        } else if (invite.getParticipantNotes() != null && !invite.getParticipantNotes().isEmpty()) {
+            referral.setNeedsDescription("Participant notes: " + invite.getParticipantNotes());
+        } else {
+            referral.setNeedsDescription("Referral created from invite");
         }
 
         Referral savedReferral = referralRepository.save(referral);
-        logger.info("Updated referral {} with location selection", savedReferral.getReferralNumber());
+        logger.info("Created referral {} from invite {} with partner location",
+                savedReferral.getReferralNumber(), invite.getId());
 
+        documentService.linkInviteDocumentsToReferral(invite.getId(), savedReferral.getId());
         return savedReferral;
+    }
+
+    /**
+     * Update an existing referral with a partner-property selection from an invite.
+     */
+    @Transactional
+    public Referral updateReferralWithLocationSelection(Referral referral, com.learning.learning.entity.PartnerLocation selectedPartnerLocation, String participantNotes) {
+        logger.info("Updating referral {} with selected partner location {}",
+                referral.getReferralNumber(), selectedPartnerLocation.getName());
+
+        referral.setSelectedLocation(null);  // mutually exclusive
+        referral.setSelectedPartnerLocation(selectedPartnerLocation);
+        referral.setLocationSelectedAt(LocalDateTime.now());
+        appendParticipantNotes(referral, participantNotes);
+
+        Referral savedReferral = referralRepository.save(referral);
+        logger.info("Updated referral {} with partner-location selection", savedReferral.getReferralNumber());
+        return savedReferral;
+    }
+
+    private void appendParticipantNotes(Referral referral, String participantNotes) {
+        if (participantNotes == null || participantNotes.isEmpty()) return;
+        String existing = referral.getNeedsDescription();
+        if (existing != null && !existing.isEmpty()) {
+            referral.setNeedsDescription(existing + "\n\nParticipant notes: " + participantNotes);
+        } else {
+            referral.setNeedsDescription("Participant notes: " + participantNotes);
+        }
     }
 
     // ========================================

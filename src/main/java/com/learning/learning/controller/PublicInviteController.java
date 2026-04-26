@@ -2,10 +2,13 @@ package com.learning.learning.controller;
 
 import com.learning.learning.entity.Charity;
 import com.learning.learning.entity.CharityLocation;
+import com.learning.learning.entity.PartnerLocation;
 import com.learning.learning.entity.Document;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.entity.ReferralInvite;
 import com.learning.learning.repository.CharityLocationRepository;
+import com.learning.learning.repository.PartnerLocationRepository;
+import com.learning.learning.repository.PartnerLocationCharityRepository;
 import com.learning.learning.repository.ReferralInviteRepository;
 import com.learning.learning.service.DocumentService;
 import com.learning.learning.service.ReferralService;
@@ -39,6 +42,12 @@ public class PublicInviteController {
 
     @Autowired
     private CharityLocationRepository locationRepository;
+
+    @Autowired
+    private PartnerLocationRepository partnerLocationRepository;
+
+    @Autowired
+    private PartnerLocationCharityRepository partnerLocationCharityRepository;
 
     @Autowired
     private ReferralService referralService;
@@ -120,8 +129,13 @@ public class PublicInviteController {
             return a.getLocationName().compareToIgnoreCase(b.getLocationName());
         });
 
+        // Partner properties linked to this charity (offered alongside charity locations)
+        List<PartnerLocation> partnerLocations =
+                partnerLocationRepository.findActiveLinkedToCharity(charityId);
+
         model.addAttribute("invite", invite);
         model.addAttribute("locations", availableLocations);
+        model.addAttribute("partnerLocations", partnerLocations);
         model.addAttribute("charity", charity);
         model.addAttribute("referral", invite.getReferral());  // May be null
 
@@ -135,11 +149,13 @@ public class PublicInviteController {
     @PostMapping("/{token}/select-location")
     public String selectLocation(
             @PathVariable String token,
-            @RequestParam Long locationId,
+            @RequestParam(required = false) String locationSelection,
+            @RequestParam(required = false) Long locationId,
             @RequestParam(required = false) String participantNotes,
             RedirectAttributes redirectAttributes
     ) {
-        logger.info("Location selection for token: {}, locationId: {}", token, locationId);
+        logger.info("Location selection for token: {}, locationSelection: '{}', locationId: {}",
+                token, locationSelection, locationId);
 
         // Find the invite
         Optional<ReferralInvite> inviteOpt = inviteRepository.findByInviteToken(token);
@@ -158,67 +174,129 @@ public class PublicInviteController {
             return "redirect:/referral/invite/" + token;
         }
 
-        // Find and validate the selected location
-        Optional<CharityLocation> locationOpt = locationRepository.findById(locationId);
-
-        if (locationOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("error", "Selected location not found.");
-            return "redirect:/referral/invite/" + token;
-        }
-
-        CharityLocation location = locationOpt.get();
-
         // Get the charity for this invite
         Charity inviteCharity = invite.getCharity();
         if (inviteCharity == null && invite.getReferral() != null) {
             inviteCharity = invite.getReferral().getCharity();
         }
+        if (inviteCharity == null) {
+            redirectAttributes.addFlashAttribute("error", "This invite is not properly configured.");
+            return "redirect:/referral/invite/" + token;
+        }
 
-        // Verify location belongs to the same charity
-        if (inviteCharity == null || !location.getCharity().getId().equals(inviteCharity.getId())) {
+        // Resolve which kind of location was chosen.
+        // The form posts a prefixed value via locationSelection ("charity:{id}" or
+        // "partner:{id}"). Legacy clients may post locationId directly.
+        String type = "charity";
+        Long resolvedId = locationId;
+        if (locationSelection != null && !locationSelection.isBlank()) {
+            int colon = locationSelection.indexOf(':');
+            if (colon < 0) {
+                redirectAttributes.addFlashAttribute("error", "Invalid location selection.");
+                return "redirect:/referral/invite/" + token;
+            }
+            type = locationSelection.substring(0, colon).trim().toLowerCase();
+            try {
+                resolvedId = Long.parseLong(locationSelection.substring(colon + 1).trim());
+            } catch (NumberFormatException e) {
+                redirectAttributes.addFlashAttribute("error", "Invalid location id.");
+                return "redirect:/referral/invite/" + token;
+            }
+        }
+        if (resolvedId == null) {
+            redirectAttributes.addFlashAttribute("error", "Please select a location.");
+            return "redirect:/referral/invite/" + token;
+        }
+
+        if ("partner".equals(type)) {
+            return selectPartnerLocation(token, invite, inviteCharity, resolvedId, participantNotes, redirectAttributes);
+        }
+        return selectCharityLocation(token, invite, inviteCharity, resolvedId, participantNotes, redirectAttributes);
+    }
+
+    private String selectCharityLocation(String token, ReferralInvite invite, Charity inviteCharity,
+                                          Long locationId, String participantNotes,
+                                          RedirectAttributes redirectAttributes) {
+        Optional<CharityLocation> locationOpt = locationRepository.findById(locationId);
+        if (locationOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Selected location not found.");
+            return "redirect:/referral/invite/" + token;
+        }
+        CharityLocation location = locationOpt.get();
+
+        if (!location.getCharity().getId().equals(inviteCharity.getId())) {
             logger.warn("Location {} does not belong to invite's charity", locationId);
             redirectAttributes.addFlashAttribute("error", "Invalid location selection.");
             return "redirect:/referral/invite/" + token;
         }
-
-        // Verify location is active
         if (!location.getIsActive()) {
             redirectAttributes.addFlashAttribute("error", "This location is no longer available.");
             return "redirect:/referral/invite/" + token;
         }
 
-        // Update the invite with selected location
         invite.setSelectedLocation(location);
+        invite.setSelectedPartnerLocation(null);
         invite.setLocationSelectedAt(LocalDateTime.now());
         invite.setParticipantNotes(participantNotes);
         invite.setStatus(ReferralInvite.InviteStatus.COMPLETED);
         invite.setCompletedAt(LocalDateTime.now());
 
-        // Create or update referral based on whether invite was linked to one
         Referral referral;
         if (invite.getReferral() != null) {
-            // Invite was linked to an existing referral - update it with location selection
             referral = referralService.updateReferralWithLocationSelection(
-                    invite.getReferral(),
-                    location,
-                    participantNotes
-            );
-            logger.info("Updated existing referral {} with location selection from invite {}",
-                    referral.getReferralNumber(), invite.getId());
+                    invite.getReferral(), location, participantNotes);
         } else {
-            // Invite was NOT linked to a referral - create a new one
             referral = referralService.createReferralFromInvite(invite, location);
-            // Link the new referral to the invite
             invite.setReferral(referral);
-            logger.info("Created new referral {} from invite {}",
-                    referral.getReferralNumber(), invite.getId());
         }
-
         inviteRepository.save(invite);
 
-        logger.info("Invite {} completed with location {} selected, referral {} submitted to facilitator",
+        logger.info("Invite {} completed with charity location {} selected, referral {}",
                 invite.getId(), location.getLocationName(), referral.getReferralNumber());
+        return "redirect:/referral/invite/" + token + "/confirmation";
+    }
 
+    private String selectPartnerLocation(String token, ReferralInvite invite, Charity inviteCharity,
+                                          Long partnerLocationId, String participantNotes,
+                                          RedirectAttributes redirectAttributes) {
+        Optional<PartnerLocation> plOpt = partnerLocationRepository.findById(partnerLocationId);
+        if (plOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Selected partner location not found.");
+            return "redirect:/referral/invite/" + token;
+        }
+        PartnerLocation pl = plOpt.get();
+
+        if (!Boolean.TRUE.equals(pl.getIsActive())) {
+            redirectAttributes.addFlashAttribute("error", "That property is not currently available.");
+            return "redirect:/referral/invite/" + token;
+        }
+        // Verify the partner property is linked to the invite's charity
+        if (!partnerLocationCharityRepository.existsByPartnerLocationIdAndCharityId(
+                pl.getId(), inviteCharity.getId())) {
+            logger.warn("Partner location {} not linked to invite's charity {}", pl.getId(), inviteCharity.getId());
+            redirectAttributes.addFlashAttribute("error", "That property is not available for this invite.");
+            return "redirect:/referral/invite/" + token;
+        }
+
+        invite.setSelectedLocation(null);
+        invite.setSelectedPartnerLocation(pl);
+        invite.setLocationSelectedAt(LocalDateTime.now());
+        invite.setParticipantNotes(participantNotes);
+        invite.setStatus(ReferralInvite.InviteStatus.COMPLETED);
+        invite.setCompletedAt(LocalDateTime.now());
+
+        Referral referral;
+        if (invite.getReferral() != null) {
+            referral = referralService.updateReferralWithLocationSelection(
+                    invite.getReferral(), pl, participantNotes);
+        } else {
+            referral = referralService.createReferralFromInvite(invite, pl);
+            invite.setReferral(referral);
+        }
+        inviteRepository.save(invite);
+
+        logger.info("Invite {} completed with partner location {} selected, referral {}",
+                invite.getId(), pl.getName(), referral.getReferralNumber());
         return "redirect:/referral/invite/" + token + "/confirmation";
     }
 
@@ -248,7 +326,33 @@ public class PublicInviteController {
         }
 
         model.addAttribute("invite", invite);
-        model.addAttribute("location", invite.getSelectedLocation());
+
+        // Flatten the selected location into simple string model attributes
+        // so the template doesn't have to branch on entity type. CharityLocation
+        // has locationName/phone/hoursOfOperation; PartnerLocation has name and
+        // no phone/hours, so those are null for partner-picks.
+        if (invite.getSelectedLocation() != null) {
+            CharityLocation cl = invite.getSelectedLocation();
+            model.addAttribute("locationName", cl.getLocationName());
+            model.addAttribute("locationAddress", cl.getAddress());
+            model.addAttribute("locationCity", cl.getCity());
+            model.addAttribute("locationState", cl.getState());
+            model.addAttribute("locationZipCode", cl.getZipCode());
+            model.addAttribute("locationPhone", cl.getPhone());
+            model.addAttribute("locationHours", cl.getHoursOfOperation());
+            model.addAttribute("isPartnerLocation", false);
+        } else if (invite.getSelectedPartnerLocation() != null) {
+            PartnerLocation pl = invite.getSelectedPartnerLocation();
+            model.addAttribute("locationName", pl.getName());
+            model.addAttribute("locationAddress", pl.getAddress());
+            model.addAttribute("locationCity", pl.getCity());
+            model.addAttribute("locationState", pl.getState());
+            model.addAttribute("locationZipCode", pl.getZipCode());
+            model.addAttribute("locationPhone", null);
+            model.addAttribute("locationHours", null);
+            model.addAttribute("isPartnerLocation", true);
+        }
+
         model.addAttribute("charity", charity);
         model.addAttribute("referral", invite.getReferral());
 
