@@ -82,16 +82,17 @@ public class StayPartnerController {
             // Applicant type
             application.setApplicantType(StayPartnerApplication.ApplicantType.valueOf(applicantType));
 
-            // Individual fields
+            // Individual fields — normalize email to lowercase so case-sensitive
+            // storage doesn't break later case-insensitive lookups
             application.setFirstName(firstName);
             application.setLastName(lastName);
-            application.setEmail(email);
+            application.setEmail(email != null ? email.trim().toLowerCase() : null);
             application.setPhone(phone);
 
             // Business fields
             application.setBusinessName(businessName);
             application.setContactName(contactName);
-            application.setBusinessEmail(businessEmail);
+            application.setBusinessEmail(businessEmail != null ? businessEmail.trim().toLowerCase() : null);
             application.setBusinessPhone(businessPhone);
             application.setTaxId(taxId);
 
