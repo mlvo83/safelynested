@@ -150,28 +150,36 @@ public class StayPartnerController {
     }
 
     /**
-     * Process status check
+     * Process status check (POST-Redirect-GET).
+     *
+     * Why redirect instead of returning the view directly: when the result
+     * is rendered as the response to a POST, the browser treats the URL as
+     * "form data" — pressing back triggers a resubmit warning or a stale
+     * page. By redirecting and passing the result via flash attributes, the
+     * GET that follows is a normal navigation and back-button works cleanly.
      */
     @PostMapping("/status")
     public String checkStatus(
             @RequestParam String applicationNumber,
             @RequestParam String email,
-            Model model) {
+            RedirectAttributes redirectAttributes) {
 
         StayPartnerApplication application = applicationService.lookupStatus(
                 applicationNumber.trim().toUpperCase(), email.trim().toLowerCase());
 
         if (application != null) {
-            model.addAttribute("app", application);
-            model.addAttribute("found", true);
+            redirectAttributes.addFlashAttribute("app", application);
+            redirectAttributes.addFlashAttribute("found", true);
         } else {
-            model.addAttribute("found", false);
-            model.addAttribute("notFoundMessage",
+            redirectAttributes.addFlashAttribute("found", false);
+            redirectAttributes.addFlashAttribute("notFoundMessage",
                     "No application found with that number and email combination. Please check your details and try again.");
         }
 
-        model.addAttribute("applicationNumber", applicationNumber);
-        model.addAttribute("email", email);
-        return "public/stay-partner-status";
+        // Carry the entered values forward so the form re-renders with them
+        redirectAttributes.addFlashAttribute("applicationNumber", applicationNumber);
+        redirectAttributes.addFlashAttribute("email", email);
+
+        return "redirect:/stay-partner/status";
     }
 }
