@@ -66,6 +66,9 @@ public class CharityPartnerController {
     private CharityLocationRepository locationRepository;
 
     @Autowired
+    private PartnerLocationRepository partnerLocationRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -733,8 +736,29 @@ public class CharityPartnerController {
         long totalLocations = locationRepository.countByCharityId(charityId);
         long activeLocations = locationRepository.countByCharityIdAndIsActive(charityId, true);
 
+        // Partner properties linked to this charity (read-only on this page —
+        // the partner owns the property, admin manages the link, charity team
+        // can only book against availability windows the partner has set).
+        List<com.learning.learning.entity.PartnerLocation> partnerLocations =
+                partnerLocationRepository.findActiveLinkedToCharity(charityId);
+
+        // Apply the same search filter to partner locations so a search like
+        // "Tulsa" returns matches from both lists
+        if (search != null && !search.trim().isEmpty()) {
+            String searchLower = search.toLowerCase().trim();
+            partnerLocations = partnerLocations.stream()
+                    .filter(pl ->
+                            (pl.getName() != null && pl.getName().toLowerCase().contains(searchLower)) ||
+                                    (pl.getCity() != null && pl.getCity().toLowerCase().contains(searchLower)) ||
+                                    (pl.getState() != null && pl.getState().toLowerCase().contains(searchLower)) ||
+                                    (pl.getZipCode() != null && pl.getZipCode().contains(search.trim()))
+                    )
+                    .toList();
+        }
+
         model.addAttribute("charity", charity);
         model.addAttribute("locations", locations);
+        model.addAttribute("partnerLocations", partnerLocations);
         model.addAttribute("totalLocations", totalLocations);
         model.addAttribute("activeLocations", activeLocations);
         model.addAttribute("selectedStatus", status);
@@ -808,7 +832,9 @@ public class CharityPartnerController {
         location.setDescription(description);
         location.setServicesOffered(servicesOffered);
         location.setHoursOfOperation(hoursOfOperation);
-        location.setIsActive(isActive != null ? isActive : true);
+        // Unchecked HTML checkbox doesn't send a value, so null means "user
+        // unchecked it" — only TRUE keeps the new location active.
+        location.setIsActive(Boolean.TRUE.equals(isActive));
 
         locationRepository.save(location);
 
@@ -898,7 +924,10 @@ public class CharityPartnerController {
         existingLocation.setDescription(description);
         existingLocation.setServicesOffered(servicesOffered);
         existingLocation.setHoursOfOperation(hoursOfOperation);
-        existingLocation.setIsActive(isActive != null ? isActive : true);
+        // An unchecked HTML checkbox doesn't send a value at all, so isActive
+        // arrives as null when the user wants to deactivate. Treat null as false
+        // (the user explicitly unchecked it) — only TRUE should keep it active.
+        existingLocation.setIsActive(Boolean.TRUE.equals(isActive));
 
         locationRepository.save(existingLocation);
 

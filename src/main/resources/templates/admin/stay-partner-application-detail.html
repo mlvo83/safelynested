@@ -344,7 +344,7 @@
                 <div th:if="${app.resultLocation != null}" class="info-row">
                     <span class="info-label">Result Location</span>
                     <span class="info-value">
-                        <a th:href="@{/admin/locations/{id}(id=${app.resultLocation.id})}"
+                        <a th:href="@{/location-admin/locations/{id}(id=${app.resultLocation.id})}"
                            style="color: #667eea; text-decoration: none;"
                            th:text="${app.resultLocation.locationName + ' (#' + app.resultLocation.id + ')'}">Location Name (#1)</a>
                     </span>

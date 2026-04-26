@@ -153,6 +153,7 @@
                             <span th:if="${loc.isActive}" class="badge bg-success">Active</span>
                             <span th:unless="${loc.isActive}" class="badge bg-secondary">Inactive</span>
                         </div>
+
                         <div class="card-body">
                             <!-- Address -->
                             <p class="small text-muted mb-2">
@@ -209,6 +210,69 @@
                                         <i th:class="${loc.isActive ? 'fas fa-pause' : 'fas fa-play'}"></i>
                                     </button>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- PARTNER PROPERTIES (read-only, owned by Location Partners) -->
+            <!-- ============================================ -->
+            <div th:if="${partnerLocations != null and !partnerLocations.isEmpty()}" class="mt-5">
+                <div class="d-flex align-items-center mb-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-handshake me-2 text-primary"></i>Partner Properties
+                    </h4>
+                    <span class="ms-2 badge bg-info" th:text="${partnerLocations.size()}">0</span>
+                </div>
+                <p class="text-muted small mb-3">
+                    These properties are owned by Location Partners and made available to your charity by an administrator.
+                    They appear in your booking dropdown alongside your own locations. Availability is set by the partner —
+                    you cannot edit these properties from here.
+                </p>
+
+                <div class="row g-4">
+                    <div th:each="pl : ${partnerLocations}" class="col-md-6 col-lg-4">
+                        <div class="card location-card h-100 shadow-sm" style="border-left: 4px solid #667eea;">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-bold" th:text="${pl.name}">Property Name</h6>
+                                <span class="badge" style="background: #667eea; color: white;">Partner</span>
+                            </div>
+                            <div class="card-body">
+                                <p class="small text-muted mb-2" th:if="${pl.propertyType != null}">
+                                    <i class="fas fa-tag me-1"></i>
+                                    <span th:text="${pl.propertyType.displayName}">Type</span>
+                                </p>
+                                <p class="small text-muted mb-2">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    <span th:text="${pl.address}">Address</span>,
+                                    <span th:text="${pl.city}">City</span>,
+                                    <span th:text="${pl.state}">State</span>
+                                    <span th:text="${pl.zipCode}">12345</span>
+                                </p>
+                                <div class="mb-2" th:if="${pl.maxGuests != null}">
+                                    <span class="text-muted small">
+                                        <i class="fas fa-bed me-1"></i> Max guests:
+                                        <strong th:text="${pl.maxGuests}">0</strong>
+                                    </span>
+                                </div>
+                                <div class="mb-2" th:if="${pl.numberOfBedrooms != null}">
+                                    <span class="text-muted small">
+                                        <i class="fas fa-door-open me-1"></i>
+                                        <strong th:text="${pl.numberOfBedrooms}">0</strong> bedroom(s)
+                                    </span>
+                                </div>
+                                <div class="mb-2" th:if="${pl.locationPartner != null}">
+                                    <span class="text-muted small">
+                                        <i class="fas fa-user me-1"></i>
+                                        Owned by <strong th:text="${pl.locationPartner.displayName}">Partner</strong>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-light text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Available for booking on approved referrals
                             </div>
                         </div>
                     </div>
