@@ -231,6 +231,25 @@
             <div class="form-section">
                 <h3>📍 Location Details</h3>
 
+                <!-- Preferred location callout — shown when the participant
+                     picked a location at invite time. -->
+                <div th:if="${hasPreferredLocation}"
+                     style="background:#d1fae5; color:#065f46; border:1px solid #a7f3d0; border-radius:8px; padding:12px 16px; margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:18px;">📍</span>
+                    <div style="flex:1;">
+                        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; color:#047857;">
+                            Participant's Preferred Location
+                            <span th:if="${preferredLocationType == 'partner'}"
+                                  style="background:#667eea; color:white; padding:1px 8px; border-radius:8px; font-size:10px; margin-left:6px;">Partner</span>
+                        </div>
+                        <div style="font-weight:600; color:#065f46; margin-top:2px;"
+                             th:text="${preferredLocationLabel}">Property Name</div>
+                        <div style="font-size:12px; color:#047857; margin-top:2px;">
+                            Pre-selected in the dropdown below. You can change it if needed.
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="locationSelection">Location <span class="required">*</span></label>
                     <select id="locationSelection" th:field="*{locationSelection}" required>

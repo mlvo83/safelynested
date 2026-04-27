@@ -342,8 +342,37 @@ public class CharityFacilitatorController {
         model.addAttribute("locations", locations);
         model.addAttribute("partnerLocations", partnerLocations);
         model.addAttribute("availableDonations", availableDonations);
+        addPreferredLocationToModel(model, referral);
 
         return "charity-facilitator/booking-form";
+    }
+
+    /**
+     * Adds preferred-location callout info to the model — a friendly label
+     * and type so the booking form can display "Participant's preferred
+     * location: X" above the dropdown. Helps facilitators not miss the
+     * participant's choice.
+     */
+    private void addPreferredLocationToModel(Model model, Referral referral) {
+        if (referral.getSelectedLocation() != null) {
+            com.learning.learning.entity.CharityLocation cl = referral.getSelectedLocation();
+            String label = cl.getLocationName();
+            if (cl.getCity() != null) label += " — " + cl.getCity();
+            if (cl.getState() != null) label += ", " + cl.getState();
+            model.addAttribute("preferredLocationLabel", label);
+            model.addAttribute("preferredLocationType", "charity");
+            model.addAttribute("hasPreferredLocation", true);
+        } else if (referral.getSelectedPartnerLocation() != null) {
+            com.learning.learning.entity.PartnerLocation pl = referral.getSelectedPartnerLocation();
+            String label = pl.getName();
+            if (pl.getCity() != null) label += " — " + pl.getCity();
+            if (pl.getState() != null) label += ", " + pl.getState();
+            model.addAttribute("preferredLocationLabel", label);
+            model.addAttribute("preferredLocationType", "partner");
+            model.addAttribute("hasPreferredLocation", true);
+        } else {
+            model.addAttribute("hasPreferredLocation", false);
+        }
     }
 
     /**
@@ -381,6 +410,7 @@ public class CharityFacilitatorController {
             model.addAttribute("locations", locations);
             model.addAttribute("partnerLocations", partnerLocations);
             model.addAttribute("availableDonations", availableDonations);
+            addPreferredLocationToModel(model, referral);
             return "charity-facilitator/booking-form";
         }
 
