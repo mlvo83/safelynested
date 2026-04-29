@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Partner Detail - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; transition: background 0.3s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .header h1 { color: #333; font-size: 24px; }
+        .header p { color: #666; font-size: 14px; margin-top: 4px; }
+        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; margin-bottom: 20px; }
+        .card-header { background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #dee2e6; font-weight: 600; }
+        .card-body { padding: 20px; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #666; font-size: 14px; min-width: 160px; }
+        .info-value { color: #333; font-weight: 500; text-align: right; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-secondary { background: #e5e7eb; color: #4b5563; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+        .btn { padding: 8px 16px; border-radius: 5px; text-decoration: none; font-weight: 600; transition: opacity 0.2s; display: inline-block; border: none; cursor: pointer; font-size: 13px; }
+        .btn:hover { opacity: 0.9; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .form-row { display: flex; gap: 12px; align-items: flex-end; }
+        .form-row select { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .form-row select:focus { outline: none; border-color: #667eea; }
+        .links-list { display: flex; flex-direction: column; gap: 10px; }
+        .link-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #667eea; }
+        .link-info .name { font-weight: 600; color: #333; font-size: 14px; }
+        .link-info .meta { color: #888; font-size: 12px; margin-top: 2px; }
+        .empty { color: #888; font-style: italic; padding: 12px 0; }
+        .property-section { padding-top: 8px; }
+        .property-name-header { background: linear-gradient(135deg, #eef0ff 0%, #f3edff 100%); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; }
+        .property-name-header h4 { color: #4338ca; font-size: 15px; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Location Partner</div>
+    <a th:href="@{/admin/location-partners}" class="nav-link">Back to List</a>
+</nav>
+
+<div class="container">
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+    <div class="header">
+        <div>
+            <h1>
+                <span th:text="${partner.displayName}">Partner Name</span>
+                <span class="badge"
+                      th:classappend="${partner.isActive != null and partner.isActive ? 'badge-success' : 'badge-secondary'}"
+                      th:text="${partner.isActive != null and partner.isActive ? 'Active' : 'Inactive'}"
+                      style="font-size: 12px; vertical-align: middle;">Active</span>
+            </h1>
+            <p>Manage charity assignments for this Location Partner's properties.</p>
+        </div>
+    </div>
+
+    <!-- Partner Info -->
+    <div class="card">
+        <div class="card-header">Partner Information</div>
+        <div class="card-body">
+            <div class="info-row">
+                <span class="info-label">Type</span>
+                <span class="info-value" th:text="${partner.applicantType.displayName}">Individual</span>
+            </div>
+            <div class="info-row" th:if="${partner.businessName}">
+                <span class="info-label">Business Name</span>
+                <span class="info-value" th:text="${partner.businessName}">Business</span>
+            </div>
+            <div class="info-row" th:if="${partner.firstName}">
+                <span class="info-label">First Name</span>
+                <span class="info-value" th:text="${partner.firstName}">First</span>
+            </div>
+            <div class="info-row" th:if="${partner.lastName}">
+                <span class="info-label">Last Name</span>
+                <span class="info-value" th:text="${partner.lastName}">Last</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Email</span>
+                <span class="info-value" th:text="${partner.contactEmail}">email@example.com</span>
+            </div>
+            <div class="info-row" th:if="${partner.contactPhone}">
+                <span class="info-label">Phone</span>
+                <span class="info-value" th:text="${partner.contactPhone}">phone</span>
+            </div>
+            <div class="info-row" th:if="${partner.einTaxId}">
+                <span class="info-label">EIN / Tax ID</span>
+                <span class="info-value" th:text="${partner.einTaxId}">ein</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Properties + Charity Assignments -->
+    <div th:if="${#lists.isEmpty(locations)}" class="card">
+        <div class="card-header">Properties</div>
+        <div class="card-body empty">No properties attached to this partner.</div>
+    </div>
+
+    <div th:each="loc : ${locations}" class="card">
+        <div class="card-header">Property &amp; Charity Assignments</div>
+        <div class="card-body property-section">
+            <div class="property-name-header">
+                <h4 th:text="${loc.name}">Property Name</h4>
+                <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                    <span th:if="${loc.propertyType}" th:text="${loc.propertyType.displayName}">Type</span>
+                    <span th:if="${loc.propertyType}"> · </span>
+                    <span th:text="${loc.address}">Address</span>,
+                    <span th:text="${loc.city}">City</span>,
+                    <span th:text="${loc.state}">ST</span>
+                    <span th:text="${loc.zipCode}">ZIP</span>
+                </div>
+            </div>
+
+            <h4 style="color: #333; font-size: 14px; margin-bottom: 10px;">Linked Charities</h4>
+            <div class="links-list" th:if="${not #lists.isEmpty(linksByLocation.get(loc.id))}">
+                <div th:each="link : ${linksByLocation.get(loc.id)}" class="link-row">
+                    <div class="link-info">
+                        <div class="name" th:text="${link.charity.charityName}">Charity Name</div>
+                        <div class="meta">
+                            Linked
+                            <span th:text="${link.createdAt != null ? #temporals.format(link.createdAt, 'MMM d, yyyy') : ''}">date</span>
+                            <span th:if="${link.createdBy != null}">
+                                by <span th:text="${link.createdBy.username}">admin</span>
+                            </span>
+                        </div>
+                    </div>
+                    <form th:action="@{/admin/location-partners/{pid}/locations/{lid}/charities/{cid}/remove(pid=${partner.id},lid=${loc.id},cid=${link.charity.id})}"
+                          method="post"
+                          onsubmit="return confirm('Remove this charity link?');">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-danger">Remove</button>
+                    </form>
+                </div>
+            </div>
+            <div class="empty" th:if="${#lists.isEmpty(linksByLocation.get(loc.id))}">
+                No charities linked yet.
+            </div>
+
+            <div style="margin-top: 20px;">
+                <h4 style="color: #333; font-size: 14px; margin-bottom: 10px;">Add Charity</h4>
+                <form th:action="@{/admin/location-partners/{pid}/locations/{lid}/charities(pid=${partner.id},lid=${loc.id})}"
+                      method="post" th:if="${not #lists.isEmpty(eligibleByLocation.get(loc.id))}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="form-row">
+                        <select name="charityId" required>
+                            <option value="">-- Select a charity --</option>
+                            <option th:each="c : ${eligibleByLocation.get(loc.id)}"
+                                    th:value="${c.id}" th:text="${c.charityName}">Charity</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">Add Link</button>
+                    </div>
+                </form>
+                <div class="empty" th:if="${#lists.isEmpty(eligibleByLocation.get(loc.id))}">
+                    All active charities are already linked to this property.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -74,24 +74,33 @@ public class StayPartnerController {
             // Communication
             @RequestParam(required = false, defaultValue = "EMAIL") String preferredContactMethod,
             @RequestParam(required = false) String additionalNotes,
+            // Terms acceptance — required checkbox; absent param means "not checked"
+            @RequestParam(required = false) Boolean agreeToTerms,
             RedirectAttributes redirectAttributes) {
 
         try {
+            // Server-side enforcement of the Terms checkbox — an unchecked
+            // checkbox doesn't post a value at all, so null = not accepted.
+            if (!Boolean.TRUE.equals(agreeToTerms)) {
+                throw new RuntimeException("You must agree to the Terms and Conditions to submit an application.");
+            }
+
             StayPartnerApplication application = new StayPartnerApplication();
 
             // Applicant type
             application.setApplicantType(StayPartnerApplication.ApplicantType.valueOf(applicantType));
 
-            // Individual fields
+            // Individual fields — normalize email to lowercase so case-sensitive
+            // storage doesn't break later case-insensitive lookups
             application.setFirstName(firstName);
             application.setLastName(lastName);
-            application.setEmail(email);
+            application.setEmail(email != null ? email.trim().toLowerCase() : null);
             application.setPhone(phone);
 
             // Business fields
             application.setBusinessName(businessName);
             application.setContactName(contactName);
-            application.setBusinessEmail(businessEmail);
+            application.setBusinessEmail(businessEmail != null ? businessEmail.trim().toLowerCase() : null);
             application.setBusinessPhone(businessPhone);
             application.setTaxId(taxId);
 
@@ -149,28 +158,36 @@ public class StayPartnerController {
     }
 
     /**
-     * Process status check
+     * Process status check (POST-Redirect-GET).
+     *
+     * Why redirect instead of returning the view directly: when the result
+     * is rendered as the response to a POST, the browser treats the URL as
+     * "form data" — pressing back triggers a resubmit warning or a stale
+     * page. By redirecting and passing the result via flash attributes, the
+     * GET that follows is a normal navigation and back-button works cleanly.
      */
     @PostMapping("/status")
     public String checkStatus(
             @RequestParam String applicationNumber,
             @RequestParam String email,
-            Model model) {
+            RedirectAttributes redirectAttributes) {
 
         StayPartnerApplication application = applicationService.lookupStatus(
                 applicationNumber.trim().toUpperCase(), email.trim().toLowerCase());
 
         if (application != null) {
-            model.addAttribute("app", application);
-            model.addAttribute("found", true);
+            redirectAttributes.addFlashAttribute("app", application);
+            redirectAttributes.addFlashAttribute("found", true);
         } else {
-            model.addAttribute("found", false);
-            model.addAttribute("notFoundMessage",
+            redirectAttributes.addFlashAttribute("found", false);
+            redirectAttributes.addFlashAttribute("notFoundMessage",
                     "No application found with that number and email combination. Please check your details and try again.");
         }
 
-        model.addAttribute("applicationNumber", applicationNumber);
-        model.addAttribute("email", email);
-        return "public/stay-partner-status";
+        // Carry the entered values forward so the form re-renders with them
+        redirectAttributes.addFlashAttribute("applicationNumber", applicationNumber);
+        redirectAttributes.addFlashAttribute("email", email);
+
+        return "redirect:/stay-partner/status";
     }
 }

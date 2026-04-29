@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Properties Needing Charity Links - Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; min-height: 100vh; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; transition: background 0.3s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .header h1 { color: #333; }
+        .header p { color: #666; font-size: 14px; margin-top: 4px; }
+        .info-banner { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; padding: 14px 18px; border-radius: 8px; margin-bottom: 22px; font-size: 14px; line-height: 1.5; }
+        .info-banner strong { color: #78350f; }
+        .info-banner.empty { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+        .info-banner.empty strong { color: #064e3b; }
+        .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 22px; }
+        .stat-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; color: #b45309; margin-top: 4px; }
+        .stat-card.zero .value { color: #059669; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 14px 18px; text-align: left; font-size: 14px; }
+        th { background: #f8f9fa; color: #333; font-weight: 600; border-bottom: 1px solid #dee2e6; }
+        tr:not(:last-child) td { border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #fafbff; }
+        td a.partner-link { color: #667eea; text-decoration: none; font-weight: 600; }
+        td a.partner-link:hover { text-decoration: underline; }
+        .age { color: #888; font-size: 12px; }
+        .age.stale { color: #b45309; font-weight: 600; }
+        .btn { display: inline-block; padding: 7px 14px; border-radius: 5px; text-decoration: none; font-weight: 600; font-size: 13px; border: none; cursor: pointer; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .empty-state { padding: 60px 20px; text-align: center; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 14px; }
+        .empty-state h2 { color: #065f46; margin-bottom: 8px; }
+        .empty-state p { color: #6b7280; }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">Properties Needing Charity Links</div>
+    <a th:href="@{/admin/location-partners}" class="nav-link">← Back to Partners</a>
+</nav>
+
+<div class="container">
+    <div class="header">
+        <div>
+            <h1>Maintenance Queue</h1>
+            <p>Active partner properties that haven't been linked to any charity yet. These are invisible to every charity's booking dropdown until you link them.</p>
+        </div>
+    </div>
+
+    <div class="stat-row">
+        <div class="stat-card" th:classappend="${totalCount == 0 ? 'zero' : ''}">
+            <div class="label">Properties Needing Links</div>
+            <div class="value" th:text="${totalCount}">0</div>
+        </div>
+    </div>
+
+    <div th:if="${totalCount > 0}" class="info-banner">
+        <strong>Action needed:</strong> open each partner's detail page and use the <em>Add Charity</em>
+        form to grant access. Until then, no charity facilitator will see these properties when creating
+        bookings.
+    </div>
+
+    <div th:if="${totalCount == 0}" class="info-banner empty">
+        <strong>All caught up.</strong> Every active partner property is linked to at least one charity.
+    </div>
+
+    <div th:if="${totalCount > 0}" class="card">
+        <table>
+            <thead>
+            <tr>
+                <th>Partner</th>
+                <th>Property</th>
+                <th>City / State</th>
+                <th>Created</th>
+                <th style="text-align: right;">Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="loc : ${unlinkedLocations}">
+                <td>
+                    <a class="partner-link"
+                       th:href="@{/admin/location-partners/{id}(id=${loc.locationPartner.id})}"
+                       th:text="${loc.locationPartner.displayName}">Partner</a>
+                </td>
+                <td>
+                    <strong th:text="${loc.name}">Property</strong>
+                    <div style="font-size: 12px; color: #888; margin-top: 2px;"
+                         th:if="${loc.propertyType != null}"
+                         th:text="${loc.propertyType.displayName}">Type</div>
+                </td>
+                <td>
+                    <span th:text="${loc.city}">City</span>,
+                    <span th:text="${loc.state}">ST</span>
+                    <span th:text="${loc.zipCode}">ZIP</span>
+                </td>
+                <td>
+                    <span class="age"
+                          th:text="${loc.createdAt != null ? #temporals.format(loc.createdAt, 'MMM d, yyyy') : '—'}">Date</span>
+                </td>
+                <td style="text-align: right;">
+                    <a class="btn btn-primary"
+                       th:href="@{/admin/location-partners/{id}(id=${loc.locationPartner.id})}">Manage Links</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

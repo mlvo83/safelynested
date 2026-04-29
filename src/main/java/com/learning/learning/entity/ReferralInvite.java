@@ -84,11 +84,20 @@ public class ReferralInvite {
 
 
     /**
-     * The location selected by the participant
+     * The CharityLocation selected by the participant (if they picked one of
+     * the charity's own locations). Mutually exclusive with selectedPartnerLocation.
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "selected_location_id")
     private CharityLocation selectedLocation;
+
+    /**
+     * The PartnerLocation selected by the participant (if they picked a partner
+     * property linked to the charity). Mutually exclusive with selectedLocation.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "selected_partner_location_id")
+    private PartnerLocation selectedPartnerLocation;
 
     /**
      * When the participant selected the location
@@ -168,9 +177,18 @@ public class ReferralInvite {
 
     /**
      * Helper method to check if participant has selected a location
+     * (either a CharityLocation or a PartnerLocation).
      */
     public boolean hasSelectedLocation() {
-        return selectedLocation != null;
+        return selectedLocation != null || selectedPartnerLocation != null;
+    }
+
+    public PartnerLocation getSelectedPartnerLocation() {
+        return selectedPartnerLocation;
+    }
+
+    public void setSelectedPartnerLocation(PartnerLocation selectedPartnerLocation) {
+        this.selectedPartnerLocation = selectedPartnerLocation;
     }
 
     public Charity getCharity() {

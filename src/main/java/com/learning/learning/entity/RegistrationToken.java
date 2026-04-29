@@ -30,12 +30,20 @@ public class RegistrationToken {
     private TokenType tokenType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "charity_id", nullable = false)
+    @JoinColumn(name = "charity_id")
     private Charity charity;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "charity_application_id")
     private CharityApplication charityApplication;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_partner_id")
+    private LocationPartner locationPartner;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stay_partner_application_id")
+    private StayPartnerApplication stayPartnerApplication;
 
     @Column(name = "team_invite_id")
     private Long teamInviteId;
@@ -77,6 +85,7 @@ public class RegistrationToken {
 
     public enum TokenType {
         PRIMARY_CONTACT,
-        TEAM_MEMBER
+        TEAM_MEMBER,
+        LOCATION_PARTNER
     }
 }

@@ -7,6 +7,7 @@ import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityLocationRepository;
+import com.learning.learning.repository.PartnerLocationRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.service.BookingService;
 import com.learning.learning.service.CharityService;
@@ -60,6 +61,9 @@ public class CharityFacilitatorController {
 
     @Autowired
     private CharityLocationRepository charityLocationRepository;
+
+    @Autowired
+    private PartnerLocationRepository partnerLocationRepository;
 
     /**
      * Charity Facilitator Dashboard
@@ -310,13 +314,22 @@ public class CharityFacilitatorController {
         BookingDto bookingDto = new BookingDto();
         bookingDto.setReferralId(referralId);
 
-        // Pre-select the location the participant chose (if any)
+        // Pre-select the location the participant chose on the invite —
+        // either a CharityLocation OR a PartnerLocation (mutually exclusive).
         if (referral.getSelectedLocation() != null) {
             bookingDto.setLocationId(referral.getSelectedLocation().getId());
+            bookingDto.setLocationSelection("charity:" + referral.getSelectedLocation().getId());
+        } else if (referral.getSelectedPartnerLocation() != null) {
+            bookingDto.setPartnerLocationId(referral.getSelectedPartnerLocation().getId());
+            bookingDto.setLocationSelection("partner:" + referral.getSelectedPartnerLocation().getId());
         }
 
         // Get active locations for this charity
         List<CharityLocation> locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(charityId);
+
+        // Partner properties linked to this charity
+        List<com.learning.learning.entity.PartnerLocation> partnerLocations =
+                partnerLocationRepository.findActiveLinkedToCharity(charityId);
 
         // Get available donations for this charity
         List<BookingService.AvailableDonation> availableDonations =
@@ -327,9 +340,39 @@ public class CharityFacilitatorController {
         model.addAttribute("bookingDto", bookingDto);
         model.addAttribute("referral", referral);
         model.addAttribute("locations", locations);
+        model.addAttribute("partnerLocations", partnerLocations);
         model.addAttribute("availableDonations", availableDonations);
+        addPreferredLocationToModel(model, referral);
 
         return "charity-facilitator/booking-form";
+    }
+
+    /**
+     * Adds preferred-location callout info to the model — a friendly label
+     * and type so the booking form can display "Participant's preferred
+     * location: X" above the dropdown. Helps facilitators not miss the
+     * participant's choice.
+     */
+    private void addPreferredLocationToModel(Model model, Referral referral) {
+        if (referral.getSelectedLocation() != null) {
+            com.learning.learning.entity.CharityLocation cl = referral.getSelectedLocation();
+            String label = cl.getLocationName();
+            if (cl.getCity() != null) label += " — " + cl.getCity();
+            if (cl.getState() != null) label += ", " + cl.getState();
+            model.addAttribute("preferredLocationLabel", label);
+            model.addAttribute("preferredLocationType", "charity");
+            model.addAttribute("hasPreferredLocation", true);
+        } else if (referral.getSelectedPartnerLocation() != null) {
+            com.learning.learning.entity.PartnerLocation pl = referral.getSelectedPartnerLocation();
+            String label = pl.getName();
+            if (pl.getCity() != null) label += " — " + pl.getCity();
+            if (pl.getState() != null) label += ", " + pl.getState();
+            model.addAttribute("preferredLocationLabel", label);
+            model.addAttribute("preferredLocationType", "partner");
+            model.addAttribute("hasPreferredLocation", true);
+        } else {
+            model.addAttribute("hasPreferredLocation", false);
+        }
     }
 
     /**
@@ -357,13 +400,17 @@ public class CharityFacilitatorController {
 
         if (bindingResult.hasErrors()) {
             List<CharityLocation> locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(charityId);
+            List<com.learning.learning.entity.PartnerLocation> partnerLocations =
+                    partnerLocationRepository.findActiveLinkedToCharity(charityId);
             List<BookingService.AvailableDonation> availableDonations =
                     bookingService.getAvailableDonationsForCharity(charityId);
             model.addAttribute("username", username);
             model.addAttribute("charity", charity);
             model.addAttribute("referral", referral);
             model.addAttribute("locations", locations);
+            model.addAttribute("partnerLocations", partnerLocations);
             model.addAttribute("availableDonations", availableDonations);
+            addPreferredLocationToModel(model, referral);
             return "charity-facilitator/booking-form";
         }
 

@@ -72,10 +72,16 @@ public class Referral {
     @Column(name = "allowed_zip_codes", columnDefinition = "TEXT")
     private String allowedZipCodes; // Comma-separated list
 
-    // Selected location by participant
+    // Selected location by participant — exactly one of these two should be
+    // set, depending on whether the participant chose a charity-owned location
+    // or a partner property linked to the charity. Both nullable.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "selected_location_id")
     private CharityLocation selectedLocation;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "selected_partner_location_id")
+    private PartnerLocation selectedPartnerLocation;
 
     @Column(name = "location_selected_at")
     private LocalDateTime locationSelectedAt;

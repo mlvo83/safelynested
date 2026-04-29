@@ -25,11 +25,16 @@ public interface StayPartnerApplicationRepository extends JpaRepository<StayPart
     // Counts
     long countByStatus(StayPartnerApplication.ApplicationStatus status);
 
-    // Duplicate check — one pending application per email
+    // Duplicate check — one pending application per email (case-insensitive)
     @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM StayPartnerApplication a " +
-            "WHERE a.email = :email AND a.status = 'PENDING'")
+            "WHERE LOWER(a.email) = LOWER(:email) AND a.status = 'PENDING'")
     boolean existsPendingByEmail(@Param("email") String email);
 
-    // Status lookup by application number and email
-    Optional<StayPartnerApplication> findByApplicationNumberAndEmail(String applicationNumber, String email);
+    // Status lookup by application number and email (case-insensitive on email)
+    @Query("SELECT a FROM StayPartnerApplication a " +
+            "WHERE a.applicationNumber = :applicationNumber " +
+            "  AND LOWER(a.email) = LOWER(:email)")
+    Optional<StayPartnerApplication> findByApplicationNumberAndEmail(
+            @Param("applicationNumber") String applicationNumber,
+            @Param("email") String email);
 }
