@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms and Conditions - SafelyNested</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .navbar-brand { font-size: 24px; font-weight: bold; }
+        .nav-link { color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; transition: background 0.3s; }
+        .nav-link:hover { background: rgba(255,255,255,0.2); }
+        .container { max-width: 900px; margin: 32px auto; padding: 0 24px 64px; }
+        .doc-card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); padding: 40px 48px; }
+        h1 { color: #333; font-size: 28px; margin-bottom: 8px; }
+        .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 32px; }
+        h2 { color: #4338ca; font-size: 18px; margin-top: 28px; margin-bottom: 10px; padding-top: 8px; }
+        h3 { color: #555; font-size: 15px; margin-top: 16px; margin-bottom: 6px; }
+        p { margin-bottom: 12px; font-size: 14px; }
+        ul { padding-left: 28px; margin-bottom: 12px; }
+        ul li { font-size: 14px; margin-bottom: 6px; }
+        .lead { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 6px; font-size: 13px; margin-bottom: 28px; }
+        .lead strong { color: #92400e; }
+        .toc { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 18px 22px; margin-bottom: 28px; font-size: 13px; }
+        .toc h3 { color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; margin-top: 0; }
+        .toc ul { list-style: none; padding: 0; margin: 8px 0 0; }
+        .toc li { margin: 4px 0; }
+        .toc a { color: #4338ca; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+        .uppercase-block { font-size: 13px; }
+        .footer-note { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #9ca3af; font-size: 12px; text-align: center; }
+        @media print {
+            .navbar { display: none; }
+            .doc-card { box-shadow: none; padding: 20px 0; }
+            .container { padding: 0; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="navbar-brand">SafelyNested</div>
+    <a href="/" class="nav-link">Home</a>
+</nav>
+
+<div class="container">
+    <div class="doc-card">
+        <h1>Safely Nested Master Services Agreement &amp; Platform Terms</h1>
+        <p class="subtitle"><strong>Effective Date:</strong> April 26, 2026</p>
+
+        <div class="lead">
+            <strong>Please read carefully.</strong> This Agreement includes a Dispute Resolution
+            section that contains an arbitration agreement. The arbitration agreement requires
+            that most disputes and claims that arise between us be resolved in individual
+            arbitration instead of in court. In arbitration there is less discovery and appellate
+            review than in court. These Terms govern access to and use of the Safely Nested
+            platform (the "Platform") by charities, facilitators, donors, and users (collectively,
+            "Users"). This Agreement governs all access to and use of the Platform and all
+            transactions involving Donation Funds and supersedes all prior agreements. By
+            accessing or using the Platform, Users agree to be bound by these Terms.
+        </div>
+
+        <div class="toc">
+            <h3>Contents</h3>
+            <ul>
+                <li><a href="#definitions">Definitions</a></li>
+                <li><a href="#platform-role">Platform Role; No Housing Services; No Fiduciary Duty</a></li>
+                <li><a href="#donation-conditions">Donation Conditions; Restricted Funds; Enforcement</a></li>
+                <li><a href="#fees">Fees; Payment Priority; Non-Refundability</a></li>
+                <li><a href="#obligations">Obligations; Standard of Care</a></li>
+                <li><a href="#third-party">Third-Party Services; Absolute Disclaimer</a></li>
+                <li><a href="#acceptable-use">Acceptable Use; Platform Controls</a></li>
+                <li><a href="#payment-processing">Payment Processing; No Banking Relationship</a></li>
+                <li><a href="#data">Data; Document Retention; Download Window</a></li>
+                <li><a href="#confidentiality">Confidentiality; Privacy</a></li>
+                <li><a href="#limitation">Limitation of Liability; Security Data Breach</a></li>
+                <li><a href="#indemnification">Indemnification; Defense; Costs</a></li>
+                <li><a href="#audit">Audit; Records; Cooperation</a></li>
+                <li><a href="#regulatory">Regulatory Cooperation</a></li>
+                <li><a href="#dispute">Dispute Resolution</a></li>
+                <li><a href="#choice-of-law">Choice of Law &amp; Forum Selection</a></li>
+                <li><a href="#notice">Notice</a></li>
+                <li><a href="#user-account">User Account</a></li>
+                <li><a href="#modification">Modification &amp; Termination</a></li>
+                <li><a href="#ip">Intellectual Property</a></li>
+                <li><a href="#unlawful">Unlawful or Prohibited Uses</a></li>
+                <li><a href="#force-majeure">Force Majeure</a></li>
+                <li><a href="#general">General Provisions</a></li>
+                <li><a href="#third-party-links">Links to Third-Parties' Websites</a></li>
+                <li><a href="#jurisdictional">Jurisdictional Issues</a></li>
+                <li><a href="#limitation-2">Limitation of Liability</a></li>
+                <li><a href="#miscellaneous">Miscellaneous</a></li>
+                <li><a href="#acknowledgment">Acknowledgment</a></li>
+            </ul>
+        </div>
+
+        <h2 id="definitions">Definitions</h2>
+        <ul>
+            <li><strong>Charity.</strong> "Charity" means any nonprofit organization or charitable entity organized in or authorized to operate within any jurisdiction of the United States that identifies, vets, and refers individuals or families in need of temporary housing ("Clients") to Safely Nested and facilitates connections between such Clients and accommodation providers through the Safely Nested platform. Charity shall comply with all applicable federal, state, and local laws and regulations, including those relating to charitable solicitation, registration, reporting, and fundraising, and represents and warrants that it is duly organized, validly existing, and in good standing, is properly registered and authorized to operate as required, and provides accurate and complete information in connection with its activities and Client referrals. Charity shall indemnify, defend, and hold harmless Safely Nested and its affiliates, officers, directors, and agents from and against any claims, liabilities, damages, losses, and expenses (including reasonable attorneys' fees) arising out of or related to Charity's breach of these terms or violation of applicable law.</li>
+            <li><strong>"Client or Clients"</strong> means an individual or family in need of temporary housing who is referred to Safely Nested by Charity or otherwise accesses the Safely Nested platform.</li>
+            <li><strong>"Location"</strong> means hotels, Airbnb properties, extended stay facilities, short-term rental properties, and other accommodation providers that list available housing on the Safely Nested platform.</li>
+            <li><strong>"Donation Funds"</strong> means all monetary contributions made by a Donor, Facilitator, or Charity for use through the Safely Nested platform for the purpose of funding Client housing.</li>
+            <li><strong>"Platform"</strong> means the Safely Nested technology platform, website, and related applications and services.</li>
+            <li><strong>"Facilitator"</strong> means any individual, organization, or other entity, including but not limited to charitable organizations, nonprofit entities, social service agencies, case managers, social workers, healthcare providers, or any other person or entity, that identifies, evaluates, vets, and/or refers individuals or families in need of temporary housing ("Clients") to Safely Nested and facilitates the connection between such Clients and available Locations offering accommodations through the Safely Nested platform, and the term "Facilitator" is intended to be broad and inclusive and applies to any person or entity performing such facilitating functions regardless of structure or tax status, and all Facilitators agree to comply with all applicable federal, state, and local laws, rules, and regulations in connection with their participation in or use of the Safely Nested platform and performance of Facilitator activities.</li>
+        </ul>
+
+        <h2 id="platform-role">Platform Role; No Housing Services; No Fiduciary Duty</h2>
+        <p>Safely Nested provides a technology platform that facilitates connections among Donors, Facilitators, Charities, Clients, and Locations. Safely Nested does not own, operate, lease, control, or manage any Location and does not provide housing or lodging services. Safely Nested is not a fiduciary, trustee, escrow agent, or bailee of any funds or property. No fiduciary duty is created by this Agreement or the Parties' course of dealing.</p>
+
+        <h2 id="donation-conditions">Donation Conditions; Restricted Funds; Enforcement</h2>
+        <p>All Donation Funds are strictly restricted and shall be used solely for Client housing arranged through the Platform and in accordance with all Restrictions. Charity shall not divert, commingle, pledge, or otherwise use Donation Funds for any purpose other than as expressly permitted. Any deviation from Restrictions constitutes a material breach and creates a rebuttable presumption of misuse. Donor retains full rights to enforce Restrictions, including specific performance, injunctive relief, disgorgement, and damages.</p>
+
+        <h2 id="fees">Fees; Payment Priority; Non-Refundability</h2>
+        <p>Safely Nested shall receive a fee equal to seven percent (7%) of all Donation Funds, deducted prior to any disbursement ("Platform Fee"). The Platform Fee is deemed earned upon receipt of Donation Funds and is non-refundable, non-offsettable, and not subject to chargeback or setoff by any Party. Any Charity or facilitator fees must be expressly documented and remain subordinate to the Platform Fee.</p>
+
+        <h2 id="obligations">Obligations; Standard of Care</h2>
+        <p>Charity or Facilitator shall: (a) independently vet and qualify Clients; (b) comply with all Restrictions and applicable law; (c) maintain segregated, auditable records for Donation Funds; (d) implement internal controls to prevent misuse; (e) promptly report any discrepancy, investigation, or suspected misuse; (f) ensure Clients comply with Location policies; (g) refrain from any discriminatory or unlawful selection criteria. Charity or Facilitator bears primary responsibility for Client conduct and program administration.</p>
+
+        <h2 id="third-party">Third-Party Services; Absolute Disclaimer</h2>
+        <p>All Locations and service providers are independent third parties. To the fullest extent permitted by law, Safely Nested disclaims all liability for:</p>
+        <ul>
+            <li>acts or omissions of Locations or third parties;</li>
+            <li>quality, safety, legality, or availability of accommodations;</li>
+            <li>cancellations, overbookings, or service failures;</li>
+            <li>injury, loss, or damage occurring at or related to a Location.</li>
+        </ul>
+
+        <h2 id="acceptable-use">Acceptable Use; Platform Controls</h2>
+        <p>No Party shall: (i) violate law; (ii) misrepresent information; (iii) interfere with Platform operations; (iv) circumvent fees; (v) use the Platform to defraud or launder funds. Safely Nested may, in its sole discretion and without liability, suspend or terminate access, freeze or delay funds, remove content, or restrict features for suspected violations or risk mitigation.</p>
+
+        <h2 id="payment-processing">Payment Processing; No Banking Relationship</h2>
+        <p>Payments may be processed by third parties. Safely Nested is not a bank or money transmitter and is not responsible for processor errors, delays, reversals, holds, or chargebacks not caused by its gross negligence or willful misconduct.</p>
+
+        <h2 id="data">Data; Document Retention; Download Window</h2>
+        <p>Safely Nested may retain, archive, or delete data in accordance with its policies and applicable law. Upon termination or expiration, Parties shall have seven (7) days to download available documents ("Download Period"). After the Download Period, Safely Nested may permanently delete data without liability and has no obligation to restore or provide copies.</p>
+
+        <h2 id="confidentiality">Confidentiality; Privacy</h2>
+        <p>Each Party shall protect Confidential Information and use it solely for performance under this Agreement. Disclosures may be made as required by law or to service providers under equivalent confidentiality obligations. Parties shall implement reasonable safeguards for personal data.</p>
+
+        <h2 id="limitation">Limitation of Liability; Security Data Breach</h2>
+        <p class="uppercase-block">TO THE MAXIMUM EXTENT PERMITTED BY LAW, SAFELY NESTED AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AGENTS, AND SERVICE PROVIDERS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING LOSS OF PROFITS, DATA, GOODWILL, SERVICE INTERRUPTION, SYSTEM FAILURE, OR COST OF SUBSTITUTE SERVICES, ARISING OUT OF OR RELATING TO THESE TERMS OR THE PLATFORM, REGARDLESS OF THEORY OF LIABILITY, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+        <p class="uppercase-block">SAFELY NESTED SHALL NOT BE LIABLE FOR ANY LOSS, DISCLOSURE, OR UNAUTHORIZED ACCESS TO DATA ARISING FROM (A) ANY USER, FACILITATOR, OR THIRD-PARTY ACTS OR NEGLIGENCE; (B) FAILURES OF USER OR FACILITATOR SYSTEMS OR SECURITY CONTROLS; OR (C) CYBERATTACKS, HACKING, OR OTHER UNAUTHORIZED ACCESS NOT DIRECTLY CAUSED BY SAFELY NESTED. EACH USER AND FACILITATOR IS SOLELY RESPONSIBLE FOR SECURING ITS SYSTEMS, ACCOUNTS, AND DATA.</p>
+
+        <h2 id="indemnification">Indemnification; Defense; Costs</h2>
+        <p>As a condition of the use of the platform, Users agree to indemnify, defend, and hold harmless Safely Nested and its affiliates from and against any claims, damages, losses, liabilities, and expenses (including attorneys' fees) arising out of or related to (a) use of the platform; (b) breach of these terms; (c) negligence or misconduct; or (d) any data breach, security incident, or unauthorized access arising from their systems or conduct.</p>
+
+        <h2 id="audit">Audit; Records; Cooperation</h2>
+        <p>Safely Nested may audit Charity and Facilitator's records on reasonable notice to verify compliance. Parties shall cooperate with reasonable information requests and maintain records sufficient to substantiate all transactions involving Donation Funds.</p>
+
+        <h2 id="regulatory">Regulatory Cooperation</h2>
+        <p>Safely Nested may disclose information and cooperate with law enforcement or regulators regarding suspected misuse, fraud, or legal violations. Such cooperation shall not constitute a breach of this Agreement.</p>
+
+        <h2 id="dispute">Dispute Resolution</h2>
+        <p>All disputes or conflicts arising out of the present contract shall be settled according to arbitration, rather than in court. The number of arbitrators shall be one. The parties binding arbitration in Fort Lauderdale, Broward County, State of Florida, United States of America. The Federal Arbitration Act and federal arbitration law apply to this agreement.</p>
+        <p>Notwithstanding the foregoing, any Party may seek injunctive or equitable relief in a court of competent jurisdiction to protect Restrictions, Confidential Information, or intellectual property. In any dispute, claim, arbitration, or proceeding arising out of or relating to this Agreement, the prevailing party shall be entitled to recover its reasonable attorneys' fees, costs, and expenses, including those incurred in pre-suit proceedings, arbitration, trial, and on appeal, to the fullest extent permitted by Florida law.</p>
+
+        <h2 id="choice-of-law">Choice of Law &amp; Forum Selection</h2>
+        <p>Except with respect to the arbitration agreement, these Terms &amp; Conditions and use of the Platform are governed by the laws of the state of Florida, without regard to Florida's conflict of laws rules. Unless agreed otherwise, to the fullest extent permitted by applicable law, the state and federal courts that encompass Broward County, Florida, United States of America, shall have exclusive jurisdiction over any disputes and claims (except for claims brought in small claims court) that are not subject to arbitration or over any action that seeks to enforce or challenge the enforceability of the arbitration agreement or any provision of the Dispute Resolution section or the Terms &amp; Conditions. Users consent to the jurisdiction of those courts and waive any objections as to personal jurisdiction or as to the laying of venue in such courts due to (1) inconvenient forum or (2) any other basis or any right to seek to transfer or change venue of any such action to another court.</p>
+
+        <h2 id="notice">Notice</h2>
+        <p>Except as explicitly stated otherwise, any notices sent to Safely Nested shall be sent by mail to 8570 Stirling Rd 102 366 Hollywood, FL 33024 or via email at the address posted on the Platform. In the case of notices Safely Nested sends to Users, Users consent to receive notices and other communications by Safely Nested posting notices on the Platform, sending Users an email at the email address listed in a user account, or mailing a notice to Users at the billing address listed in the user profile account. Users agree that all agreements, notices, disclosures and other communications that Safely Nested provides to Users in accordance with the prior sentence satisfy any legal requirement that such communications be in writing. Notice shall be deemed given (i) 24 hours after the notice is posted on the Platform or an electronic message is sent, unless the sending party is notified that the message did not reach the recipient, or (ii) in the case of mailing, three days after the date of mailing. Users agree that a printed version of these Terms &amp; Conditions and/or any notice given in electronic form shall be admissible in judicial or administrative proceedings based upon or relating to these Terms &amp; Conditions to the same extent and subject to the same conditions as other business documents and records originally generated and maintained in printed form.</p>
+
+        <h2 id="user-account">User Account</h2>
+        <p>Users may be required to register with Safely Nested in order to access certain services or areas of the Platform. With respect to any such registration, Safely Nested may refuse to grant to Users the requested user name requested. Users' user name and password are for personal use only, and Users will not share their user name or password with any individual or third party (other than Safely Nested). If Users use the Platform, Users are responsible for maintaining the confidentiality of their account and password and for restricting access to Users' computer, and Users agree to accept responsibility for all activities that occur under Users account or password. In addition to all other rights available to Users including those set forth in these Terms &amp; Conditions, Safely Nested reserves the right, in its sole discretion, to terminate user account or refuse service to Users.</p>
+
+        <h2 id="modification">Modification &amp; Termination</h2>
+        <p>Safely Nested may at any time: (i) modify or discontinue any part of the Platform; (ii) charge, modify or waive fees required to use the Site; or (iii) offer opportunities to some or all Site users. Safely Nested reserves the right to make changes to these Terms &amp; Conditions at any time, and such changes will be effective immediately upon being posted on the Platform. Each time Users use the Platform, Users should review the current Terms &amp; Conditions. Users can determine when these Terms &amp; Conditions were last revised by referring to the "LAST UPDATED" legend at the top of these Terms &amp; Conditions. Users' continued use of the Platform will indicate acceptance of the current Terms &amp; Conditions; however, any change to these Terms &amp; Conditions after Users' last usage of the Platform will not be applied retroactively. Safely Nested reserves the right, without notice and at its sole discretion, to terminate any account or use of the Platform and to block or prevent future access to and use of the Platform (i) if Users violate any of these Terms &amp; Conditions, (ii) for any other reason or (iii) for no reason. Upon any such termination, Users' right to use the Platform will immediately cease.</p>
+        <p>Users agree that Safely Nested shall not be liable to Users or any third party for any termination of Users' access to the Platform. Upon termination, all provisions of these Terms &amp; Conditions which are by their nature intended to survive termination, all representations, all limitations of liability and all indemnities shall survive such termination.</p>
+        <p>Upon termination: (i) funds are reconciled per Donor direction and law; (ii) access to data is limited to the Download Period; (iii) accrued rights and all protective provisions survive.</p>
+
+        <h2 id="ip">Intellectual Property</h2>
+        <p>All right, title, and interest in the Platform and related technology remain exclusively with Safely Nested. No license is granted except a limited, revocable right to access and use the Platform in accordance with this Agreement.</p>
+
+        <h2 id="unlawful">Unlawful or Prohibited Uses</h2>
+        <p>The Platform may only be used for lawful purposes in accordance with the terms of the license granted in these Terms &amp; Conditions. As a condition of Users' use of this Platform, Users warrant to Safely Nested that Users will not (and will not assist or encourage any third party to) use the Platform in any way or for any purpose that is unlawful or is prohibited by these Terms &amp; Conditions.</p>
+
+        <h2 id="force-majeure">Force Majeure</h2>
+        <p>Users shall be liable for delay or failure (other than payment obligations) due to events beyond reasonable control, provided reasonable mitigation efforts are undertaken.</p>
+
+        <h2 id="general">General Provisions</h2>
+        <p>Use of the Platform creates no agency, partnership, or joint venture.</p>
+
+        <h2 id="third-party-links">Links to Third-Parties' Websites</h2>
+        <p>The Platform may contain links and interactive functionality interacting with the websites of third parties, including social sites and sites monitored by Locations. Safely Nested is not responsible for and has no liability for the functionality, actions, inactions, privacy settings, privacy policies, terms, or content of any such website. Before enabling any sharing functions of the Platform to communicate with any such website or otherwise visiting any such website, Safely Nested strongly recommends that Users review and understand the terms and conditions, privacy policies, settings, and information-sharing functions of each such third-party website. The links and interactive functionality for third-party sites on the Site do not constitute an endorsement by Safely Nested of such third-party sites. Other sites may link to the Platform with or without authorization, and Safely Nested may block any links to or from the Platform. <strong>USERS' USE OF THIRD-PARTY WEBSITES AND RESOURCES IS AT USER'S OWN RISK.</strong></p>
+
+        <h2 id="jurisdictional">Jurisdictional Issues</h2>
+        <p>The Site is controlled and operated by Safely Nested from the United States, and is not intended to subject Safely Nested to the laws or jurisdiction of any state, country or territory other than that of the United States. Safely Nested does not represent or warrant that the Platform or any part thereof is appropriate or available for use in any particular jurisdiction other than the United States. In choosing to access the Platform, Users do so on their own initiative and at their own risk, and users are responsible for complying with all local laws, rules and regulations. Safely Nested may limit the Platform's availability, in whole or in part, to any person, geographic area or jurisdiction it may choose, at any time and in its sole discretion.</p>
+
+        <h2 id="limitation-2">Limitation of Liability</h2>
+        <p class="uppercase-block">UNDER NO CIRCUMSTANCES SHALL SAFELY NESTED OR ITS EMPLOYEES, DIRECTORS, OFFICERS OR AGENTS BE LIABLE FOR ANY DIRECT OR INDIRECT LOSSES OR DAMAGES ARISING OUT OF OR IN CONNECTION WITH USERS' USE OF OR INABILITY TO USE THE PLATFORM. THIS IS A COMPREHENSIVE LIMITATION OF LIABILITY THAT APPLIES TO ALL LOSSES AND DAMAGES OF ANY KIND (WHETHER GENERAL, SPECIAL, CONSEQUENTIAL, INCIDENTAL, EXEMPLARY OR OTHERWISE, INCLUDING, WITHOUT LIMITATION, LOSS OF DATA, INCOME OR PROFITS), WHETHER IN CONTRACT OR TORT, EVEN IF SAFELY NESTED HAS BEEN ADVISED OF OR SHOULD HAVE KNOWN OF THE POSSIBILITY OF SUCH DAMAGES. IF USER IS DISSATISFIED WITH THE PLATFORM, ANY CONTENT ON THE PLATFORM, OR THESE TERMS &amp; CONDITIONS, USERS' SOLE AND EXCLUSIVE REMEDY IS TO DISCONTINUE USING THE SITE. USERS ACKNOWLEDGE, BY USE OF THE SITE, THAT USERS' USE OF THE SITE IS AT THEIR SOLE RISK. SAFELY NESTED'S OR ITS EMPLOYEES, DIRECTORS, OFFICERS OR AGENTS SHALL NOT BE LIABLE FOR ANY LOSSES OR DAMAGES ARISING OUT OF OR IN CONNECTION WITH USERS' USE OF OR INABILITY TO USE THE SITE, OR ANY MATERIALS THEREIN UNLESS SUCH DAMAGES OR INJURIES ARE THE RESULT OF SAFELY NESTED'S NEGLIGENT, FRAUDULENT OR RECKLESS ACTS OR INTENTIONAL MISCONDUCT.</p>
+        <p class="uppercase-block">EACH PROVISION OF THESE TERMS &amp; CONDITIONS THAT PROVIDES FOR A LIMITATION OF LIABILITY OR EXCLUSION OF DAMAGES IS TO ALLOCATE THE RISKS UNDER THE AGREEMENT BETWEEN USERS AND SAFELY NESTED. THIS ALLOCATION IS AN ESSENTIAL ELEMENT OF THE BASIS OF THE BARGAIN BETWEEN USERS AND SAFELY NESTED. THE LIMITATIONS IN THIS SECTION WILL APPLY EVEN IF ANY LIMITED REMEDY FAILS OF ITS ESSENTIAL PURPOSE(S).</p>
+
+        <h2 id="miscellaneous">Miscellaneous</h2>
+        <p>These Terms &amp; Conditions, including policies and information linked from or incorporated herein or otherwise found on the Site, constitute the entire agreement between with respect to the Platform and supersede all prior or contemporaneous communications, agreements, and proposals with respect to the Platform. No provision of these Terms &amp; Conditions shall be waived except pursuant to a writing executed by the party against whom the waiver is sought. No failure to exercise, partial exercise of, or delay in exercising any right or remedy under these Terms &amp; Conditions shall operate as a waiver or estoppel of any right, remedy, or condition. Except as provided in the arbitration agreement, if any provision of these Terms &amp; Conditions is held invalid, illegal or unenforceable, the validity, legality and enforceability of the remaining provisions will not be affected or impaired. Users may not assign, transfer, or sublicense any of Users' rights or obligations under these Terms &amp; Conditions without our express prior written consent. Safely Nested will not be responsible for failure to fulfill any obligation due to causes beyond its control.</p>
+
+        <h2 id="acknowledgment">Acknowledgment</h2>
+        <p>Each Party acknowledges it has read, understands, and agrees to be bound by this Agreement and has had the opportunity to consult counsel.</p>
+
+        <div class="footer-note">
+            Safely Nested · 8570 Stirling Rd 102 366 Hollywood, FL 33024 · Effective April 26, 2026
+        </div>
+    </div>
+</div>
+</body>
+</html>

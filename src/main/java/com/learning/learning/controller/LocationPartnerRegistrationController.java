@@ -52,10 +52,14 @@ public class LocationPartnerRegistrationController {
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) String phone,
+            @RequestParam(required = false) Boolean agreeToTerms,
             Model model,
             RedirectAttributes redirectAttributes) {
 
         try {
+            if (!Boolean.TRUE.equals(agreeToTerms)) {
+                throw new RuntimeException("You must agree to the Terms and Conditions to create an account.");
+            }
             if (!password.equals(confirmPassword)) {
                 throw new RuntimeException("Passwords do not match.");
             }

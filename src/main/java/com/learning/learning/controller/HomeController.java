@@ -31,4 +31,9 @@ public class HomeController {
     public String accessDenied() {
         return "access-denied";
     }
+
+    @GetMapping("/terms")
+    public String terms() {
+        return "public/terms";
+    }
 }

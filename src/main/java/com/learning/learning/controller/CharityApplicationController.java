@@ -46,9 +46,15 @@ public class CharityApplicationController {
             @RequestParam(required = false) String missionStatement,
             @RequestParam(required = false) String website,
             @RequestParam(required = false) Integer estimatedReferralsPerMonth,
+            @RequestParam(required = false) Boolean agreeToTerms,
             RedirectAttributes redirectAttributes) {
 
         try {
+            // Server-side enforcement of the Terms checkbox
+            if (!Boolean.TRUE.equals(agreeToTerms)) {
+                throw new RuntimeException("You must agree to the Terms and Conditions to submit an application.");
+            }
+
             CharityApplication application = new CharityApplication();
             application.setCharityName(charityName);
             application.setOrganizationType(organizationType);
@@ -134,10 +140,15 @@ public class CharityApplicationController {
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) String phone,
+            @RequestParam(required = false) Boolean agreeToTerms,
             Model model,
             RedirectAttributes redirectAttributes) {
 
         try {
+            // Server-side enforcement of the Terms checkbox
+            if (!Boolean.TRUE.equals(agreeToTerms)) {
+                throw new RuntimeException("You must agree to the Terms and Conditions to create an account.");
+            }
             // Validate passwords match
             if (!password.equals(confirmPassword)) {
                 throw new RuntimeException("Passwords do not match.");

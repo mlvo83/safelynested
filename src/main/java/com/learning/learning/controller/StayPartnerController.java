@@ -74,9 +74,17 @@ public class StayPartnerController {
             // Communication
             @RequestParam(required = false, defaultValue = "EMAIL") String preferredContactMethod,
             @RequestParam(required = false) String additionalNotes,
+            // Terms acceptance — required checkbox; absent param means "not checked"
+            @RequestParam(required = false) Boolean agreeToTerms,
             RedirectAttributes redirectAttributes) {
 
         try {
+            // Server-side enforcement of the Terms checkbox — an unchecked
+            // checkbox doesn't post a value at all, so null = not accepted.
+            if (!Boolean.TRUE.equals(agreeToTerms)) {
+                throw new RuntimeException("You must agree to the Terms and Conditions to submit an application.");
+            }
+
             StayPartnerApplication application = new StayPartnerApplication();
 
             // Applicant type
