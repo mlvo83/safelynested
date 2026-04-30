@@ -60,6 +60,9 @@ public class SecurityConfig {
                         .requestMatchers("/stay-partner/**").permitAll()
                         .requestMatchers("/charity-application/**").permitAll()
                         .requestMatchers("/location-partner/register/**").permitAll()
+                        // Public donate page disabled — donations are recorded by charity partners
+                        // .requestMatchers("/donate/**").permitAll()
+                        .requestMatchers("/api/stripe/**").permitAll()
                         // Role-based access control
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/facilitator/**").hasRole("FACILITATOR")
@@ -76,6 +79,9 @@ public class SecurityConfig {
 
                         // All other requests require authentication
                         .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/stripe/webhook")
                 )
                 .formLogin(form -> form
                         .loginPage("/login")

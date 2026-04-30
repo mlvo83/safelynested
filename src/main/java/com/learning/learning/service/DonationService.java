@@ -177,6 +177,10 @@ public class DonationService {
         return donationRepository.findByCharityIdOrderByDonatedAtDesc(charityId);
     }
 
+    public java.util.Optional<Donation> findByFeeStripeSessionId(String sessionId) {
+        return donationRepository.findByFeeStripeSessionId(sessionId);
+    }
+
     /**
      * Get all donations (admin)
      */

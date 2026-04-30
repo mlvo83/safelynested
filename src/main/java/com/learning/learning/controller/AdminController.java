@@ -348,7 +348,7 @@ public class AdminController {
         if (donorSearch != null && !donorSearch.isBlank()) {
             String search = donorSearch.toLowerCase();
             filtered = filtered.stream()
-                    .filter(d -> d.getDonor().getDisplayName().toLowerCase().contains(search))
+                    .filter(d -> d.getDonorDisplayName().toLowerCase().contains(search))
                     .collect(Collectors.toList());
         }
 

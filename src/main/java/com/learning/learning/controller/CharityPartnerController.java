@@ -9,6 +9,7 @@ import com.learning.learning.service.DonorDashboardService;
 import com.learning.learning.service.DonorService;
 import com.learning.learning.service.DonorSetupRequestService;
 import com.learning.learning.service.InviteService;
+import com.learning.learning.service.StripeService;
 import com.learning.learning.service.TeamInviteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -23,8 +24,10 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -73,6 +76,9 @@ public class CharityPartnerController {
 
     @Autowired
     private TeamInviteService teamInviteService;
+
+    @Autowired
+    private StripeService stripeService;
 
     // Adds pending donor setup request count to all charity-partner views for sidebar badge
     @ModelAttribute("pendingDonorSetupCount")
@@ -1410,5 +1416,126 @@ public class CharityPartnerController {
         }
 
         return "redirect:/charity-partner/team";
+    }
+
+    // ========================================
+    // DONATION RECORDING (with fee payment)
+    // ========================================
+
+    @GetMapping("/donations")
+    public String listDonations(Model model, Principal principal) {
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+        List<Donation> donations = donationService.getDonationsForCharity(charity.getId());
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("donations", donations);
+        model.addAttribute("activePage", "donations");
+        return "charity-partner/donations";
+    }
+
+    @GetMapping("/donations/record")
+    public String showRecordDonationForm(Model model, Principal principal) {
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("activePage", "donations");
+        return "charity-partner/record-donation";
+    }
+
+    @PostMapping("/donations/create-fee-session")
+    public String createFeePaymentSession(
+            @RequestParam BigDecimal donationAmount,
+            @RequestParam String donorName,
+            @RequestParam(required = false) String donorEmail,
+            @RequestParam String dateReceived,
+            @RequestParam(required = false) String notes,
+            Principal principal,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            String username = principal.getName();
+            Charity charity = charityService.getCharityForUser(username);
+            LocalDate parsedDate = LocalDate.parse(dateReceived);
+
+            if (donationAmount.compareTo(new BigDecimal("5.00")) < 0) {
+                throw new RuntimeException("Minimum donation amount is $5.00.");
+            }
+            if (parsedDate.isAfter(LocalDate.now())) {
+                throw new RuntimeException("Date received cannot be in the future.");
+            }
+
+            String checkoutUrl = stripeService.createFeePaymentSession(
+                    charity.getId(), donationAmount, donorName, donorEmail,
+                    parsedDate, notes, username);
+            return "redirect:" + checkoutUrl;
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/charity-partner/donations/record";
+        }
+    }
+
+    @GetMapping("/donations/record/success")
+    public String feePaymentSuccess(@RequestParam("session_id") String sessionId,
+                                     Model model, Principal principal) {
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+
+        try {
+            com.stripe.model.checkout.Session session = stripeService.retrieveSession(sessionId);
+
+            BigDecimal feeAmount = new BigDecimal(session.getAmountTotal())
+                    .divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
+            model.addAttribute("feeAmount", feeAmount);
+
+            String donationAmountStr = session.getMetadata().get("donation_amount");
+            if (donationAmountStr != null) {
+                model.addAttribute("donationAmount", new BigDecimal(donationAmountStr));
+            }
+
+            donationService.findByFeeStripeSessionId(sessionId).ifPresent(donation -> {
+                model.addAttribute("donation", donation);
+            });
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Unable to retrieve payment details.");
+        }
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("activePage", "donations");
+        return "charity-partner/record-donation-success";
+    }
+
+    @GetMapping("/donations/record/cancel")
+    public String feePaymentCancel(Model model, Principal principal) {
+        String username = principal.getName();
+        Charity charity = charityService.getCharityForUser(username);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("activePage", "donations");
+        return "charity-partner/record-donation-cancel";
+    }
+
+    @GetMapping("/donations/calculate-fees")
+    @ResponseBody
+    public Map<String, Object> calculateDonationFees(@RequestParam BigDecimal donationAmount,
+                                                      Principal principal) {
+        String username = principal.getName();
+        Long charityId = charityService.getCharityIdForUser(username);
+
+        DonationService.DonationBreakdown breakdown = donationService.calculateFees(donationAmount);
+        BigDecimal feeAmount = breakdown.platformFee().add(breakdown.facilitatorFee());
+        int nightsFunded = donationService.calculateNightsFunded(breakdown.netAmount(), charityId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("donationAmount", donationAmount);
+        result.put("platformFee", breakdown.platformFee());
+        result.put("facilitatorFee", breakdown.facilitatorFee());
+        result.put("feeAmount", feeAmount);
+        result.put("netAmount", breakdown.netAmount());
+        result.put("nightsFunded", nightsFunded);
+        return result;
     }
 }
