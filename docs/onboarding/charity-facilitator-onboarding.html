@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Onboarding a Charity Facilitator on SafelyNested</title>
+<style>
+    @page { size: Letter; margin: 0.75in 0.7in; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1f2937; line-height: 1.55; font-size: 11pt;
+    }
+    a { color: #4f46e5; text-decoration: none; word-break: break-all; }
+    h1, h2, h3, h4 { color: #111827; line-height: 1.25; }
+    h1 { font-size: 26pt; margin: 0 0 4pt; letter-spacing: -0.5pt; }
+    h2 { font-size: 16pt; margin: 18pt 0 6pt; padding-bottom: 4pt; border-bottom: 2px solid #4f46e5; }
+    h3 { font-size: 13pt; margin: 12pt 0 4pt; color: #4338ca; }
+    h4 { font-size: 11pt; margin: 8pt 0 2pt; }
+    p { margin: 0 0 8pt; }
+    ul, ol { margin: 0 0 10pt 18pt; padding: 0; }
+    li { margin-bottom: 4pt; }
+    code, .url {
+        font-family: "Consolas", "Courier New", monospace;
+        background: #f3f4f6; padding: 1pt 5pt; border-radius: 3pt; font-size: 10pt; color: #1e293b;
+    }
+    .cover {
+        text-align: center; padding: 30pt 20pt 20pt;
+        border-bottom: 3px solid #4f46e5; margin-bottom: 18pt;
+    }
+    .cover img { width: 110pt; height: 110pt; object-fit: contain; margin: 0 auto 10pt; display: block; }
+    .cover .brand { font-size: 14pt; color: #4f46e5; font-weight: 700; letter-spacing: 1pt; margin-bottom: 4pt; }
+    .cover .tag { color: #6b7280; font-size: 11pt; font-style: italic; margin-top: 6pt; }
+    .lede {
+        background: #eef2ff; border-left: 4px solid #4f46e5;
+        padding: 10pt 14pt; margin: 12pt 0 18pt; border-radius: 4pt;
+    }
+    .step {
+        margin: 12pt 0; padding: 10pt 14pt 10pt 50pt; position: relative;
+        background: #f9fafb; border-radius: 6pt; page-break-inside: avoid;
+    }
+    .step .num {
+        position: absolute; left: 12pt; top: 10pt;
+        width: 28pt; height: 28pt; border-radius: 50%;
+        background: #4f46e5; color: #fff;
+        font-weight: 700; font-size: 13pt;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .step h3 { margin-top: 0; }
+    .callout {
+        background: #fef3c7; border-left: 4px solid #d97706;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt;
+        font-size: 10pt; page-break-inside: avoid;
+    }
+    .callout strong { color: #92400e; }
+    .info {
+        background: #ecfdf5; border-left: 4px solid #059669;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt; font-size: 10pt;
+    }
+    .info strong { color: #065f46; }
+    table { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 10pt; page-break-inside: avoid; }
+    th, td { text-align: left; padding: 6pt 8pt; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    th { background: #f3f4f6; font-weight: 600; color: #374151; }
+    .req { color: #dc2626; font-weight: 700; }
+    .role-card {
+        display: inline-block; padding: 8pt 12pt; margin: 4pt 6pt 4pt 0;
+        background: #fff; border: 1px solid #d1d5db; border-radius: 6pt;
+        font-size: 10pt; min-width: 200pt;
+    }
+    .role-card .label { font-size: 9pt; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5pt; }
+    .role-card .name { font-weight: 700; color: #4338ca; font-size: 12pt; margin-top: 2pt; }
+    .footer {
+        margin-top: 24pt; padding-top: 10pt; border-top: 1px solid #e5e7eb;
+        font-size: 9pt; color: #6b7280; text-align: center;
+    }
+    .small { font-size: 9.5pt; color: #6b7280; }
+    @media print {
+        .step, .callout, .info, table { page-break-inside: avoid; }
+        h2 { page-break-after: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <img src="logo.jpeg" alt="SafelyNested logo">
+    <div class="brand">SAFELYNESTED</div>
+    <h1>Onboarding a Charity Facilitator</h1>
+    <div class="tag">A guide for charity primary contacts adding a facilitator to their team</div>
+</div>
+
+<div class="lede">
+    <strong>What this guide covers.</strong> The full process for adding someone to your charity as a
+    <strong>Charity Facilitator</strong>. Onboarding a facilitator is a two-step process: you invite them as a
+    team member from your charity dashboard, and then a SafelyNested administrator adds the facilitator role to
+    their account. This guide walks through both halves precisely.
+    <br><br>
+    Once promoted, a Charity Facilitator has the same Team-management powers as the primary contact &mdash; they
+    can invite new team members, cancel pending invitations, and review the team roster.
+</div>
+
+<h2>What is a Charity Facilitator?</h2>
+
+<p>SafelyNested has two charity-side roles. Both belong to your organization, but they have different powers:</p>
+
+<div>
+    <div class="role-card">
+        <div class="label">Standard team member</div>
+        <div class="name">Charity Partner</div>
+        <div class="small" style="margin-top: 4pt;">Creates and manages referrals, invites participants, uploads documents, manages locations.</div>
+    </div>
+    <div class="role-card">
+        <div class="label">Elevated team member</div>
+        <div class="name">Charity Facilitator</div>
+        <div class="small" style="margin-top: 4pt;">Everything a Charity Partner can do, <em>plus</em> access to the Facilitator Dashboard with charity-wide oversight tools.</div>
+    </div>
+</div>
+
+<p style="margin-top: 8pt;">A Charity Facilitator can do everything a Charity Partner can, plus access the Facilitator Dashboard with elevated views over the charity's referrals and bookings, <em>and</em> manage the charity's team (invite or cancel team members) alongside the primary contact.</p>
+
+<div class="callout"><strong>Why two steps?</strong> Your team-invite form on the charity dashboard creates new accounts as <strong>Charity Partners</strong> by default. Promoting a user to <strong>Charity Facilitator</strong> requires a SafelyNested administrator. This is intentional &mdash; it keeps a second set of eyes on who gains elevated access.</div>
+
+<h2>Before you begin</h2>
+
+<table>
+    <tr><th style="width: 35%;">Prerequisite</th><th>Notes</th></tr>
+    <tr><td>Your charity must already be approved on SafelyNested.</td><td>If not, see the <em>Onboarding a Charity</em> guide first.</td></tr>
+    <tr><td>You must be the <strong>primary contact</strong> or an existing <strong>Charity Facilitator</strong>.</td><td>Both can manage the team. Standard Charity Partners cannot. If neither role applies to you, ask the primary contact or a facilitator to send the invitation.</td></tr>
+    <tr><td>The new facilitator's email must use your charity's email domain.</td><td>For example, if you registered with <code>name@hopeshelter.org</code>, all team invites must be to <code>@hopeshelter.org</code> addresses.</td></tr>
+    <tr><td>Have the new facilitator's first name, last name, and email ready.</td><td>You'll enter these in the invite form.</td></tr>
+</table>
+
+<h2>The 5-step facilitator onboarding flow</h2>
+
+<div class="step">
+    <div class="num">1</div>
+    <h3>Primary contact or facilitator: open the Team page</h3>
+    <p>Log in at <a class="url" href="https://safelynested.com/login">safelynested.com/login</a> as either the primary contact or an existing Charity Facilitator.</p>
+    <p>In the <strong>purple Charity Partner sidebar</strong>, click <strong>Team</strong>.</p>
+    <div class="callout"><strong>Important &mdash; where the link lives:</strong> The Team link only appears in the <strong>purple Charity Partner</strong> sidebar (the layout you land on by default after login, or via the Dashboard link). It does <em>not</em> appear on the green Facilitator Dashboard, which has its own minimal layout. If you're on the green page and don't see Team, click the regular <strong>Dashboard</strong> link to switch back to the purple side &mdash; the Team link will be there.</div>
+    <p>The Team page shows three things:</p>
+    <ul>
+        <li>The invite form on the left.</li>
+        <li>Your current team members in a table on the right.</li>
+        <li>A history of pending and past invitations.</li>
+    </ul>
+    <p>If you don't see the Team link from the purple sidebar at all, your account is neither the primary contact nor a Charity Facilitator &mdash; ask one of them to send the invitation, or contact your SafelyNested administrator.</p>
+</div>
+
+<div class="step">
+    <div class="num">2</div>
+    <h3>Primary contact or facilitator: send the invitation</h3>
+    <p>In the <strong>Invite Team Member</strong> card on the left, fill in:</p>
+    <ul>
+        <li><strong>Email Address</strong> <span class="req">*</span> &mdash; must end in your charity's domain (the page shows the allowed domain in a blue badge).</li>
+        <li><strong>First name</strong> and <strong>last name</strong> &mdash; helps the recipient recognize the email.</li>
+        <li><strong>Personal Message</strong> &mdash; optional. A short note that appears in the invitation email above the &quot;Create Your Account&quot; button.</li>
+    </ul>
+    <p>Click <strong>Send Invitation</strong>. The page shows a green &quot;Sending invitation...&quot; spinner while the email is dispatched, then returns you to the Team page with the new pending invite shown.</p>
+    <div class="info"><strong>What just happened:</strong> An invitation email was sent and a registration link, valid for <strong>7 days</strong>, was generated.</div>
+</div>
+
+<div class="step">
+    <div class="num">3</div>
+    <h3>New team member: register their account</h3>
+    <p>The recipient receives an email titled:</p>
+    <p><code>You've been invited to join {Your Charity} on SafelyNested</code></p>
+    <p>They click <strong>Create Your Account</strong>, which opens the registration form. Their email is pre-filled and read-only. They fill in:</p>
+    <ul>
+        <li><strong>Username</strong> <span class="req">*</span></li>
+        <li><strong>Password</strong> <span class="req">*</span> and <strong>Confirm Password</strong> <span class="req">*</span></li>
+        <li>First name, last name, phone (optional)</li>
+        <li>Agree to the Terms and Conditions <span class="req">*</span></li>
+    </ul>
+    <p>They click <strong>Create Account</strong>, are redirected to the login page, and receive a welcome email with their username.</p>
+    <div class="callout"><strong>Important:</strong> At this point the new team member has the <strong>Charity Partner</strong> role &mdash; not yet Charity Facilitator. They can log in and use the standard charity features but cannot yet manage the team. The next step adds the elevated role; once promoted, they will see the Team link in their own sidebar and can invite future team members themselves.</div>
+</div>
+
+<div class="step">
+    <div class="num">4</div>
+    <h3>Primary contact or existing facilitator: request the role upgrade</h3>
+    <p>Once the team member has registered (you can confirm this on the Team page &mdash; their invite status will change from <em>Pending</em> to <em>Accepted</em>), contact your SafelyNested administrator and ask them to <strong>add the Charity Facilitator role</strong> to that user.</p>
+    <p>Provide:</p>
+    <ul>
+        <li>Your charity name.</li>
+        <li>The new team member's username or email.</li>
+        <li>A brief reason (for example: &quot;Will oversee booking approvals for our charity.&quot;).</li>
+    </ul>
+    <p>The admin will edit the user record at <code>/admin/users</code>, check the <strong>CHARITY_FACILITATOR</strong> role on top of <strong>CHARITY_PARTNER</strong>, and save.</p>
+    <div class="info"><strong>Note:</strong> The user keeps both roles. They retain everything a Charity Partner can do and gain Charity Facilitator access on top.</div>
+</div>
+
+<div class="step">
+    <div class="num">5</div>
+    <h3>Facilitator: confirm access on next login</h3>
+    <p>The next time the new facilitator logs in, they'll see a new menu item in the sidebar:</p>
+    <p><strong>Facilitator Dashboard</strong> &mdash; highlighted in green and linked to <a class="url" href="https://safelynested.com/charity-facilitator/dashboard">/charity-facilitator/dashboard</a>.</p>
+    <p>Clicking it opens the Charity Facilitator Dashboard. From here they can:</p>
+    <ul>
+        <li>View charity-specific statistics.</li>
+        <li>Review referrals across the whole charity.</li>
+        <li>Manage bookings.</li>
+    </ul>
+    <p>They can switch back to the Charity Partner Dashboard at any time using the regular <strong>Dashboard</strong> link in the sidebar. The Team link will appear there too &mdash; they now have full team-management powers alongside the primary contact.</p>
+</div>
+
+<h2>Managing pending invitations</h2>
+
+<p>The lower half of the Team page lists every invitation you've ever sent, with its current status:</p>
+
+<table>
+    <tr><th>Status</th><th>Meaning</th><th>What you can do</th></tr>
+    <tr><td><strong>Pending</strong></td><td>The invitee has not yet registered.</td><td>Click <strong>Cancel</strong> to revoke the invitation if it was sent in error.</td></tr>
+    <tr><td><strong>Accepted</strong></td><td>The invitee registered. They are now a team member.</td><td>No action; they appear in the team members list above.</td></tr>
+    <tr><td><strong>Expired</strong></td><td>7 days passed without registration.</td><td>Send a fresh invitation.</td></tr>
+    <tr><td><strong>Cancelled</strong></td><td>You cancelled the invite.</td><td>None.</td></tr>
+</table>
+
+<h2>Common issues</h2>
+
+<table>
+    <tr><th>Problem</th><th>What to do</th></tr>
+    <tr><td>The invite form rejects my colleague's email.</td><td>Their address must end in your charity's allowed domain (shown in the blue badge). If they have a personal address (e.g. Gmail), they cannot be invited &mdash; this is an intentional security control. Contact your SafelyNested administrator if you need an exception.</td></tr>
+    <tr><td>The 7-day registration link expired.</td><td>From the Team page, you can send a new invitation. (The old expired one cannot be reused.)</td></tr>
+    <tr><td>I can't see the Team menu item.</td><td>Two things to check, in order: (1) Are you on the <strong>green Facilitator Dashboard</strong>? It has no sidebar &mdash; click <strong>Dashboard</strong> to switch to the purple Charity Partner side. (2) On the purple side, the Team link only appears for the primary contact and Charity Facilitators. If you're a regular Charity Partner, you won't see it &mdash; ask your primary contact or a facilitator to send the invitation instead.</td></tr>
+    <tr><td>The new facilitator logged in but doesn't see the Facilitator Dashboard.</td><td>The role hasn't been added yet. Step 4 (admin promotion) is still pending. Have them log out and log back in after the admin confirms the change.</td></tr>
+</table>
+
+<h2>Help and support</h2>
+<p>The role-promotion step in particular requires a SafelyNested administrator and is not something charity staff can do themselves. If your administrator is slow to respond and your facilitator needs access urgently &mdash; for example, to handle bookings for families needing housing tonight &mdash; flag the urgency in your request.</p>
+
+<div class="footer">
+    SafelyNested &mdash; A Safe Place, Every Night<br>
+    Charity Facilitator Onboarding Guide
+</div>
+
+</body>
+</html>

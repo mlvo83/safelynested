@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Charity Partner Tasks on SafelyNested</title>
+<style>
+    @page { size: Letter; margin: 0.7in 0.65in; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1f2937; line-height: 1.55; font-size: 11pt;
+    }
+    a { color: #4f46e5; text-decoration: none; word-break: break-all; }
+    h1, h2, h3, h4 { color: #111827; line-height: 1.25; }
+    h1 { font-size: 26pt; margin: 0 0 4pt; letter-spacing: -0.5pt; }
+    h2 { font-size: 17pt; margin: 24pt 0 8pt; padding-bottom: 5pt; border-bottom: 2px solid #4f46e5; page-break-after: avoid; }
+    h3 { font-size: 13pt; margin: 12pt 0 4pt; color: #4338ca; page-break-after: avoid; }
+    h4 { font-size: 11pt; margin: 8pt 0 2pt; color: #374151; }
+    p { margin: 0 0 8pt; }
+    ul, ol { margin: 0 0 10pt 18pt; padding: 0; }
+    li { margin-bottom: 4pt; }
+    code, .url {
+        font-family: "Consolas", "Courier New", monospace;
+        background: #f3f4f6; padding: 1pt 5pt; border-radius: 3pt; font-size: 10pt; color: #1e293b;
+    }
+    .cover {
+        text-align: center; padding: 30pt 20pt 20pt;
+        border-bottom: 3px solid #4f46e5; margin-bottom: 18pt;
+    }
+    .cover img { width: 110pt; height: 110pt; object-fit: contain; margin: 0 auto 10pt; display: block; }
+    .cover .brand { font-size: 14pt; color: #4f46e5; font-weight: 700; letter-spacing: 1pt; margin-bottom: 4pt; }
+    .cover .tag { color: #6b7280; font-size: 11pt; font-style: italic; margin-top: 6pt; }
+    .lede {
+        background: #eef2ff; border-left: 4px solid #4f46e5;
+        padding: 10pt 14pt; margin: 12pt 0 18pt; border-radius: 4pt;
+    }
+    .toc {
+        background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6pt;
+        padding: 12pt 16pt; margin: 16pt 0; page-break-inside: avoid;
+    }
+    .toc h3 { margin: 0 0 6pt; color: #4338ca; }
+    .toc ol { margin: 4pt 0 0 18pt; }
+    .toc li { margin-bottom: 3pt; font-size: 10.5pt; }
+    .task { margin: 18pt 0; page-break-inside: avoid; }
+    .task-banner {
+        background: #4f46e5; color: #fff;
+        padding: 10pt 14pt;
+        border-radius: 6pt 6pt 0 0;
+        display: flex; align-items: baseline; gap: 10pt;
+    }
+    .task-banner .tnum {
+        background: #fff; color: #4f46e5;
+        font-weight: 700; font-size: 11pt;
+        padding: 2pt 9pt; border-radius: 12pt;
+        white-space: nowrap;
+    }
+    .task-banner .tname { font-weight: 700; font-size: 13pt; }
+    .task-body {
+        background: #fff; border: 1px solid #e5e7eb; border-top: none;
+        padding: 12pt 16pt; border-radius: 0 0 6pt 6pt;
+    }
+    .meta-row {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 10pt; margin: 6pt 0 12pt;
+        font-size: 10pt;
+    }
+    .meta-cell { background: #f9fafb; padding: 6pt 10pt; border-radius: 4pt; }
+    .meta-cell .meta-label {
+        color: #6b7280; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5pt;
+        font-weight: 700; margin-bottom: 2pt;
+    }
+    .step-list { counter-reset: step; padding-left: 0; list-style: none; margin: 6pt 0 10pt; }
+    .step-list > li {
+        counter-increment: step;
+        padding: 6pt 0 6pt 32pt; position: relative;
+        margin-bottom: 6pt;
+    }
+    .step-list > li::before {
+        content: counter(step);
+        position: absolute; left: 0; top: 4pt;
+        width: 22pt; height: 22pt; border-radius: 50%;
+        background: #4f46e5; color: #fff;
+        font-weight: 700; font-size: 10pt;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .callout {
+        background: #fef3c7; border-left: 4px solid #d97706;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt;
+        font-size: 10pt; page-break-inside: avoid;
+    }
+    .callout strong { color: #92400e; }
+    .info {
+        background: #ecfdf5; border-left: 4px solid #059669;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt; font-size: 10pt;
+    }
+    .info strong { color: #065f46; }
+    .danger {
+        background: #fee2e2; border-left: 4px solid #dc2626;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt; font-size: 10pt;
+    }
+    .danger strong { color: #991b1b; }
+    table { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 10pt; page-break-inside: avoid; }
+    th, td { text-align: left; padding: 6pt 8pt; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    th { background: #f3f4f6; font-weight: 600; color: #374151; }
+    .req { color: #dc2626; font-weight: 700; }
+    figure { margin: 10pt 0; padding: 0; page-break-inside: avoid; }
+    figure img {
+        max-width: 100%; height: auto;
+        border: 1px solid #d1d5db; border-radius: 4pt;
+        display: block; margin: 0 auto;
+    }
+    figcaption {
+        font-size: 9.5pt; color: #6b7280; text-align: center;
+        margin-top: 4pt; font-style: italic;
+    }
+    .placeholder {
+        background: repeating-linear-gradient(45deg, #fafafa, #fafafa 8pt, #f3f4f6 8pt, #f3f4f6 16pt);
+        border: 2px dashed #d1d5db; border-radius: 4pt;
+        padding: 24pt; text-align: center;
+        color: #9ca3af; font-size: 10pt; font-style: italic;
+        margin: 0 auto;
+    }
+    .placeholder strong { color: #6b7280; }
+    .footer {
+        margin-top: 24pt; padding-top: 10pt; border-top: 1px solid #e5e7eb;
+        font-size: 9pt; color: #6b7280; text-align: center;
+    }
+    .small { font-size: 9.5pt; color: #6b7280; }
+    .pill {
+        display: inline-block; padding: 2pt 8pt; border-radius: 12pt;
+        font-size: 9pt; font-weight: 700; letter-spacing: 0.3pt;
+        text-transform: uppercase;
+    }
+    .pill-pending { background: #fef3c7; color: #92400e; }
+    .pill-approved { background: #d1fae5; color: #065f46; }
+    .pill-rejected { background: #fee2e2; color: #991b1b; }
+    .pill-completed { background: #d1fae5; color: #065f46; }
+    .pill-cancelled { background: #fee2e2; color: #991b1b; }
+    .pill-opened { background: #dbeafe; color: #1e40af; }
+    .pill-expired { background: #f3f4f6; color: #4b5563; }
+    .pointer-card {
+        background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6pt;
+        padding: 10pt 14pt; margin: 8pt 0;
+    }
+    .pointer-card .pointer-label {
+        font-size: 9pt; color: #065f46; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.5pt;
+        margin-bottom: 3pt;
+    }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <img src="logo.jpeg" alt="SafelyNested logo">
+    <div class="brand">SAFELYNESTED</div>
+    <h1>Charity Partner &mdash; Daily Tasks</h1>
+    <div class="tag">A precise, step-by-step working guide for charity partners</div>
+</div>
+
+<div class="lede">
+    <strong>Who this is for.</strong> Charity Partners &mdash; the day-to-day charity-side users who create
+    referrals, send invitation links to participants, manage shelter locations, set up donors, and record donations.
+    This is not an onboarding guide; it assumes you've already finished onboarding and have a working login. For
+    account setup, see <em>Onboarding a Charity</em>.
+    <br><br>
+    <strong>What this document covers.</strong> Every task you perform in your day-to-day work, broken into
+    precise steps with the exact URLs, button names, required fields, validations, and side effects. Every
+    procedure here has been verified against the application's source code so you can trust it line-by-line.
+</div>
+
+<div class="toc">
+    <h3>Tasks covered</h3>
+    <ol>
+        <li><strong>Read your dashboard</strong> &mdash; orient yourself before doing anything else.</li>
+        <li><strong>Create a referral</strong> &mdash; the primary way to put a family into the system.</li>
+        <li><strong>Browse, view, edit, or cancel referrals</strong> &mdash; manage your charity's pipeline.</li>
+        <li><strong>Send a participant invite link</strong> &mdash; let the family pick their own location.</li>
+        <li><strong>Manage participant invites</strong> &mdash; resend, cancel, track status.</li>
+        <li><strong>Upload, download, or delete documents</strong> &mdash; attach paperwork to referrals or invites.</li>
+        <li><strong>Manage your shelter locations</strong> &mdash; the places your charity can house families.</li>
+        <li><strong>Set up a donor</strong> &mdash; pointer to the separate <em>Charity Donor Onboarding</em> guide.</li>
+        <li><strong>View your donors and donor setup requests</strong> &mdash; track who's giving and what's pending.</li>
+        <li><strong>Record a donation and pay the platform fee</strong> &mdash; via Stripe Checkout.</li>
+        <li><strong>View donation history</strong> &mdash; see what's been recorded.</li>
+        <li><strong>Manage your charity profile</strong> &mdash; keep your contact info and address current.</li>
+        <li><strong>Manage your team</strong> &mdash; pointer to the <em>Onboarding a Charity Facilitator</em> guide.</li>
+    </ol>
+</div>
+
+<h2>Reference: statuses you'll see</h2>
+
+<h4>Referral statuses</h4>
+<p>
+    <span class="pill pill-pending">Pending</span> awaiting facilitator review &middot;
+    <span class="pill pill-approved">Approved</span> ready for booking &middot;
+    <span class="pill pill-rejected">Rejected</span> declined (with reason) &middot;
+    <span class="pill pill-completed">Completed</span> family stayed &middot;
+    <span class="pill pill-cancelled">Cancelled</span> withdrawn before stay
+</p>
+
+<h4>Invite statuses</h4>
+<p>
+    <span class="pill pill-pending">Pending</span> sent, not yet opened &middot;
+    <span class="pill pill-opened">Opened</span> participant clicked the link &middot;
+    <span class="pill pill-completed">Completed</span> participant picked a location &middot;
+    <span class="pill pill-expired">Expired</span> 7 days passed &middot;
+    <span class="pill pill-cancelled">Cancelled</span>
+</p>
+
+<h2>Task 1 &mdash; Read your dashboard</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 1</span>
+        <span class="tname">Read the Charity Partner Dashboard</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Every login &mdash; orient before acting.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/dashboard</code></div>
+        </div>
+
+        <p>The Charity Partner Dashboard is the purple-themed page you land on after login. It shows your charity's recent activity, key counts (referrals, invites, locations, donors), and quick-action buttons for the most common tasks.</p>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Open <a class="url" href="https://safelynested.com/login">safelynested.com/login</a> and sign in with your charity username and password.</li>
+            <li>You land on the dashboard. Read the stat cards at the top.</li>
+            <li>Scan the <strong>Recent Referrals</strong> table for new activity since your last visit.</li>
+            <li>Use a Quick Action button (e.g. <strong>Create Referral</strong>, <strong>Send Invite</strong>, <strong>Set Up a Donor</strong>, <strong>Record Donation</strong>) to jump directly into the most common workflows.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/01-dashboard.png" alt="Charity Partner dashboard"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;01-dashboard.png &mdash; the Charity Partner Dashboard with the stat cards, Quick Actions, and Recent Referrals table&lt;/div&gt;'">
+            <figcaption>The Charity Partner Dashboard, with sidebar visible.</figcaption>
+        </figure>
+
+        <div class="info"><strong>Tip:</strong> If the <em>Pending Donor Setup</em> badge in the sidebar's Donors menu shows a number, an admin has reviewed (or rejected) requests you submitted. Click through to read the result.</div>
+    </div>
+</div>
+
+<h2>Task 2 &mdash; Create a referral</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 2</span>
+        <span class="tname">Create a referral for a family</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>You know a specific family who needs housing and have their details.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>GET /charity-partner/referrals/new</code> &rarr; <code>POST /charity-partner/referrals/new</code></div>
+        </div>
+
+        <p>A referral is the primary record SafelyNested uses to track a family. Once you create one, it goes into your charity's Pending queue, a Charity Facilitator reviews it, and (if approved) a booking is created from it for an actual stay.</p>
+
+        <h4>When to use this vs. an invite link</h4>
+        <ul>
+            <li><strong>Create a referral directly</strong> when you know the participant and have their details, and you (or your team) have already chosen a location for them.</li>
+            <li><strong>Send an invite link</strong> (Task 4) when you want the participant to <em>pick</em> their own location from your charity's options. The invite auto-creates a referral once they choose.</li>
+        </ul>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>From the dashboard or from the <strong>Referrals</strong> page, click <strong>Create Referral</strong> (or <strong>+ New Referral</strong>).</li>
+            <li>Fill in the participant section. Required fields are marked with red asterisks.</li>
+            <li>Set the urgency level &mdash; this drives how quickly the facilitator should review.</li>
+            <li>Optionally provide a needs description (1-3 sentences explaining the situation), allowed ZIP codes if location is restricted, and check <em>Documents Required</em> if paperwork must be uploaded.</li>
+            <li>Click <strong>Create Referral</strong>. You're redirected to the new referral's detail page with a success banner.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/02-referral-form.png" alt="Referral form"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;02-referral-form.png &mdash; the new-referral form showing all fields&lt;/div&gt;'">
+            <figcaption>The new referral form. Required fields are marked with red asterisks.</figcaption>
+        </figure>
+
+        <h4>Fields</h4>
+        <table>
+            <tr><th style="width: 30%;">Field</th><th>Required?</th><th>Notes</th></tr>
+            <tr><td>Full Name</td><td><span class="req">Required</span></td><td>The participant's legal full name.</td></tr>
+            <tr><td>Age</td><td>Optional</td><td>Helps the facilitator gauge urgency.</td></tr>
+            <tr><td>Email Address</td><td>Optional</td><td>If provided, the participant gets an automatic confirmation email when a booking is created.</td></tr>
+            <tr><td>Phone Number</td><td>Optional</td><td>For SMS coordination.</td></tr>
+            <tr><td>Needs Description</td><td>Optional</td><td>Plain-language summary of the situation. Read by the facilitator and saved on the referral.</td></tr>
+            <tr><td>Allowed ZIP Codes</td><td>Optional</td><td>Comma-separated. Restricts the family to specific geographies.</td></tr>
+            <tr><td>Documents Required</td><td>Optional</td><td>Checkbox. If checked, you (or the participant via the invite flow) need to upload paperwork before booking.</td></tr>
+            <tr><td>Urgency Level</td><td><span class="req">Required</span></td><td>LOW / MEDIUM / HIGH / CRITICAL.</td></tr>
+        </table>
+
+        <h4>What happens behind the scenes</h4>
+        <table>
+            <tr><th style="width: 35%;">Change</th><th>Detail</th></tr>
+            <tr><td>Status</td><td>Set to <span class="pill pill-pending">Pending</span>.</td></tr>
+            <tr><td>Referral number</td><td>Generated automatically (format <code>REF-YYYY-NNNN</code>).</td></tr>
+            <tr><td>Charity link</td><td>Set to your charity (multi-tenant scoping).</td></tr>
+            <tr><td>Referred by</td><td>Set to your user record.</td></tr>
+        </table>
+
+        <div class="callout"><strong>Monthly limit:</strong> Each charity has a monthly referral cap. If you hit it, the form returns &quot;Monthly referral limit reached&quot; and the referral is not saved. Contact your SafelyNested administrator to discuss raising it.</div>
+    </div>
+</div>
+
+<h2>Task 3 &mdash; Browse, view, edit, or cancel referrals</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 3</span>
+        <span class="tname">Manage your referral pipeline</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Reviewing what's pending, fixing a typo, or pulling back a referral.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/referrals</code></div>
+        </div>
+
+        <h4>Browsing</h4>
+        <ol class="step-list">
+            <li>Click <strong>Referrals</strong> in the sidebar.</li>
+            <li>The list shows every referral your charity has ever created, newest first.</li>
+            <li>Use the status filter buttons (<em>All / Pending / Approved / Rejected / Completed / Cancelled</em>) to focus.</li>
+            <li>Click any row to open its details.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/03-referrals-list.png" alt="Referrals list"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;03-referrals-list.png &mdash; the Referrals list with filters and a mix of statuses&lt;/div&gt;'">
+            <figcaption>The Referrals list with status filter buttons.</figcaption>
+        </figure>
+
+        <h4>Editing a referral</h4>
+        <p>You can only edit a referral while its status is <span class="pill pill-pending">Pending</span>. Once a facilitator approves or rejects it, the data is locked for audit reasons.</p>
+        <ol class="step-list">
+            <li>Open the referral's detail page.</li>
+            <li>If the status is Pending, click <strong>Edit</strong> at the top of the page.</li>
+            <li>Update participant info, needs description, urgency, allowed ZIPs, or the documents-required flag.</li>
+            <li>Click <strong>Update Referral</strong>.</li>
+        </ol>
+
+        <h4>Cancelling a referral</h4>
+        <ol class="step-list">
+            <li>Open the referral's detail page.</li>
+            <li>Click <strong>Cancel</strong>.</li>
+            <li>The status flips to <span class="pill pill-cancelled">Cancelled</span> and the referral leaves the active pipeline.</li>
+        </ol>
+        <div class="callout"><strong>Important:</strong> A <span class="pill pill-completed">Completed</span> referral cannot be cancelled &mdash; that would erase a record of a real stay. Approved or rejected referrals can still be cancelled, but cancelling won't undo their effects (e.g. emails already sent).</div>
+    </div>
+</div>
+
+<h2>Task 4 &mdash; Send a participant invite link</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 4</span>
+        <span class="tname">Send an invite link to a participant</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>You want the participant to pick their own location, or you want to capture their info via a public form.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>GET /charity-partner/invites/send</code> &rarr; <code>POST /charity-partner/invites/send</code></div>
+        </div>
+
+        <p>An invite link is a unique, time-limited URL the participant clicks. It opens a public page (no login required) where they pick a location from your charity's options. Once they pick, a referral is auto-created and shows up in your pipeline.</p>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Click <strong>Invites</strong> in the sidebar, then click <strong>+ Send New Invite</strong>. (Alternatively, from a specific referral's detail page, click <strong>Send Invite</strong> &mdash; this pre-links the invite to that referral.)</li>
+            <li>Fill in the recipient's name (required) and at least one of email or phone.</li>
+            <li>Pick the delivery method: <strong>Email</strong> or <strong>SMS</strong>.</li>
+            <li>Optionally describe the participant's needs and add a personal message. The needs description flows through to the auto-created referral.</li>
+            <li>Optionally restrict allowed ZIP codes.</li>
+            <li>Click <strong>Send Invite</strong>. The recipient receives an email or SMS with the unique link.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/04-invite-form.png" alt="Invite send form"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;04-invite-form.png &mdash; the Send Invite form&lt;/div&gt;'">
+            <figcaption>Send Invite form. The recipient gets a unique link valid for 7 days.</figcaption>
+        </figure>
+
+        <h4>Fields</h4>
+        <table>
+            <tr><th style="width: 30%;">Field</th><th>Required?</th><th>Notes</th></tr>
+            <tr><td>Full Name</td><td><span class="req">Required</span></td><td>The recipient's name as they should see it in the invitation.</td></tr>
+            <tr><td>Email Address</td><td>Required if Send Via = Email</td><td>Used to deliver the invite link.</td></tr>
+            <tr><td>Phone Number</td><td>Required if Send Via = SMS</td><td>Used for SMS delivery.</td></tr>
+            <tr><td>Send Via</td><td><span class="req">Required</span></td><td>Email or SMS.</td></tr>
+            <tr><td>Describe Participant Needs</td><td>Optional</td><td>Flows through to the referral that's auto-created when they pick a location.</td></tr>
+            <tr><td>Personal Message</td><td>Optional</td><td>A short note included in the email/SMS.</td></tr>
+            <tr><td>Allowed ZIP Codes</td><td>Optional</td><td>Restricts which locations the participant sees on their pick-a-location page.</td></tr>
+            <tr><td>Link to Existing Referral</td><td>Optional</td><td>If you have a referral already, link it so the location selection updates that referral instead of creating a new one.</td></tr>
+        </table>
+
+        <div class="info"><strong>How long the link is good for:</strong> The invite token expires after <strong>7 days</strong>. After that, the recipient sees an &quot;Invite expired&quot; page and you'll need to send a new one.</div>
+    </div>
+</div>
+
+<h2>Task 5 &mdash; Manage participant invites</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 5</span>
+        <span class="tname">Manage existing invites (resend, cancel, track)</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>An invite hasn't been opened, the recipient lost the link, or the situation changed.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/invites</code></div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Click <strong>Invites</strong> in the sidebar.</li>
+            <li>The list shows every invite ever sent. Each row shows: recipient name, contact method, status, sent date, expiry, and action buttons.</li>
+            <li>Filter by status using the buttons at the top (<em>Pending / Opened / Completed / Expired / Cancelled</em>).</li>
+            <li>Use the action buttons:
+                <ul>
+                    <li><strong>Resend</strong> &mdash; sends the invitation email or SMS again. The original token stays valid.</li>
+                    <li><strong>Cancel</strong> &mdash; voids the invite token. The recipient can no longer use the link.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/05-invites-list.png" alt="Invites list"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;05-invites-list.png &mdash; the Invites list with mixed statuses, showing Resend and Cancel buttons&lt;/div&gt;'">
+            <figcaption>Invites list with action buttons.</figcaption>
+        </figure>
+
+        <h4>What the statuses mean</h4>
+        <table>
+            <tr><th>Status</th><th>What it means</th></tr>
+            <tr><td><span class="pill pill-pending">Pending</span></td><td>Sent, but the recipient hasn't opened the link yet.</td></tr>
+            <tr><td><span class="pill pill-opened">Opened</span></td><td>The recipient clicked the link and saw the location-picker page, but didn't yet finish.</td></tr>
+            <tr><td><span class="pill pill-completed">Completed</span></td><td>The recipient picked a location. A referral has been auto-created (or updated, if linked) and is now in your Pending queue.</td></tr>
+            <tr><td><span class="pill pill-expired">Expired</span></td><td>7 days passed without completion. Send a new invite to try again.</td></tr>
+            <tr><td><span class="pill pill-cancelled">Cancelled</span></td><td>You manually voided this invite.</td></tr>
+        </table>
+    </div>
+</div>
+
+<h2>Task 6 &mdash; Upload, download, or delete documents</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 6</span>
+        <span class="tname">Manage documents on referrals and invites</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>You need to attach paperwork (ID, proof of need, intake forms) to a referral or invite.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/documents</code> and <code>/charity-partner/documents/upload</code></div>
+        </div>
+
+        <h4>Upload a document</h4>
+        <ol class="step-list">
+            <li>From the sidebar click <strong>Documents</strong>, then <strong>+ Upload Document</strong>. Or, from a referral or invite detail page, click the upload button there to pre-link the document.</li>
+            <li>Choose a file (PDF, image, etc.).</li>
+            <li>Pick a <strong>Document Type</strong>.</li>
+            <li>Optionally pick a referral or invite from the dropdowns to attach to. If both are blank, the document is uploaded to your charity's general document library.</li>
+            <li>Optionally write a short description.</li>
+            <li>Click <strong>Upload</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/06-document-upload.png" alt="Document upload form"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;06-document-upload.png &mdash; the Document Upload form&lt;/div&gt;'">
+            <figcaption>Document upload form.</figcaption>
+        </figure>
+
+        <h4>Download or delete</h4>
+        <ol class="step-list">
+            <li>Open the documents list at <code>/charity-partner/documents</code>.</li>
+            <li>Click <strong>Download</strong> on a row to fetch the file.</li>
+            <li>Click <strong>Delete</strong> to permanently remove a document. Deleted files cannot be recovered, so confirm carefully.</li>
+        </ol>
+
+        <div class="callout"><strong>Sensitive files:</strong> Documents may contain participant ID, financial info, or family details. Avoid uploading anything not strictly needed for the referral or booking. Delete documents that are no longer required.</div>
+    </div>
+</div>
+
+<h2>Task 7 &mdash; Manage your shelter locations</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 7</span>
+        <span class="tname">Manage your charity's shelter locations</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Adding a new shelter, updating contact info, or temporarily taking a location offline.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/locations</code></div>
+        </div>
+
+        <p>Locations represent the physical places your charity can house families. They appear in the location dropdown when a Charity Facilitator creates a booking, and on the public invite page when a participant picks a location.</p>
+
+        <h4>Add a location</h4>
+        <ol class="step-list">
+            <li>Click <strong>Locations</strong> in the sidebar, then <strong>+ Add Location</strong>.</li>
+            <li>Fill in the form. Only <strong>Location Name</strong> is required, but address, capacity, and services help facilitators and participants pick correctly.</li>
+            <li>Check <strong>Active</strong> to make the location available for bookings immediately. Leave it unchecked to add a draft entry.</li>
+            <li>Click <strong>Create Location</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/07-locations-list.png" alt="Locations list"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;07-locations-list.png &mdash; the Locations list with at least 2-3 entries, showing the Edit / Toggle Active / Delete buttons&lt;/div&gt;'">
+            <figcaption>Locations list with management actions.</figcaption>
+        </figure>
+
+        <h4>Edit, toggle active, or delete a location</h4>
+        <ul>
+            <li><strong>Edit</strong> &mdash; click the location row, then <strong>Edit</strong>. Update any field and save. Existing bookings keep their original snapshot of the location data.</li>
+            <li><strong>Toggle Active</strong> &mdash; takes the location out of (or back into) the booking dropdown without deleting it. Use this if a location is temporarily unavailable.</li>
+            <li><strong>Delete</strong> &mdash; permanently removes the location. Existing bookings retain their historical record (location name, address) so this doesn't break past data.</li>
+        </ul>
+
+        <h4>Fields</h4>
+        <table>
+            <tr><th style="width: 30%;">Field</th><th>Required?</th><th>Notes</th></tr>
+            <tr><td>Location Name</td><td><span class="req">Required</span></td><td>Must be unique within your charity.</td></tr>
+            <tr><td>Address, City, State, ZIP, Country</td><td>Optional</td><td>Country defaults to USA.</td></tr>
+            <tr><td>Phone, Email</td><td>Optional</td><td>Contact info for the location.</td></tr>
+            <tr><td>Capacity</td><td>Optional</td><td>Maximum guests/beds.</td></tr>
+            <tr><td>Description, Services Offered, Hours of Operation</td><td>Optional</td><td>Free-text fields shown to participants.</td></tr>
+            <tr><td>Is Active</td><td>Optional</td><td>Checkbox. Inactive locations don't appear in booking dropdowns.</td></tr>
+        </table>
+
+        <div class="callout"><strong>Duplicate names:</strong> If you try to create a location with a name that already exists at your charity, the form returns &quot;Location name already exists.&quot; Pick a unique name (e.g. add city or building qualifier).</div>
+    </div>
+</div>
+
+<h2>Task 8 &mdash; Set up a donor</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 8</span>
+        <span class="tname">Submit a donor setup request</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>You need to register a donor to your charity in the system.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/donors/setup</code></div>
+        </div>
+
+        <p>Setting up a donor is a request flow &mdash; you submit a request, and a SafelyNested administrator approves or rejects it. Two paths: link an existing donor that's already in the system, or register a brand-new donor.</p>
+
+        <div class="pointer-card">
+            <div class="pointer-label">See the dedicated guide</div>
+            <p style="margin: 0;">The full step-by-step procedure for setting up a donor &mdash; including the search-existing flow, the new-donor form fields, and what happens after admin approval &mdash; is in the separate guide <strong>Onboarding a Charity Donor</strong> (<code>charity-donor-onboarding.pdf</code>). Refer to that document for this task.</p>
+        </div>
+    </div>
+</div>
+
+<h2>Task 9 &mdash; View donors and donor setup requests</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 9</span>
+        <span class="tname">View your charity's donors and request status</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Looking up a donor's details, or checking on a setup request you submitted.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/donors</code> and <code>/charity-partner/donors/setup-requests</code></div>
+        </div>
+
+        <h4>View your donors</h4>
+        <ol class="step-list">
+            <li>Click <strong>Donors</strong> in the sidebar.</li>
+            <li>The list shows every donor approved and linked to your charity.</li>
+            <li>Use the search box to filter by name or email.</li>
+            <li>Click any donor to see their full record, contact info, and donation history.</li>
+        </ol>
+
+        <h4>View your donor setup requests</h4>
+        <ol class="step-list">
+            <li>From the Donors page, click <strong>View My Requests</strong>, or go to <code>/charity-partner/donors/setup-requests</code> directly.</li>
+            <li>The list shows all requests you've submitted with their status: <span class="pill pill-pending">Pending</span>, <span class="pill pill-approved">Approved</span>, or <span class="pill pill-rejected">Rejected</span>.</li>
+            <li>For rejected requests, the admin's reason is shown. You can submit a new request after addressing the concern.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/08-donors-list.png" alt="Donors list"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;08-donors-list.png &mdash; the Donors list and/or Setup Requests page&lt;/div&gt;'">
+            <figcaption>The Donors list with the search field at the top.</figcaption>
+        </figure>
+    </div>
+</div>
+
+<h2>Task 10 &mdash; Record a donation and pay the platform fee</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 10</span>
+        <span class="tname">Record a donation and pay the 10% fee via Stripe</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>A donor gave money directly to your charity (cash, check, etc.) and you need to record it on the platform.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/donations/record</code></div>
+        </div>
+
+        <p>Donations to your charity happen <em>outside</em> SafelyNested &mdash; donors give you cash, check, ACH, etc. directly. To track that money on the platform (and use it later to fund bookings), you record the donation here. SafelyNested charges a 10% platform fee (7% platform + 3% facilitator), which you pay via Stripe Checkout when you submit the record.</p>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>From the dashboard, click the green <strong>Record Donation</strong> quick-action button. Or go to <strong>Donations</strong> in the sidebar and click <strong>+ Record Donation</strong>.</li>
+            <li>Fill in the form: Donor Name, Donor Email (optional), Donation Amount, Date Received, and optional Notes.</li>
+            <li>As you type the amount, the page shows a live fee breakdown: platform fee (7%), facilitator fee (3%), total fee, and net amount credited to your charity.</li>
+            <li>Click <strong>Pay Fee &amp; Record Donation</strong>. You're redirected to Stripe Checkout.</li>
+            <li>On Stripe's hosted page, pay the fee using a credit/debit card or US bank transfer (ACH).</li>
+            <li>Stripe redirects you back to a success page. The donation is now recorded as <span class="pill pill-approved">Verified</span> and visible in your donations list.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/09-record-donation.png" alt="Record donation form"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;09-record-donation.png &mdash; the Record Donation form with the fee breakdown visible&lt;/div&gt;'">
+            <figcaption>The Record Donation form with the live fee calculator.</figcaption>
+        </figure>
+
+        <h4>Fields and validations</h4>
+        <table>
+            <tr><th style="width: 30%;">Field</th><th>Required?</th><th>Validation</th></tr>
+            <tr><td>Donor Name</td><td><span class="req">Required</span></td><td>Up to 255 chars.</td></tr>
+            <tr><td>Donor Email</td><td>Optional</td><td>Used for donor receipts.</td></tr>
+            <tr><td>Donation Amount</td><td><span class="req">Required</span></td><td>Minimum <strong>$5.00</strong>. Smaller amounts are rejected because the 10% fee falls below Stripe's minimum charge.</td></tr>
+            <tr><td>Date Received</td><td><span class="req">Required</span></td><td>The actual date your charity received the money. <strong>Cannot be in the future.</strong></td></tr>
+            <tr><td>Notes</td><td>Optional</td><td>Freeform context (e.g., &quot;Spring fundraiser, check #4271&quot;).</td></tr>
+        </table>
+
+        <h4>Fee breakdown example</h4>
+        <p>For a <strong>$1,000</strong> donation:</p>
+        <ul>
+            <li>Platform fee (7%): <strong>$70.00</strong></li>
+            <li>Facilitator fee (3%): <strong>$30.00</strong></li>
+            <li><strong>Total fee charged via Stripe: $100.00</strong></li>
+            <li>Net amount credited to your charity (available to fund bookings): <strong>$900.00</strong></li>
+        </ul>
+
+        <h4>What happens behind the scenes after payment</h4>
+        <table>
+            <tr><th style="width: 35%;">Change</th><th>Detail</th></tr>
+            <tr><td>Stripe Checkout session</td><td>Created with the fee amount; you're redirected to Stripe.</td></tr>
+            <tr><td>Webhook notification</td><td>After payment completes, Stripe notifies SafelyNested.</td></tr>
+            <tr><td>Donation record</td><td>Created with status <span class="pill pill-approved">Verified</span> and source <em>CHARITY_RECORDED</em>.</td></tr>
+            <tr><td>Receipt email</td><td>Sent to your charity's primary contact.</td></tr>
+            <tr><td>Available to fund bookings</td><td>Immediately. The full net amount can be used by facilitators when creating bookings.</td></tr>
+        </table>
+
+        <div class="callout"><strong>Payment options:</strong> Stripe Checkout supports both credit/debit cards (instant) and US bank transfers (ACH, lower fees but takes 1-4 business days to settle in production). For ACH, your donation will appear once the payment clears.</div>
+        <div class="info"><strong>Tip:</strong> If you accidentally cancel out of Stripe Checkout, no fee is charged and no donation is recorded. Start over from the form.</div>
+    </div>
+</div>
+
+<h2>Task 11 &mdash; View donation history</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 11</span>
+        <span class="tname">View your charity's donations</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Reviewing what's been recorded, checking remaining balances for funding bookings.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/donations</code></div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Click <strong>Donations</strong> in the sidebar.</li>
+            <li>The list shows every donation recorded for your charity, newest first.</li>
+            <li>Each row shows: donor name, amount, date received, fee paid, net amount, source (Manual / Charity-Recorded / Stripe), and current status.</li>
+            <li>Click a row to see the donation's detail page, including any bookings it has funded and remaining balance.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/10-donations-list.png" alt="Donations list"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;10-donations-list.png &mdash; the Donations list with multiple recorded donations and source badges&lt;/div&gt;'">
+            <figcaption>The Donations list with source badges and statuses.</figcaption>
+        </figure>
+
+        <h4>Donation statuses</h4>
+        <table>
+            <tr><th>Status</th><th>What it means</th></tr>
+            <tr><td><strong>Verified</strong></td><td>Fee paid, donation confirmed; full net amount available to fund bookings.</td></tr>
+            <tr><td><strong>Allocated</strong></td><td>One or more bookings have been funded from this donation.</td></tr>
+            <tr><td><strong>Partially Used</strong></td><td>Some funded nights have been consumed by completed stays.</td></tr>
+            <tr><td><strong>Fully Used</strong></td><td>All funds have been consumed.</td></tr>
+            <tr><td><strong>Cancelled</strong></td><td>Admin cancelled or rejected.</td></tr>
+        </table>
+    </div>
+</div>
+
+<h2>Task 12 &mdash; Manage your charity profile</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 12</span>
+        <span class="tname">Update your charity's contact info and address</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Your charity moved, your contact phone changed, or you need to update org info.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/profile</code> and <code>/charity-partner/profile/edit</code></div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Click <strong>Profile</strong> in the sidebar to view your charity's current info (name, organization type, EIN, contact name/email/phone, address, mission statement).</li>
+            <li>Click <strong>Edit Profile</strong> to update.</li>
+            <li>Modify the fields you need to change and click <strong>Update Profile</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/partner/11-profile.png" alt="Charity profile page"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;11-profile.png &mdash; the Charity Profile view page with all the contact and address info&lt;/div&gt;'">
+            <figcaption>The Charity Profile page.</figcaption>
+        </figure>
+
+        <div class="info"><strong>What you can change:</strong> Contact name, email, phone, address, description, mission statement. Items requiring admin involvement (charity name, organization type, EIN, verification status) typically need to be requested via support.</div>
+    </div>
+</div>
+
+<h2>Task 13 &mdash; Manage your team</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 13</span>
+        <span class="tname">Invite team members or facilitators</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Adding a new team member to your charity, or requesting a facilitator promotion.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-partner/team</code> (visible to primary contact and Charity Facilitators)</div>
+        </div>
+
+        <p>Inviting a team member uses the same flow as facilitator onboarding (a Charity Facilitator <em>is</em> a team member with elevated permissions). The full procedure &mdash; including the email-domain restriction and the post-registration step where an admin promotes the user to facilitator &mdash; is documented separately.</p>
+
+        <div class="pointer-card">
+            <div class="pointer-label">See the dedicated guide</div>
+            <p style="margin: 0;">The complete step-by-step procedure for inviting a team member or facilitator is in <strong>Onboarding a Charity Facilitator</strong> (<code>charity-facilitator-onboarding.pdf</code>). Refer to that document for this task.</p>
+        </div>
+
+        <div class="callout"><strong>Visibility:</strong> The Team menu item appears for the charity's <strong>primary contact</strong> and for any user with the <strong>Charity Facilitator</strong> role. Standard Charity Partners do not see the Team link &mdash; ask your primary contact or facilitator to send invitations on your behalf.</div>
+    </div>
+</div>
+
+<h2>Common errors and what they mean</h2>
+
+<table>
+    <tr><th style="width: 45%;">Error message</th><th>What to do</th></tr>
+    <tr><td>&quot;Monthly referral limit reached&quot;</td><td>Your charity has hit its cap for the month. Contact your SafelyNested administrator to request an increase if you have legitimate referrals waiting.</td></tr>
+    <tr><td>&quot;Referral cannot be edited after submission&quot;</td><td>The referral was already approved or rejected. Edit is only available in <span class="pill pill-pending">Pending</span> status.</td></tr>
+    <tr><td>&quot;Cannot cancel completed referral&quot;</td><td>The referral resulted in an actual stay. You cannot retroactively cancel that record.</td></tr>
+    <tr><td>&quot;Please provide either an email or phone number&quot;</td><td>On the Send Invite form, both contact fields were empty. At least one is required.</td></tr>
+    <tr><td>&quot;Email address is required for email invites&quot; / &quot;Phone number is required for SMS invites&quot;</td><td>Match your delivery method to the contact info you provided.</td></tr>
+    <tr><td>&quot;Location name already exists&quot;</td><td>Pick a unique location name within your charity.</td></tr>
+    <tr><td>&quot;Minimum donation amount is $5.00&quot;</td><td>Stripe's minimum charge limits the smallest donation that can be recorded with a fee.</td></tr>
+    <tr><td>&quot;Date received cannot be in the future&quot;</td><td>The donation must have already been received in real life before recording.</td></tr>
+</table>
+
+<h2>Help and escalation</h2>
+
+<p>If a workflow gets stuck and a family is depending on it &mdash; for instance, a referral can't be submitted because of an error, or a donation payment fails &mdash; do <strong>not</strong> work around the system by tracking things outside SafelyNested. Contact your SafelyNested administrator immediately, describe what you're trying to do, share the error message verbatim, and explain the urgency. Edge cases belong with the admin, not in shadow records.</p>
+
+<div class="footer">
+    SafelyNested &mdash; A Safe Place, Every Night<br>
+    Charity Partner &mdash; Daily Tasks Guide
+</div>
+
+</body>
+</html>

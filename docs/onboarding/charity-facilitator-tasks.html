@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Charity Facilitator Tasks on SafelyNested</title>
+<style>
+    @page { size: Letter; margin: 0.7in 0.65in; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1f2937; line-height: 1.55; font-size: 11pt;
+    }
+    a { color: #4f46e5; text-decoration: none; word-break: break-all; }
+    h1, h2, h3, h4 { color: #111827; line-height: 1.25; }
+    h1 { font-size: 26pt; margin: 0 0 4pt; letter-spacing: -0.5pt; }
+    h2 { font-size: 17pt; margin: 24pt 0 8pt; padding-bottom: 5pt; border-bottom: 2px solid #4f46e5; page-break-after: avoid; }
+    h3 { font-size: 13pt; margin: 12pt 0 4pt; color: #4338ca; page-break-after: avoid; }
+    h4 { font-size: 11pt; margin: 8pt 0 2pt; color: #374151; }
+    p { margin: 0 0 8pt; }
+    ul, ol { margin: 0 0 10pt 18pt; padding: 0; }
+    li { margin-bottom: 4pt; }
+    code, .url {
+        font-family: "Consolas", "Courier New", monospace;
+        background: #f3f4f6; padding: 1pt 5pt; border-radius: 3pt; font-size: 10pt; color: #1e293b;
+    }
+    .cover {
+        text-align: center; padding: 30pt 20pt 20pt;
+        border-bottom: 3px solid #4f46e5; margin-bottom: 18pt;
+    }
+    .cover img { width: 110pt; height: 110pt; object-fit: contain; margin: 0 auto 10pt; display: block; }
+    .cover .brand { font-size: 14pt; color: #4f46e5; font-weight: 700; letter-spacing: 1pt; margin-bottom: 4pt; }
+    .cover .tag { color: #6b7280; font-size: 11pt; font-style: italic; margin-top: 6pt; }
+    .lede {
+        background: #eef2ff; border-left: 4px solid #4f46e5;
+        padding: 10pt 14pt; margin: 12pt 0 18pt; border-radius: 4pt;
+    }
+    .toc {
+        background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6pt;
+        padding: 12pt 16pt; margin: 16pt 0; page-break-inside: avoid;
+    }
+    .toc h3 { margin: 0 0 6pt; color: #4338ca; }
+    .toc ol { margin: 4pt 0 0 18pt; }
+    .toc li { margin-bottom: 3pt; font-size: 10.5pt; }
+    .task {
+        margin: 18pt 0;
+        page-break-inside: avoid;
+    }
+    .task-banner {
+        background: #4f46e5; color: #fff;
+        padding: 10pt 14pt;
+        border-radius: 6pt 6pt 0 0;
+        display: flex; align-items: baseline; gap: 10pt;
+    }
+    .task-banner .tnum {
+        background: #fff; color: #4f46e5;
+        font-weight: 700; font-size: 11pt;
+        padding: 2pt 9pt; border-radius: 12pt;
+        white-space: nowrap;
+    }
+    .task-banner .tname {
+        font-weight: 700; font-size: 13pt;
+    }
+    .task-body {
+        background: #fff; border: 1px solid #e5e7eb; border-top: none;
+        padding: 12pt 16pt; border-radius: 0 0 6pt 6pt;
+    }
+    .meta-row {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 10pt; margin: 6pt 0 12pt;
+        font-size: 10pt;
+    }
+    .meta-cell {
+        background: #f9fafb; padding: 6pt 10pt; border-radius: 4pt;
+    }
+    .meta-cell .meta-label {
+        color: #6b7280; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5pt;
+        font-weight: 700; margin-bottom: 2pt;
+    }
+    .step-list { counter-reset: step; padding-left: 0; list-style: none; margin: 6pt 0 10pt; }
+    .step-list > li {
+        counter-increment: step;
+        padding: 6pt 0 6pt 32pt; position: relative;
+        margin-bottom: 6pt;
+    }
+    .step-list > li::before {
+        content: counter(step);
+        position: absolute; left: 0; top: 4pt;
+        width: 22pt; height: 22pt; border-radius: 50%;
+        background: #4f46e5; color: #fff;
+        font-weight: 700; font-size: 10pt;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .callout {
+        background: #fef3c7; border-left: 4px solid #d97706;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt;
+        font-size: 10pt; page-break-inside: avoid;
+    }
+    .callout strong { color: #92400e; }
+    .info {
+        background: #ecfdf5; border-left: 4px solid #059669;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt; font-size: 10pt;
+    }
+    .info strong { color: #065f46; }
+    .danger {
+        background: #fee2e2; border-left: 4px solid #dc2626;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt; font-size: 10pt;
+    }
+    .danger strong { color: #991b1b; }
+    table { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 10pt; page-break-inside: avoid; }
+    th, td { text-align: left; padding: 6pt 8pt; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    th { background: #f3f4f6; font-weight: 600; color: #374151; }
+    .req { color: #dc2626; font-weight: 700; }
+    figure {
+        margin: 10pt 0; padding: 0; page-break-inside: avoid;
+    }
+    figure img {
+        max-width: 100%; height: auto;
+        border: 1px solid #d1d5db; border-radius: 4pt;
+        display: block; margin: 0 auto;
+    }
+    figcaption {
+        font-size: 9.5pt; color: #6b7280; text-align: center;
+        margin-top: 4pt; font-style: italic;
+    }
+    .placeholder {
+        background: repeating-linear-gradient(45deg, #fafafa, #fafafa 8pt, #f3f4f6 8pt, #f3f4f6 16pt);
+        border: 2px dashed #d1d5db; border-radius: 4pt;
+        padding: 24pt; text-align: center;
+        color: #9ca3af; font-size: 10pt; font-style: italic;
+        margin: 0 auto;
+    }
+    .placeholder strong { color: #6b7280; }
+    .footer {
+        margin-top: 24pt; padding-top: 10pt; border-top: 1px solid #e5e7eb;
+        font-size: 9pt; color: #6b7280; text-align: center;
+    }
+    .small { font-size: 9.5pt; color: #6b7280; }
+    .pill {
+        display: inline-block; padding: 2pt 8pt; border-radius: 12pt;
+        font-size: 9pt; font-weight: 700; letter-spacing: 0.3pt;
+        text-transform: uppercase;
+    }
+    .pill-pending { background: #fef3c7; color: #92400e; }
+    .pill-approved { background: #d1fae5; color: #065f46; }
+    .pill-rejected { background: #fee2e2; color: #991b1b; }
+    .pill-confirmed { background: #dbeafe; color: #1e40af; }
+    .pill-checkedin { background: #e0e7ff; color: #3730a3; }
+    .pill-checkedout { background: #ede9fe; color: #5b21b6; }
+    .pill-completed { background: #d1fae5; color: #065f46; }
+    .pill-cancelled { background: #fee2e2; color: #991b1b; }
+    .pill-noshow { background: #f3f4f6; color: #4b5563; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <img src="logo.jpeg" alt="SafelyNested logo">
+    <div class="brand">SAFELYNESTED</div>
+    <h1>Charity Facilitator &mdash; Daily Tasks</h1>
+    <div class="tag">A precise, step-by-step working guide for charity facilitators</div>
+</div>
+
+<div class="lede">
+    <strong>Who this is for.</strong> Charity Facilitators &mdash; the elevated charity-side role responsible for
+    reviewing referrals, approving or rejecting them, and managing the bookings that turn an approved referral
+    into an actual stay for a family. This is not an onboarding guide; it assumes your account already has the
+    Charity Facilitator role and you've logged in. For account setup, see <em>Onboarding a Charity Facilitator</em>.
+    <br><br>
+    <strong>What this document covers.</strong> Every task you perform day-to-day, broken into precise steps with
+    the exact URLs, button names, required fields, validations, and what happens behind the scenes &mdash; including
+    which emails are sent and which records change. Because real families depend on these workflows being executed
+    correctly, every step in this document has been verified against the application's source code.
+</div>
+
+<div class="toc">
+    <h3>Tasks covered</h3>
+    <ol>
+        <li><strong>Open and read your dashboard</strong> &mdash; understand the numbers before you act.</li>
+        <li><strong>Browse referrals</strong> &mdash; see all referrals for your charity, optionally filtered by status.</li>
+        <li><strong>Review a referral's details</strong> &mdash; understand who's being referred and why before approving.</li>
+        <li><strong>Approve a referral</strong> &mdash; greenlight a family for housing.</li>
+        <li><strong>Reject a referral</strong> &mdash; with a written reason, sent to the charity partner.</li>
+        <li><strong>Browse bookings</strong> &mdash; the master list of all stays for your charity.</li>
+        <li><strong>Create a booking from an approved referral</strong> &mdash; turn approval into a real stay, optionally funded by a donation.</li>
+        <li><strong>Check in a guest</strong> &mdash; mark arrival when the family shows up.</li>
+        <li><strong>Check out a guest</strong> &mdash; mark departure at the end of the stay.</li>
+        <li><strong>Cancel a booking</strong> &mdash; with a written reason. Releases donation funds and partner availability.</li>
+        <li><strong>Update a booking's status manually</strong> &mdash; for the cases the standard buttons don't cover.</li>
+    </ol>
+</div>
+
+<h2>Reference: statuses you'll see</h2>
+
+<h4>Referral statuses</h4>
+<p>
+    <span class="pill pill-pending">Pending</span> awaiting review &middot;
+    <span class="pill pill-approved">Approved</span> ready for booking &middot;
+    <span class="pill pill-rejected">Rejected</span> declined &middot;
+    <span class="pill pill-completed">Completed</span> family stayed &middot;
+    <span class="pill pill-cancelled">Cancelled</span> withdrawn before stay
+</p>
+
+<h4>Booking statuses</h4>
+<p>
+    <span class="pill pill-pending">Pending</span> created, not yet confirmed &middot;
+    <span class="pill pill-confirmed">Confirmed</span> ready for arrival &middot;
+    <span class="pill pill-checkedin">Checked In</span> family on site &middot;
+    <span class="pill pill-checkedout">Checked Out</span> family has left &middot;
+    <span class="pill pill-completed">Completed</span> stay closed &middot;
+    <span class="pill pill-cancelled">Cancelled</span> &middot;
+    <span class="pill pill-noshow">No Show</span>
+</p>
+
+<h2>Task 1 &mdash; Open and read your dashboard</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 1</span>
+        <span class="tname">Read the Facilitator Dashboard</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Every time you log in &mdash; orient yourself before doing anything else.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/dashboard</code></div>
+        </div>
+
+        <p>The Facilitator Dashboard is the green-themed page you land on after login. It shows the operating health of your charity at a glance: how many referrals are awaiting your review, how many are approved, how many bookings are active, and recent activity.</p>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Open <a class="url" href="https://safelynested.com/login">safelynested.com/login</a> and sign in.</li>
+            <li>If you also have the Charity Partner role, you'll land on the purple Charity Partner Dashboard. Click <strong>Facilitator Dashboard</strong> in the sidebar (the green-highlighted item with the shield icon) to switch.</li>
+            <li>Read the eight stat cards at the top of the page (described below).</li>
+            <li>Scan the <strong>Recent Referrals</strong> and <strong>Recent Bookings</strong> sections for anything new since your last login.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/01-dashboard.png" alt="Facilitator dashboard"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;01-dashboard.png &mdash; the Charity Facilitator Dashboard, showing all eight stat cards and the Recent Referrals / Recent Bookings tables&lt;/div&gt;'">
+            <figcaption>The Charity Facilitator Dashboard.</figcaption>
+        </figure>
+
+        <h4>What the stats mean</h4>
+        <table>
+            <tr><th style="width: 30%;">Card</th><th>Meaning</th></tr>
+            <tr><td><strong>Pending Referrals</strong></td><td>Referrals awaiting your approve/reject decision. Anything here is blocking a family from being booked.</td></tr>
+            <tr><td><strong>Approved Referrals</strong></td><td>Referrals you've approved that have not yet had a booking created.</td></tr>
+            <tr><td><strong>Rejected Referrals</strong></td><td>Referrals you (or another facilitator) declined. Counts cumulatively.</td></tr>
+            <tr><td><strong>Total Referrals</strong></td><td>All-time count for your charity.</td></tr>
+            <tr><td><strong>Confirmed Bookings</strong></td><td>Bookings ready for arrival but the guest hasn't checked in yet.</td></tr>
+            <tr><td><strong>Checked-In Bookings</strong></td><td>Families currently on site. This number drives daily operations.</td></tr>
+            <tr><td><strong>Completed Bookings</strong></td><td>Stays that have ended.</td></tr>
+            <tr><td><strong>Total Bookings</strong></td><td>All-time count.</td></tr>
+        </table>
+
+        <div class="info"><strong>Tip:</strong> If <em>Pending Referrals</em> is greater than zero on a given morning, that's the first place to start &mdash; every pending referral is a family waiting for an answer.</div>
+    </div>
+</div>
+
+<h2>Task 2 &mdash; Browse referrals</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 2</span>
+        <span class="tname">Browse the referrals list</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Reviewing what's pending; finding a specific referral.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/referrals</code></div>
+        </div>
+
+        <p>The Referrals page lists every referral submitted under your charity, newest first. You can filter by status to focus on what needs attention.</p>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>From the top navigation, click <strong>Referrals</strong>.</li>
+            <li>To filter by status, use the status filter buttons or pass a query parameter (e.g. <code>?status=PENDING</code>). The valid values are <code>PENDING</code>, <code>APPROVED</code>, <code>REJECTED</code>, <code>COMPLETED</code>, <code>CANCELLED</code>.</li>
+            <li>Each row shows the participant's name, urgency level, location preference, status, and the date the referral was created. Click any row to open the referral's detail page.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/02-referrals-list.png" alt="Referrals list"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;02-referrals-list.png &mdash; the Referrals list showing a mix of pending and approved entries with the status filter visible&lt;/div&gt;'">
+            <figcaption>The referrals list with a status filter applied.</figcaption>
+        </figure>
+
+        <div class="info"><strong>Note:</strong> Referrals from <em>other</em> charities never appear here. The list is automatically scoped to your charity only.</div>
+    </div>
+</div>
+
+<h2>Task 3 &mdash; Review a referral's details</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 3</span>
+        <span class="tname">Review a referral before deciding</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Before approving or rejecting any pending referral.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/referrals/{id}</code></div>
+        </div>
+
+        <p>The Referral Details page is where you read everything the charity partner has captured about the family being referred. <strong>Always read this carefully before approving</strong> &mdash; once approved, a booking can be created and a real stay reserved.</p>
+
+        <h4>What you'll see</h4>
+        <ul>
+            <li><strong>Participant info</strong> &mdash; name, phone, email, household size.</li>
+            <li><strong>Urgency level</strong> &mdash; Low, Medium, High, or Critical.</li>
+            <li><strong>Needs description</strong> &mdash; the situation in plain language, captured by the charity partner or by the participant via the public invite link.</li>
+            <li><strong>Selected location</strong> &mdash; either a charity location (one of yours) or a partner property (e.g. a hotel that has linked to your charity).</li>
+            <li><strong>Referred by</strong> &mdash; which charity partner submitted this.</li>
+            <li><strong>Existing booking, if any</strong> &mdash; if a booking has already been created from this referral, the page links to it.</li>
+        </ul>
+
+        <figure>
+            <img src="screenshots/facilitator/03-referral-detail-pending.png" alt="Referral detail"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;03-referral-detail-pending.png &mdash; a referral details page in PENDING status, showing participant fields, urgency, needs description, and the green Approve / red Reject buttons at the bottom&lt;/div&gt;'">
+            <figcaption>A pending referral, ready for approve/reject decision.</figcaption>
+        </figure>
+
+        <div class="callout"><strong>Privacy reminder:</strong> Participant information is sensitive. Don't share screenshots of these pages outside SafelyNested without redacting the names, contact details, and needs description.</div>
+    </div>
+</div>
+
+<h2>Task 4 &mdash; Approve a referral</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 4</span>
+        <span class="tname">Approve a pending referral</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>The referral is in scope, accurate, and you're ready to fund a stay.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div>Approve button on the referral detail page &rarr; modal &rarr; <code>POST /referrals/{id}/approve</code></div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Open the referral detail page (Task 3).</li>
+            <li>Confirm the status is <span class="pill pill-pending">Pending</span>. The Approve button only appears in this status.</li>
+            <li>Click the green <strong>Approve Referral</strong> button at the bottom of the page.</li>
+            <li>A modal appears with an optional <strong>Notes</strong> textarea. Use it to record any context for later reference (it's saved on the referral as <em>facilitator notes</em>). Notes are optional.</li>
+            <li>Click <strong>Confirm Approval</strong>. A loading overlay reads &quot;Approving Referral... Sending approval notification email, please wait.&quot;</li>
+            <li>You're returned to the referrals list with a green success banner.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/04-approve-modal.png" alt="Approve modal"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;04-approve-modal.png &mdash; the Approve Referral modal with the Notes textarea visible&lt;/div&gt;'">
+            <figcaption>The approval modal. Notes are optional but useful for handoff.</figcaption>
+        </figure>
+
+        <h4>What happens behind the scenes</h4>
+        <table>
+            <tr><th style="width: 35%;">Change</th><th>Detail</th></tr>
+            <tr><td>Referral status</td><td><span class="pill pill-pending">Pending</span> &rarr; <span class="pill pill-approved">Approved</span></td></tr>
+            <tr><td>Approved by</td><td>Set to your user account.</td></tr>
+            <tr><td>Approved at</td><td>Set to the current timestamp.</td></tr>
+            <tr><td>Facilitator notes</td><td>Saved to the referral if you provided any.</td></tr>
+            <tr><td>Email notifications</td><td>Sent asynchronously to the charity partner who created the referral and to the participant if they have an email on file.</td></tr>
+        </table>
+
+        <div class="callout"><strong>Important:</strong> Approving a referral does <em>not</em> create a booking. The family doesn't have a confirmed stay until you (or another facilitator) creates a booking from this approved referral &mdash; that's Task 7.</div>
+    </div>
+</div>
+
+<h2>Task 5 &mdash; Reject a referral</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 5</span>
+        <span class="tname">Reject a pending referral with a reason</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>The referral is out of scope, duplicate, or otherwise not appropriate to fund.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div>Reject button on the referral detail page &rarr; modal &rarr; <code>POST /referrals/{id}/reject</code></div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Open the referral detail page (Task 3).</li>
+            <li>Confirm the status is <span class="pill pill-pending">Pending</span>. The Reject button only appears in this status.</li>
+            <li>Click the red <strong>Reject Referral</strong> button.</li>
+            <li>A modal appears with a required <strong>Reason for Rejection</strong> textarea. Write a clear, respectful explanation. The charity partner will see this verbatim.</li>
+            <li>Click <strong>Confirm Rejection</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/05-reject-modal.png" alt="Reject modal"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;05-reject-modal.png &mdash; the Reject Referral modal with the required Reason textarea&lt;/div&gt;'">
+            <figcaption>The rejection modal. The reason is required and shown to the charity partner.</figcaption>
+        </figure>
+
+        <h4>What happens behind the scenes</h4>
+        <table>
+            <tr><th style="width: 35%;">Change</th><th>Detail</th></tr>
+            <tr><td>Referral status</td><td><span class="pill pill-pending">Pending</span> &rarr; <span class="pill pill-rejected">Rejected</span></td></tr>
+            <tr><td>Reviewed by / at</td><td>Set to your user / current timestamp.</td></tr>
+            <tr><td>Rejection reason</td><td>Saved on the referral, visible to the charity partner.</td></tr>
+            <tr><td>Email notifications</td><td>A rejection notification email is sent asynchronously to the charity partner who created the referral.</td></tr>
+        </table>
+
+        <div class="danger"><strong>Reject reasons are seen by humans.</strong> The charity partner reads the reason and may share it with the participant. Be specific, factual, and kind. Avoid blame language. Examples: &quot;Out of catchment area &mdash; we serve only Tulsa County&quot;; &quot;Duplicate of referral REF-2026-0123 &mdash; please use that one&quot;; &quot;Pending verification of the situation &mdash; please resubmit with caseworker contact info.&quot;</div>
+    </div>
+</div>
+
+<h2>Task 6 &mdash; Browse bookings</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 6</span>
+        <span class="tname">Browse the bookings list</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>Tracking what's checked in, what's coming up, what's complete.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/bookings</code></div>
+        </div>
+
+        <p>This is the master list of every booking ever created for your charity, regardless of who created it. Optional <code>?status=</code> filter accepts: <code>PENDING</code>, <code>CONFIRMED</code>, <code>CHECKED_IN</code>, <code>CHECKED_OUT</code>, <code>CANCELLED</code>, <code>NO_SHOW</code>, <code>COMPLETED</code>.</p>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Click <strong>Bookings</strong> in the top navigation.</li>
+            <li>Each row shows confirmation code, participant name, location, check-in date, check-out date, status, and an action menu.</li>
+            <li>Click a row to open the booking detail page (Task 7+).</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/06-bookings-list.png" alt="Bookings list"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;06-bookings-list.png &mdash; the Bookings list with a mix of statuses including at least one Checked In booking&lt;/div&gt;'">
+            <figcaption>The bookings list with multiple statuses visible.</figcaption>
+        </figure>
+
+        <div class="info"><strong>Tip:</strong> Filter to <span class="pill pill-confirmed">Confirmed</span> to see all upcoming arrivals you'll need to check in soon. Filter to <span class="pill pill-checkedin">Checked In</span> to see who's currently on site.</div>
+    </div>
+</div>
+
+<h2>Task 7 &mdash; Create a booking from an approved referral</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 7</span>
+        <span class="tname">Create a booking from an approved referral</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>The referral is approved and you're ready to reserve a stay for the family.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>GET /charity-facilitator/bookings/new?referralId=X</code> &rarr; <code>POST /charity-facilitator/bookings/new</code></div>
+        </div>
+
+        <p>This is the heart of the facilitator's job: turning an approved referral into a real reservation. The booking form is long but most of it is pre-filled or optional. Required fields are marked with <span class="req">*</span>.</p>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>From an approved referral's detail page, click <strong>Create Booking</strong>. (You can only create a booking for an <span class="pill pill-approved">Approved</span> referral &mdash; the system will block other statuses.)</li>
+            <li>The form opens. The participant's name, email, and phone are pulled automatically from the referral.</li>
+            <li>If the participant chose a location via their public invite link, the form will already display a yellow callout reading &quot;Participant's preferred location: <em>{location}</em>&quot; and the location dropdown will be pre-set. <strong>Do not silently change this</strong> &mdash; if you must, document why in the Notes field.</li>
+            <li>Fill in the required fields: <strong>Location</strong> <span class="req">*</span>, <strong>Check-in Date</strong> <span class="req">*</span>, <strong>Check-out Date</strong> <span class="req">*</span>.</li>
+            <li>Optionally fill in time-of-day fields, special instructions, and any notes the location admin will need.</li>
+            <li>If a donation is funding this stay, see the <em>Funding from a donation</em> section below.</li>
+            <li>Click <strong>Create Booking</strong>. The page redirects to the bookings list with a success banner showing the new <strong>confirmation code</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/07-booking-form-top.png" alt="Booking form, top section"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;07-booking-form-top.png &mdash; the top of the booking creation form including the participant info readouts, the preferred-location callout, the location dropdown, and the date fields&lt;/div&gt;'">
+            <figcaption>The top of the booking form. Required fields are marked with red asterisks.</figcaption>
+        </figure>
+
+        <h4>The location dropdown</h4>
+        <p>Two groups appear:</p>
+        <ul>
+            <li><strong>Our Locations</strong> &mdash; charity locations belonging to your charity that are marked active.</li>
+            <li><strong>Partner Properties</strong> &mdash; properties owned by Location Partners that are linked to your charity. These show alongside city and state for clarity.</li>
+        </ul>
+        <p>You can pick from either group. The form's hidden <code>locationSelection</code> field encodes the choice as <code>charity:{id}</code> or <code>partner:{id}</code>; you don't need to think about that.</p>
+
+        <h4>Funding from a donation (optional but recommended)</h4>
+        <p>If a verified donation has nights or dollars remaining, you can fund this booking from it. The dropdown lists eligible donations with the donor name, original net amount, and remaining balance.</p>
+        <ol class="step-list">
+            <li>In the <strong>Fund from a Donation</strong> card, choose a donation from the dropdown.</li>
+            <li>The form auto-fills payment status to <strong>Program Funded</strong>, payment method to <strong>PROGRAM_FUNDED</strong>, and &quot;Paid by&quot; to the donor's display name.</li>
+            <li>Make sure the booking <strong>Cost</strong> field is set &mdash; it will be debited from the donation's remaining balance. If cost exceeds the remaining balance, the form will reject the submission with an error.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/08-booking-form-donation.png" alt="Booking form, donation section"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;08-booking-form-donation.png &mdash; the Fund from a Donation card with a donation selected, showing the auto-filled payment fields below&lt;/div&gt;'">
+            <figcaption>Selecting a donation auto-fills the payment fields.</figcaption>
+        </figure>
+
+        <h4>What happens behind the scenes on submit</h4>
+        <table>
+            <tr><th style="width: 35%;">Change</th><th>Detail</th></tr>
+            <tr><td>Booking record</td><td>Created in <span class="pill pill-pending">Pending</span> status (or whatever you selected).</td></tr>
+            <tr><td>Confirmation code</td><td>Generated automatically. Format: looks like <code>SN-XXXXXXXX</code>.</td></tr>
+            <tr><td>Participant snapshot</td><td>Name, email, phone copied from the referral onto the booking (so historical records survive even if the referral is later edited).</td></tr>
+            <tr><td>Partner property availability</td><td>For partner-property bookings: the matching availability window is consumed (split into BOOKED and surrounding AVAILABLE pieces).</td></tr>
+            <tr><td>Donation status</td><td>If donation-funded: donation moves <span class="pill pill-approved">Verified</span> &rarr; <em>Allocated</em>.</td></tr>
+            <tr><td>Booking confirmation email</td><td>Sent automatically to the participant if they have an email on file. Failure to send won't break the booking.</td></tr>
+        </table>
+
+        <div class="callout"><strong>Validation errors you might hit:</strong>
+            <ul style="margin-top: 4pt; margin-bottom: 0;">
+                <li><em>&quot;Can only create bookings for approved referrals&quot;</em> &mdash; the referral isn't approved.</li>
+                <li><em>&quot;Check-out date must be after check-in date&quot;</em> &mdash; dates inverted.</li>
+                <li><em>&quot;Booking must be for at least 1 night&quot;</em> &mdash; same day check-in/check-out is not allowed.</li>
+                <li><em>&quot;Your charity is not linked to that partner property&quot;</em> &mdash; you picked a partner location your charity isn't authorized for.</li>
+                <li><em>&quot;That partner property is not active&quot;</em> &mdash; the partner deactivated it.</li>
+                <li><em>&quot;Not enough donation funds available...&quot;</em> &mdash; the booking cost exceeds the donation's remaining balance.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<h2>Task 8 &mdash; Check in a guest</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 8</span>
+        <span class="tname">Mark a guest as checked in</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>The family has arrived at the location.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div>Booking detail page &rarr; <strong>Check In</strong> button</div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Open the booking from the bookings list.</li>
+            <li>Confirm the status is <span class="pill pill-confirmed">Confirmed</span> or <span class="pill pill-pending">Pending</span>. The Check In button only appears in those statuses.</li>
+            <li>Click the green <strong>Check In</strong> button.</li>
+            <li>A modal appears with an optional <strong>Check-in Notes</strong> textarea. Use it for things like &quot;arrived 7:30pm with all 3 children, no luggage&quot;.</li>
+            <li>Click <strong>Confirm Check-in</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/09-checkin-modal.png" alt="Check-in modal"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;09-checkin-modal.png &mdash; the Check-in modal with the optional notes textarea visible&lt;/div&gt;'">
+            <figcaption>Check-in modal. Notes are optional but recommended for the handoff record.</figcaption>
+        </figure>
+
+        <h4>What happens behind the scenes</h4>
+        <table>
+            <tr><th style="width: 35%;">Change</th><th>Detail</th></tr>
+            <tr><td>Booking status</td><td>&rarr; <span class="pill pill-checkedin">Checked In</span></td></tr>
+            <tr><td>Actual check-in timestamp</td><td>Set to the moment you clicked Confirm.</td></tr>
+            <tr><td>Admin notes</td><td>Your notes are appended with a timestamp prefix.</td></tr>
+        </table>
+    </div>
+</div>
+
+<h2>Task 9 &mdash; Check out a guest</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 9</span>
+        <span class="tname">Mark a guest as checked out</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>The family has left the location at the end of their stay.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div>Booking detail page &rarr; <strong>Check Out</strong> button</div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Open the booking detail page.</li>
+            <li>Confirm the status is <span class="pill pill-checkedin">Checked In</span>. The Check Out button only appears in this status.</li>
+            <li>Click the blue <strong>Check Out</strong> button.</li>
+            <li>A modal appears with an optional <strong>Check-out Notes</strong> textarea (e.g. &quot;Property left clean, no damage&quot;).</li>
+            <li>Click <strong>Confirm Check-out</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/10-checkout-modal.png" alt="Check-out modal"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;10-checkout-modal.png &mdash; the Check-out modal&lt;/div&gt;'">
+            <figcaption>Check-out modal.</figcaption>
+        </figure>
+
+        <h4>What happens behind the scenes</h4>
+        <table>
+            <tr><th style="width: 35%;">Change</th><th>Detail</th></tr>
+            <tr><td>Booking status</td><td>&rarr; <span class="pill pill-checkedout">Checked Out</span></td></tr>
+            <tr><td>Actual check-out timestamp</td><td>Set to the moment you clicked Confirm.</td></tr>
+            <tr><td>Admin notes</td><td>Your notes are appended with a timestamp prefix.</td></tr>
+        </table>
+
+        <div class="info"><strong>Note:</strong> &quot;Checked Out&quot; is distinct from &quot;Completed&quot;. Use Task 11 (Update Status) to mark a stay as fully completed once any post-stay paperwork is wrapped up, or leave it as Checked Out if completion isn't meaningful in your charity's process.</div>
+    </div>
+</div>
+
+<h2>Task 10 &mdash; Cancel a booking</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 10</span>
+        <span class="tname">Cancel a booking with a reason</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>The family won't stay (couldn't make it, found other housing, situation changed).</div>
+            <div class="meta-cell"><div class="meta-label">Where</div>Booking detail page &rarr; <strong>Cancel Booking</strong> button</div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Open the booking detail page.</li>
+            <li>Confirm the booking is not already <span class="pill pill-cancelled">Cancelled</span> or <span class="pill pill-completed">Completed</span> &mdash; the Cancel button is hidden in those states.</li>
+            <li>Click the red <strong>Cancel Booking</strong> button.</li>
+            <li>A modal appears with a <strong>required</strong> reason textarea. Enter a clear, factual reason.</li>
+            <li>Click <strong>Confirm Cancellation</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/11-cancel-booking-modal.png" alt="Cancel booking modal"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;11-cancel-booking-modal.png &mdash; the Cancel Booking modal with the required Reason textarea&lt;/div&gt;'">
+            <figcaption>Cancel Booking modal. Reason is required.</figcaption>
+        </figure>
+
+        <h4>What happens behind the scenes</h4>
+        <table>
+            <tr><th style="width: 35%;">Change</th><th>Detail</th></tr>
+            <tr><td>Booking status</td><td>&rarr; <span class="pill pill-cancelled">Cancelled</span></td></tr>
+            <tr><td>Admin notes</td><td>Your reason is appended with a &quot;CANCELLED -&quot; prefix and timestamp.</td></tr>
+            <tr><td>Partner property availability</td><td>If the booking was at a partner property: the BOOKED window is restored to <strong>AVAILABLE</strong>, and other charities may now book those dates.</td></tr>
+            <tr><td>Donation funds</td><td>If donation-funded: the donation's status is recalculated and may revert from <em>Allocated</em> back to <span class="pill pill-approved">Verified</span> if no other booking is consuming it. The funds are now available again for future bookings.</td></tr>
+        </table>
+
+        <div class="callout"><strong>Cancellations are not silent.</strong> If you're cancelling on behalf of a partner property or because of a donor-funded change, please tell the affected parties. The system handles the data side automatically; the human side is on you.</div>
+    </div>
+</div>
+
+<h2>Task 11 &mdash; Update a booking's status manually</h2>
+
+<div class="task">
+    <div class="task-banner">
+        <span class="tnum">TASK 11</span>
+        <span class="tname">Update booking status (catch-all)</span>
+    </div>
+    <div class="task-body">
+        <div class="meta-row">
+            <div class="meta-cell"><div class="meta-label">When</div>You need to set a status that the dedicated buttons don't cover &mdash; e.g. <em>No Show</em>, <em>Completed</em>, or correcting a wrong status.</div>
+            <div class="meta-cell"><div class="meta-label">Where</div>Booking detail page &rarr; <strong>Update Status</strong> button</div>
+        </div>
+
+        <h4>Steps</h4>
+        <ol class="step-list">
+            <li>Open the booking detail page.</li>
+            <li>Click <strong>Update Status</strong>.</li>
+            <li>Pick a status from the dropdown. Available values: <code>PENDING</code>, <code>CONFIRMED</code>, <code>CHECKED_IN</code>, <code>CHECKED_OUT</code>, <code>CANCELLED</code>, <code>NO_SHOW</code>, <code>COMPLETED</code>.</li>
+            <li>Optionally add <strong>Completion Notes</strong>.</li>
+            <li>Click <strong>Update Status</strong>.</li>
+        </ol>
+
+        <figure>
+            <img src="screenshots/facilitator/12-status-modal.png" alt="Update status modal"
+                 onerror="this.outerHTML='&lt;div class=&quot;placeholder&quot;&gt;&lt;strong&gt;Screenshot pending:&lt;/strong&gt; &lt;br&gt;12-status-modal.png &mdash; the Update Status modal with the dropdown open showing all status options&lt;/div&gt;'">
+            <figcaption>The catch-all Update Status modal.</figcaption>
+        </figure>
+
+        <div class="callout"><strong>Important:</strong> This action does <em>not</em> trigger side effects like releasing partner availability or recalculating donations. If you intend to cancel a booking, use Task 10 (Cancel Booking) &mdash; not this generic update &mdash; otherwise donation funds and partner availability will not be released. Use Update Status only for non-cancellation transitions.</div>
+    </div>
+</div>
+
+<h2>Common errors and what they mean</h2>
+
+<table>
+    <tr><th style="width: 45%;">Error message</th><th>What to do</th></tr>
+    <tr><td>&quot;Referral not found or access denied.&quot;</td><td>The referral belongs to a different charity than yours, or its ID is wrong. Go back to the Referrals list.</td></tr>
+    <tr><td>&quot;Only pending referrals can be approved/rejected&quot;</td><td>Someone has already actioned this referral. Refresh the page to see the current status.</td></tr>
+    <tr><td>&quot;Rejection reason is required&quot;</td><td>You submitted the reject modal with an empty reason. Fill it in.</td></tr>
+    <tr><td>&quot;Cancellation reason is required&quot;</td><td>Same idea for cancelling a booking.</td></tr>
+    <tr><td>&quot;Can only create bookings for approved referrals&quot;</td><td>The referral hasn't been approved (or was already cancelled). Approve it first.</td></tr>
+    <tr><td>&quot;Booking not found or access denied.&quot;</td><td>Cross-charity access attempt. Return to your bookings list.</td></tr>
+</table>
+
+<h2>Help and escalation</h2>
+
+<p>If a workflow gets stuck and a family is depending on it &mdash; for instance, a booking can't be created tonight and the family needs to be housed &mdash; do <strong>not</strong> work around the system by recording bookings outside SafelyNested. Instead, contact your SafelyNested administrator immediately and describe what you're trying to do, the error you're seeing, and the urgency. Edge cases (an admin needs to fix a stuck status, an emergency override) belong with the admin, not in shadow records.</p>
+
+<div class="footer">
+    SafelyNested &mdash; A Safe Place, Every Night<br>
+    Charity Facilitator &mdash; Daily Tasks Guide
+</div>
+
+</body>
+</html>

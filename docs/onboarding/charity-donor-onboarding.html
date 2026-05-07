@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Onboarding a Charity Donor on SafelyNested</title>
+<style>
+    @page { size: Letter; margin: 0.75in 0.7in; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1f2937; line-height: 1.55; font-size: 11pt;
+    }
+    a { color: #4f46e5; text-decoration: none; word-break: break-all; }
+    h1, h2, h3, h4 { color: #111827; line-height: 1.25; }
+    h1 { font-size: 26pt; margin: 0 0 4pt; letter-spacing: -0.5pt; }
+    h2 { font-size: 16pt; margin: 18pt 0 6pt; padding-bottom: 4pt; border-bottom: 2px solid #4f46e5; }
+    h3 { font-size: 13pt; margin: 12pt 0 4pt; color: #4338ca; }
+    h4 { font-size: 11pt; margin: 8pt 0 2pt; }
+    p { margin: 0 0 8pt; }
+    ul, ol { margin: 0 0 10pt 18pt; padding: 0; }
+    li { margin-bottom: 4pt; }
+    code, .url {
+        font-family: "Consolas", "Courier New", monospace;
+        background: #f3f4f6; padding: 1pt 5pt; border-radius: 3pt; font-size: 10pt; color: #1e293b;
+    }
+    .cover {
+        text-align: center; padding: 30pt 20pt 20pt;
+        border-bottom: 3px solid #4f46e5; margin-bottom: 18pt;
+    }
+    .cover img { width: 110pt; height: 110pt; object-fit: contain; margin: 0 auto 10pt; display: block; }
+    .cover .brand { font-size: 14pt; color: #4f46e5; font-weight: 700; letter-spacing: 1pt; margin-bottom: 4pt; }
+    .cover .tag { color: #6b7280; font-size: 11pt; font-style: italic; margin-top: 6pt; }
+    .lede {
+        background: #eef2ff; border-left: 4px solid #4f46e5;
+        padding: 10pt 14pt; margin: 12pt 0 18pt; border-radius: 4pt;
+    }
+    .step {
+        margin: 12pt 0; padding: 10pt 14pt 10pt 50pt; position: relative;
+        background: #f9fafb; border-radius: 6pt; page-break-inside: avoid;
+    }
+    .step .num {
+        position: absolute; left: 12pt; top: 10pt;
+        width: 28pt; height: 28pt; border-radius: 50%;
+        background: #4f46e5; color: #fff;
+        font-weight: 700; font-size: 13pt;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .step h3 { margin-top: 0; }
+    .callout {
+        background: #fef3c7; border-left: 4px solid #d97706;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt;
+        font-size: 10pt; page-break-inside: avoid;
+    }
+    .callout strong { color: #92400e; }
+    .info {
+        background: #ecfdf5; border-left: 4px solid #059669;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt; font-size: 10pt;
+    }
+    .info strong { color: #065f46; }
+    table { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 10pt; page-break-inside: avoid; }
+    th, td { text-align: left; padding: 6pt 8pt; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    th { background: #f3f4f6; font-weight: 600; color: #374151; }
+    .req { color: #dc2626; font-weight: 700; }
+    .path-box {
+        border: 1px solid #d1d5db; border-radius: 6pt; padding: 10pt 14pt; margin: 6pt 0;
+        background: #fff;
+    }
+    .path-box .path-label {
+        display: inline-block; padding: 2pt 8pt; background: #4f46e5; color: #fff;
+        border-radius: 3pt; font-size: 9pt; font-weight: 700; letter-spacing: 0.5pt;
+        margin-bottom: 6pt;
+    }
+    .footer {
+        margin-top: 24pt; padding-top: 10pt; border-top: 1px solid #e5e7eb;
+        font-size: 9pt; color: #6b7280; text-align: center;
+    }
+    .small { font-size: 9.5pt; color: #6b7280; }
+    @media print {
+        .step, .callout, .info, table, .path-box { page-break-inside: avoid; }
+        h2 { page-break-after: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <img src="logo.jpeg" alt="SafelyNested logo">
+    <div class="brand">SAFELYNESTED</div>
+    <h1>Onboarding a Charity Donor</h1>
+    <div class="tag">A guide for charity staff setting up donors in SafelyNested</div>
+</div>
+
+<div class="lede">
+    <strong>What this guide covers.</strong> How a Charity Partner or Charity Facilitator submits a request to set
+    up a donor &mdash; either by linking an existing donor in the system to your charity, or by registering a brand
+    new donor. All requests are reviewed by a SafelyNested administrator before the donor is added.
+</div>
+
+<h2>About donors on SafelyNested</h2>
+
+<p>A &quot;donor&quot; is an individual or organization who has given (or plans to give) money to your charity. Recording donors and their donations on the platform unlocks two things:</p>
+
+<ul>
+    <li>You can record their donations and pay the platform fee through the system.</li>
+    <li>Their donations can be used to <strong>fund actual bookings</strong> &mdash; nights of housing for families &mdash; with full traceability from donation through to a real stay.</li>
+</ul>
+
+<p>Because donor records affect financial flows and donor privacy, charities don't create donors directly. You submit a <strong>request</strong>, and a SafelyNested administrator reviews and approves it.</p>
+
+<div class="callout"><strong>Two kinds of requests:</strong>
+    <ul style="margin-top: 4pt; margin-bottom: 0;">
+        <li><strong>Link Existing Donor</strong> &mdash; the donor already exists somewhere else in SafelyNested (perhaps they've also given to another charity). You ask the admin to link them to your charity too.</li>
+        <li><strong>Register New Donor</strong> &mdash; the donor isn't in the system at all. You provide their details and the admin creates a brand-new donor record on approval.</li>
+    </ul>
+</div>
+
+<h2>Before you begin</h2>
+
+<table>
+    <tr><th style="width: 35%;">Prerequisite</th><th>Notes</th></tr>
+    <tr><td>You must be logged into your charity dashboard.</td><td>As a Charity Partner or Charity Facilitator.</td></tr>
+    <tr><td>For an <strong>existing donor</strong>: nothing extra.</td><td>You'll search for them by name or email inside the app.</td></tr>
+    <tr><td>For a <strong>new donor</strong>: have their details ready.</td><td>See the <em>What to gather for new donors</em> table below.</td></tr>
+</table>
+
+<h3>What to gather for a new donor</h3>
+<table>
+    <tr><th style="width: 22%;">Donor type</th><th>Required</th><th>Recommended</th></tr>
+    <tr>
+        <td><strong>Individual</strong></td>
+        <td>First name, Last name</td>
+        <td>Email, phone, mailing address, anonymity preference, preferred contact method</td>
+    </tr>
+    <tr>
+        <td><strong>Business / Organization</strong></td>
+        <td>Company / Organization name</td>
+        <td>Contact person name, Tax ID / EIN, email, phone, address, anonymity preference, preferred contact method</td>
+    </tr>
+</table>
+
+<h2>The donor setup flow</h2>
+
+<div class="step">
+    <div class="num">1</div>
+    <h3>Open the &quot;Set Up a Donor&quot; page</h3>
+    <p>Two ways to get there from your charity dashboard:</p>
+    <ul>
+        <li>From the <strong>Dashboard</strong>, click the green <strong>Set Up a Donor</strong> quick-action button.</li>
+        <li>Or, in the left sidebar click <strong>Donors</strong>, then click <strong>Set Up a Donor</strong> at the top of the list.</li>
+    </ul>
+    <p>You'll land on a page with two sections stacked vertically:</p>
+    <ul>
+        <li>Top: <strong>Search Existing Donors</strong></li>
+        <li>Bottom: <strong>Register New Donor</strong></li>
+    </ul>
+    <p>Always start with the search &mdash; it prevents duplicate donor records.</p>
+</div>
+
+<div class="path-box">
+    <span class="path-label">PATH A &mdash; LINK EXISTING DONOR</span>
+    <p style="margin: 0;">Use this if you suspect the donor may already be in the system (for example, they've previously given to another SafelyNested charity, or another team member registered them).</p>
+</div>
+
+<div class="step">
+    <div class="num">2</div>
+    <h3>Path A: search for the donor</h3>
+    <p>In the search box at the top of the page, type at least <strong>2 characters</strong> &mdash; name, email, or business name. Results appear automatically as you type.</p>
+    <p>Each result row shows:</p>
+    <ul>
+        <li><strong>Name</strong> &mdash; the donor's display name.</li>
+        <li><strong>Email</strong>.</li>
+        <li><strong>Type</strong> &mdash; Individual or Business / Organization.</li>
+        <li><strong>Status</strong> &mdash; Verified or Pending.</li>
+        <li><strong>Action</strong> &mdash; either a <strong>Select</strong> button, or an <em>Already Linked</em> badge if they're already part of your charity.</li>
+    </ul>
+    <p>Click <strong>Select</strong> next to the right donor.</p>
+    <div class="info"><strong>Tip:</strong> If you can't find the donor after a thorough search, scroll down and use Path B (Register New Donor) instead.</div>
+</div>
+
+<div class="step">
+    <div class="num">3</div>
+    <h3>Path A: submit the link request</h3>
+    <p>After selecting, a green confirmation card appears showing the donor's name and email. Below it:</p>
+    <ul>
+        <li><strong>Notes (optional)</strong> &mdash; a short explanation of why you want this donor linked. Helpful context for the admin (e.g., &quot;The Smith family has supported us for 3 years &mdash; recently moved their giving through SafelyNested&quot;).</li>
+    </ul>
+    <p>Click <strong>Submit Link Request</strong>. You'll see a green success message and be taken to your <strong>Donor Setup Requests</strong> page where the new request is listed with status <em>Pending</em> and a request number in the format <code>DSR-YYYY-NNNN</code>. Save this number.</p>
+</div>
+
+<div class="path-box">
+    <span class="path-label">PATH B &mdash; REGISTER NEW DONOR</span>
+    <p style="margin: 0;">Use this if your search returned no matching donor.</p>
+</div>
+
+<div class="step">
+    <div class="num">4</div>
+    <h3>Path B: choose the donor type</h3>
+    <p>Scroll to the <strong>Register New Donor</strong> section. At the top, choose:</p>
+    <ul>
+        <li><strong>Individual</strong> (the default) &mdash; for a person.</li>
+        <li><strong>Business / Organization</strong> &mdash; for a company, foundation, faith group, or similar entity.</li>
+    </ul>
+    <p>The form below adapts to the type you choose.</p>
+</div>
+
+<div class="step">
+    <div class="num">5</div>
+    <h3>Path B: fill in the donor's details</h3>
+    <p>Required fields are marked with a red asterisk on the form. Other fields are optional but help the admin verify the donor and help you stay in touch with them later.</p>
+
+    <h4>For an individual</h4>
+    <ul>
+        <li>First Name <span class="req">*</span></li>
+        <li>Last Name <span class="req">*</span></li>
+    </ul>
+
+    <h4>For a business / organization</h4>
+    <ul>
+        <li>Company / Organization Name <span class="req">*</span></li>
+        <li>Contact Person Name (the person at the organization you deal with)</li>
+        <li>Tax ID / EIN</li>
+    </ul>
+
+    <h4>Contact information (both types)</h4>
+    <ul>
+        <li>Email</li>
+        <li>Phone</li>
+    </ul>
+
+    <h4>Mailing address</h4>
+    <ul>
+        <li>Street Address, City, State, ZIP Code</li>
+    </ul>
+
+    <h4>Preferences</h4>
+    <ul>
+        <li><strong>Anonymity Preference</strong> &mdash; whether the donor wants to be acknowledged publicly, listed by name only with the charity, or stay fully anonymous. Pick what they've told you.</li>
+        <li><strong>Preferred Contact Method</strong> &mdash; email, phone, mail, or no contact.</li>
+    </ul>
+
+    <h4>Final field</h4>
+    <ul>
+        <li><strong>Notes</strong> &mdash; freeform notes for the SafelyNested admin reviewer (e.g. context for why the donor is being added, how the charity received the donation, etc.).</li>
+    </ul>
+</div>
+
+<div class="step">
+    <div class="num">6</div>
+    <h3>Path B: submit the new donor request</h3>
+    <p>The <strong>Requesting Charity</strong> field at the bottom is filled in automatically and locked &mdash; it confirms which charity the donor will be linked to.</p>
+    <p>Click <strong>Submit New Donor Request</strong>. You'll see a green success message and be taken to your <strong>Donor Setup Requests</strong> page. The request number (format <code>DSR-YYYY-NNNN</code>) appears in the list with status <em>Pending</em>.</p>
+    <div class="callout"><strong>Duplicate prevention:</strong> The system will reject a new-donor request if there's already a pending request with the same email at your charity, or if the existing donor is already linked to your charity. If you hit this, check your existing requests &mdash; the one you need is probably already there.</div>
+</div>
+
+<div class="step">
+    <div class="num">7</div>
+    <h3>Wait for admin review</h3>
+    <p>A SafelyNested administrator will review your request. They have three actions available:</p>
+    <ul>
+        <li><strong>Approve a Link request</strong> &mdash; the existing donor is immediately linked to your charity.</li>
+        <li><strong>Approve a New Donor request</strong> &mdash; a new donor record is created in the system, given an auto-generated username (e.g. <code>donor_first.last_NNNN</code>) and a temporary password, and immediately linked to your charity.</li>
+        <li><strong>Reject the request</strong> &mdash; with a written reason. You'll be able to read the reason on the requests page.</li>
+    </ul>
+    <p>Check the status of your requests anytime by clicking <strong>Donors</strong> in the sidebar, then <strong>View My Requests</strong>, or visiting <a class="url" href="https://safelynested.com/charity-partner/donors/setup-requests">/charity-partner/donors/setup-requests</a>. Filter by status (Pending, Approved, Rejected) using the buttons at the top.</p>
+</div>
+
+<div class="step">
+    <div class="num">8</div>
+    <h3>Once approved: the donor appears in your list</h3>
+    <p>An approved donor (whether linked or newly created) shows up in your charity's donor list at <code>/charity-partner/donors</code>. From there you can:</p>
+    <ul>
+        <li>See their contact information and preferences.</li>
+        <li>Record donations they've given to your charity.</li>
+        <li>Use those donations to fund bookings for families needing housing.</li>
+    </ul>
+    <div class="info"><strong>For newly created donors:</strong> If your donor needs to log in to SafelyNested themselves (for example, to view their donor dashboard and impact reports), the SafelyNested admin will provide their generated username and a temporary password through a separate channel. Coordinate with the admin to ensure this reaches the donor securely &mdash; never share login credentials over insecure email.</div>
+</div>
+
+<h2>Privacy and donor information</h2>
+
+<p>Donor information lives in SafelyNested with these protections:</p>
+<ul>
+    <li><strong>Anonymity preferences are honored</strong>: if a donor selects &quot;Fully Anonymous&quot;, their name is suppressed in donor-facing reports.</li>
+    <li><strong>Other charities cannot see your donors</strong> by default; only when an admin explicitly links them.</li>
+    <li><strong>Family / participant information is never visible to donors</strong> &mdash; donors see only the locations, dates, and number of nights their donations funded, never the names or details of the families staying.</li>
+</ul>
+
+<h2>Common issues</h2>
+
+<table>
+    <tr><th>Problem</th><th>What to do</th></tr>
+    <tr><td>Search returns &quot;Already Linked&quot; for a donor I'm trying to add.</td><td>That donor is already in your charity's donor list. Go to <strong>Donors</strong> in the sidebar &mdash; you'll find them there.</td></tr>
+    <tr><td>I get an error: &quot;A pending request already exists...&quot;.</td><td>Open <strong>Donors &rarr; View My Requests</strong> and look for the pending request &mdash; it's probably one you submitted earlier. No need to submit again.</td></tr>
+    <tr><td>I submitted a request days ago and it's still pending.</td><td>Contact your SafelyNested administrator with the request number (DSR-YYYY-NNNN). For requests that are blocking active fundraising or booking funding, mention the urgency.</td></tr>
+    <tr><td>My request was rejected and I disagree.</td><td>The rejection reason is shown on the requests page. You can submit a new request addressing the concern, or contact the admin to discuss.</td></tr>
+</table>
+
+<h2>Help and support</h2>
+<p>Donor records can directly fund housing for families in need. If a request is blocked or delayed and is preventing you from funding a booking, contact your SafelyNested administrator and explain the situation &mdash; we'll prioritize accordingly.</p>
+
+<div class="footer">
+    SafelyNested &mdash; A Safe Place, Every Night<br>
+    Charity Donor Onboarding Guide
+</div>
+
+</body>
+</html>

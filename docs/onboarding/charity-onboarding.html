@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Onboarding a Charity on SafelyNested</title>
+<style>
+    @page { size: Letter; margin: 0.75in 0.7in; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #1f2937; line-height: 1.55; font-size: 11pt;
+    }
+    a { color: #4f46e5; text-decoration: none; word-break: break-all; }
+    h1, h2, h3, h4 { color: #111827; line-height: 1.25; }
+    h1 { font-size: 26pt; margin: 0 0 4pt; letter-spacing: -0.5pt; }
+    h2 { font-size: 16pt; margin: 18pt 0 6pt; padding-bottom: 4pt; border-bottom: 2px solid #4f46e5; }
+    h3 { font-size: 13pt; margin: 12pt 0 4pt; color: #4338ca; }
+    h4 { font-size: 11pt; margin: 8pt 0 2pt; }
+    p { margin: 0 0 8pt; }
+    ul, ol { margin: 0 0 10pt 18pt; padding: 0; }
+    li { margin-bottom: 4pt; }
+    code, .url {
+        font-family: "Consolas", "Courier New", monospace;
+        background: #f3f4f6; padding: 1pt 5pt; border-radius: 3pt; font-size: 10pt; color: #1e293b;
+    }
+    .cover {
+        text-align: center; padding: 30pt 20pt 20pt;
+        border-bottom: 3px solid #4f46e5; margin-bottom: 18pt;
+    }
+    .cover img { width: 110pt; height: 110pt; object-fit: contain; margin: 0 auto 10pt; display: block; }
+    .cover .brand { font-size: 14pt; color: #4f46e5; font-weight: 700; letter-spacing: 1pt; margin-bottom: 4pt; }
+    .cover .tag { color: #6b7280; font-size: 11pt; font-style: italic; margin-top: 6pt; }
+    .lede {
+        background: #eef2ff; border-left: 4px solid #4f46e5;
+        padding: 10pt 14pt; margin: 12pt 0 18pt; border-radius: 4pt;
+    }
+    .step {
+        margin: 12pt 0; padding: 10pt 14pt 10pt 50pt; position: relative;
+        background: #f9fafb; border-radius: 6pt; page-break-inside: avoid;
+    }
+    .step .num {
+        position: absolute; left: 12pt; top: 10pt;
+        width: 28pt; height: 28pt; border-radius: 50%;
+        background: #4f46e5; color: #fff;
+        font-weight: 700; font-size: 13pt;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .step h3 { margin-top: 0; }
+    .callout {
+        background: #fef3c7; border-left: 4px solid #d97706;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt;
+        font-size: 10pt; page-break-inside: avoid;
+    }
+    .callout strong { color: #92400e; }
+    .info {
+        background: #ecfdf5; border-left: 4px solid #059669;
+        padding: 8pt 12pt; margin: 8pt 0; border-radius: 4pt; font-size: 10pt;
+    }
+    .info strong { color: #065f46; }
+    table { width: 100%; border-collapse: collapse; margin: 8pt 0 12pt; font-size: 10pt; page-break-inside: avoid; }
+    th, td { text-align: left; padding: 6pt 8pt; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    th { background: #f3f4f6; font-weight: 600; color: #374151; }
+    .req { color: #dc2626; font-weight: 700; }
+    .footer {
+        margin-top: 24pt; padding-top: 10pt; border-top: 1px solid #e5e7eb;
+        font-size: 9pt; color: #6b7280; text-align: center;
+    }
+    .small { font-size: 9.5pt; color: #6b7280; }
+    @media print {
+        .step, .callout, .info, table { page-break-inside: avoid; }
+        h2 { page-break-after: avoid; }
+    }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <img src="logo.jpeg" alt="SafelyNested logo">
+    <div class="brand">SAFELYNESTED</div>
+    <h1>Onboarding a Charity</h1>
+    <div class="tag">A guide for charity staff joining the SafelyNested platform</div>
+</div>
+
+<div class="lede">
+    <strong>What this guide covers.</strong> Every step a charity needs to take to join SafelyNested &mdash; from
+    submitting your application, to receiving approval, to creating the primary contact account that runs your
+    charity on the platform. This document is for the person at your organization who will lead the onboarding.
+</div>
+
+<h2>Before you begin</h2>
+
+<p>Joining SafelyNested takes about a week from application to active account. The process is:</p>
+
+<ol>
+    <li>You fill out a public application form on SafelyNested.</li>
+    <li>A SafelyNested administrator reviews your application.</li>
+    <li>If approved, your designated primary contact receives an email link to create their account.</li>
+    <li>The primary contact sets up their username and password and logs in.</li>
+</ol>
+
+<p>You do <strong>not</strong> need a SafelyNested account to apply. The application is open to the public.</p>
+
+<h3>What you'll need before you start</h3>
+<table>
+    <tr><th style="width: 35%;">Item</th><th>Notes</th></tr>
+    <tr><td>Organization name <span class="req">*</span></td><td>The legal or commonly used name of your charity.</td></tr>
+    <tr><td>Primary contact name <span class="req">*</span></td><td>The person who will run your charity's account on SafelyNested.</td></tr>
+    <tr><td>Primary contact email <span class="req">*</span></td><td>Used to verify your application <em>and</em> to create the account. Must be a real, monitored email address.</td></tr>
+    <tr><td>Organization type</td><td>Nonprofit, School, Church / Religious Organization, Government Agency, Community Organization, or Other.</td></tr>
+    <tr><td>EIN or Tax ID</td><td>Optional but recommended. Speeds up verification.</td></tr>
+    <tr><td>Mailing address</td><td>Street, city, state, ZIP, country.</td></tr>
+    <tr><td>Mission statement &amp; description</td><td>A few sentences each. Helps the reviewer understand who you serve.</td></tr>
+    <tr><td>Estimated referrals per month</td><td>Your best honest estimate.</td></tr>
+    <tr><td>Website (if you have one)</td><td>Optional. Helpful for verification.</td></tr>
+</table>
+<p class="small">Fields marked <span class="req">*</span> are required by the form. All others are optional but help the review move faster.</p>
+
+<h2>The 6-step onboarding flow</h2>
+
+<div class="step">
+    <div class="num">1</div>
+    <h3>Submit your application</h3>
+    <p>Open the application page in any browser:</p>
+    <p><a class="url" href="https://safelynested.com/charity-application/apply">safelynested.com/charity-application/apply</a></p>
+    <p>Fill out the form in full. Take your time on the description and mission statement &mdash; this is what the reviewer reads.</p>
+    <p>At the bottom, check the box agreeing to the <strong>SafelyNested Terms and Conditions</strong>, then click <strong>Submit Application</strong>.</p>
+    <div class="callout"><strong>Important:</strong> Only one pending application per email address is allowed. If you submit and then realize something needs to change, contact SafelyNested support rather than trying to submit again.</div>
+</div>
+
+<div class="step">
+    <div class="num">2</div>
+    <h3>Receive your confirmation email</h3>
+    <p>Within a few minutes you should receive an email titled:</p>
+    <p><code>Application Received: CA-YYYY-NNNN - SafelyNested</code></p>
+    <p>That code &mdash; <code>CA-YYYY-NNNN</code> &mdash; is your <strong>application number</strong>. Save it. You'll need it to check your status.</p>
+    <div class="info"><strong>Tip:</strong> If the email doesn't arrive within 15 minutes, check your spam or junk folder before contacting support.</div>
+</div>
+
+<div class="step">
+    <div class="num">3</div>
+    <h3>(Optional) Check your application status anytime</h3>
+    <p>If you want to confirm your application is in the queue, visit:</p>
+    <p><a class="url" href="https://safelynested.com/charity-application/status">safelynested.com/charity-application/status</a></p>
+    <p>Enter your application number and the email you applied with. The status will be one of:</p>
+    <ul>
+        <li><strong>Pending</strong> &mdash; received, awaiting review.</li>
+        <li><strong>Under Review</strong> &mdash; an administrator is actively looking at it.</li>
+        <li><strong>Approved</strong> &mdash; you should also have received the approval email (see Step 4).</li>
+        <li><strong>Rejected</strong> &mdash; an explanation will be in the rejection email.</li>
+    </ul>
+</div>
+
+<div class="step">
+    <div class="num">4</div>
+    <h3>Receive your approval email</h3>
+    <p>Once a SafelyNested administrator approves your application, the primary contact will receive an email titled:</p>
+    <p><code>Application Approved: CA-YYYY-NNNN - SafelyNested</code></p>
+    <p>The email contains a <strong>Create Your Account</strong> button. This button is unique to your charity and takes you to the registration page.</p>
+    <div class="callout"><strong>Time-sensitive:</strong> The Create Your Account link expires <strong>7 days</strong> after approval. If it expires before you finish, you'll need to contact SafelyNested support to issue a new link &mdash; the original cannot be reused.</div>
+</div>
+
+<div class="step">
+    <div class="num">5</div>
+    <h3>Create the primary contact account</h3>
+    <p>Click the <strong>Create Your Account</strong> button in the approval email. You'll land on a registration form pre-filled with your email address (read-only).</p>
+    <p>Fill in:</p>
+    <ul>
+        <li><strong>Username</strong> <span class="req">*</span> &mdash; what you'll type when you log in. Cannot be changed later without admin help, so choose carefully.</li>
+        <li><strong>Password</strong> <span class="req">*</span> &mdash; pick a strong password (12+ characters, mix of letters, numbers, symbols recommended).</li>
+        <li><strong>Confirm Password</strong> <span class="req">*</span> &mdash; type it again to catch typos.</li>
+        <li><strong>First name</strong> and <strong>last name</strong> &mdash; optional but recommended; appears across the platform.</li>
+        <li><strong>Phone</strong> &mdash; optional.</li>
+        <li><strong>Agree to the Terms and Conditions</strong> <span class="req">*</span> &mdash; required.</li>
+    </ul>
+    <p>Click <strong>Create Account</strong>. You'll be redirected to the login page with a success message.</p>
+    <div class="info"><strong>Behind the scenes:</strong> Two important things happen automatically when you complete this step:
+        <ul style="margin-top: 4pt;">
+            <li>Your account is set as the charity's <strong>primary contact</strong>. Only the primary contact can manage the team.</li>
+            <li>The domain of your email (for example, <code>shelterorg.com</code>) is locked in as the <strong>allowed team email domain</strong>. From now on, any team member you invite must have an email at the same domain. This prevents accidental invitations to outside parties.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="step">
+    <div class="num">6</div>
+    <h3>Log in and explore your dashboard</h3>
+    <p>You'll receive a welcome email titled:</p>
+    <p><code>Welcome to SafelyNested - {Your Charity Name}</code></p>
+    <p>Click <strong>Log In Now</strong> in the email, or go to <a class="url" href="https://safelynested.com/login">safelynested.com/login</a> and sign in with the username and password you just created.</p>
+    <p>You'll land on your <strong>Charity Partner Dashboard</strong>. From here you can:</p>
+    <ul>
+        <li>Create referrals for families needing housing.</li>
+        <li>Send invite links to participants.</li>
+        <li>Manage your charity's locations.</li>
+        <li>Set up donors (see the separate <em>Charity Donor Onboarding</em> guide).</li>
+        <li>Invite team members and (after admin promotion) facilitators &mdash; see the separate <em>Charity Facilitator Onboarding</em> guide.</li>
+    </ul>
+</div>
+
+<h2>What if your application is rejected?</h2>
+<p>If a reviewer determines your organization isn't a fit, you'll receive an email titled <code>Application Update: CA-YYYY-NNNN - SafelyNested</code>. The email contains a written reason. You're welcome to address the reason and submit a new application, or contact SafelyNested directly to discuss.</p>
+
+<h2>Help and support</h2>
+<p>If you run into any issue at any step &mdash; an email didn't arrive, a link expired, the form errored, anything &mdash; reach out to your SafelyNested administrator. Because this platform helps families find safe shelter, we treat onboarding issues as urgent.</p>
+
+<div class="footer">
+    SafelyNested &mdash; A Safe Place, Every Night<br>
+    Charity Onboarding Guide
+</div>
+
+</body>
+</html>
