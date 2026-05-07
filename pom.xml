@@ -111,6 +111,18 @@
 
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>docs/onboarding</directory>
+                <targetPath>static/help</targetPath>
+                <excludes>
+                    <exclude>**/SHOT-LIST.md</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

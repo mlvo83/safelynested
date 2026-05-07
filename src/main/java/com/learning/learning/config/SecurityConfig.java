@@ -60,6 +60,8 @@ public class SecurityConfig {
                         .requestMatchers("/stay-partner/**").permitAll()
                         .requestMatchers("/charity-application/**").permitAll()
                         .requestMatchers("/location-partner/register/**").permitAll()
+                        .requestMatchers("/help", "/help/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         // Public donate page disabled — donations are recorded by charity partners
                         // .requestMatchers("/donate/**").permitAll()
                         .requestMatchers("/api/stripe/**").permitAll()

@@ -36,4 +36,9 @@ public class HomeController {
     public String terms() {
         return "public/terms";
     }
+
+    @GetMapping("/help")
+    public String help() {
+        return "redirect:/help/index.html";
+    }
 }
