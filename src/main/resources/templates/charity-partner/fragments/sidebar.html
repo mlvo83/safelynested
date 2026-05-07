@@ -54,7 +54,7 @@
                 <i class="fas fa-building me-2"></i> Profile
             </a>
         </li>
-        <li class="nav-item" th:if="${isPrimaryContact}">
+        <li class="nav-item" th:if="${canManageTeam}">
             <a th:class="${activePage == 'team'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/team}">
                 <i class="fas fa-users me-2"></i> Team
             </a>

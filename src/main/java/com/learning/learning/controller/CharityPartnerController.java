@@ -106,6 +106,19 @@ public class CharityPartnerController {
         }
     }
 
+    @ModelAttribute("canManageTeam")
+    public Boolean canManageTeam(Principal principal) {
+        if (principal == null) return false;
+        try {
+            if (Boolean.TRUE.equals(isPrimaryContact(principal))) return true;
+            User user = userRepository.findByUsername(principal.getName()).orElse(null);
+            return user != null
+                    && (user.hasRole("ROLE_CHARITY_FACILITATOR") || user.hasRole("CHARITY_FACILITATOR"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     // ========================================
     // DASHBOARD
     // ========================================
@@ -1348,13 +1361,16 @@ public class CharityPartnerController {
         Charity charity = charityService.getCharityForUser(username);
         User user = userRepository.findByUsername(username).orElse(null);
 
-        // Only primary contact can access team page
+        // Primary contact OR Charity Facilitator can access the team page
         boolean isPrimary = charity.getPrimaryContact() != null
                 && user != null
                 && charity.getPrimaryContact().getId().equals(user.getId());
+        boolean isFacilitator = user != null
+                && (user.hasRole("ROLE_CHARITY_FACILITATOR") || user.hasRole("CHARITY_FACILITATOR"));
 
-        if (!isPrimary) {
-            redirectAttributes.addFlashAttribute("error", "Only the primary contact can manage team members.");
+        if (!isPrimary && !isFacilitator) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Only the primary contact or a charity facilitator can manage team members.");
             return "redirect:/charity-partner/dashboard";
         }
 

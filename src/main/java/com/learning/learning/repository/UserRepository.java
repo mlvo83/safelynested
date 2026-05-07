@@ -3,6 +3,7 @@ package com.learning.learning.repository;
 
 import com.learning.learning.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -24,4 +25,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByEnabledFalse();
 
     List<User> findByCharityId(Long charityId);
+
+    @Query("SELECT DISTINCT u FROM User u JOIN u.roles r " +
+           "WHERE u.charity IS NOT NULL " +
+           "AND r.name IN ('ROLE_CHARITY_FACILITATOR', 'CHARITY_FACILITATOR') " +
+           "ORDER BY u.charity.id, u.username")
+    List<User> findAllCharityFacilitators();
 }

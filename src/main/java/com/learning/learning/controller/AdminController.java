@@ -8,6 +8,7 @@ import com.learning.learning.entity.User;
 import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityRepository;
 import com.learning.learning.repository.DonationRepository;
+import com.learning.learning.repository.UserRepository;
 import com.learning.learning.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ public class AdminController {
 
     @Autowired
     private BookingRepository bookingRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // ========================================
     // USER MANAGEMENT
@@ -179,7 +183,13 @@ public class AdminController {
     @GetMapping("/charities")
     public String listCharities(Model model) {
         List<Charity> charities = charityRepository.findAll();
+
+        Map<Long, List<User>> facilitatorsByCharity = userRepository.findAllCharityFacilitators().stream()
+                .filter(u -> u.getCharity() != null)
+                .collect(Collectors.groupingBy(u -> u.getCharity().getId()));
+
         model.addAttribute("charities", charities);
+        model.addAttribute("facilitatorsByCharity", facilitatorsByCharity);
         return "admin/charities";
     }
 

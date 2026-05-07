@@ -194,6 +194,72 @@
             color: #666;
         }
 
+        .contact-cell {
+            min-width: 200px;
+        }
+
+        .contact-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .contact-username {
+            font-size: 12px;
+            color: #888;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        .badge-not-registered {
+            background: #fff4e5;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .followup-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .facilitators-cell {
+            min-width: 180px;
+            font-size: 13px;
+        }
+
+        .facilitator-row {
+            padding: 3px 0;
+            border-bottom: 1px dotted #eee;
+        }
+
+        .facilitator-row:last-child {
+            border-bottom: none;
+        }
+
+        .facilitator-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .facilitator-meta {
+            color: #888;
+            font-size: 11px;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        .badge-empty {
+            background: #f3f4f6;
+            color: #9ca3af;
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -232,7 +298,9 @@
             <tr>
                 <th>ID</th>
                 <th>Charity Name</th>
-                <th>Contact</th>
+                <th>Application Contact</th>
+                <th>Primary Contact</th>
+                <th>Facilitators</th>
                 <th>Location</th>
                 <th>Status</th>
                 <th>Verified</th>
@@ -246,10 +314,39 @@
                     <div class="charity-name" th:text="${charity.charityName}">Charity Name</div>
                     <div class="charity-contact" th:if="${charity.organizationType}" th:text="${charity.organizationType}">Non-profit</div>
                 </td>
-                <td>
+                <td class="contact-cell">
                     <div th:if="${charity.contactName}" th:text="${charity.contactName}">John Doe</div>
                     <div class="charity-contact" th:if="${charity.contactEmail}" th:text="${charity.contactEmail}">email@example.com</div>
                     <div class="charity-contact" th:if="${charity.contactPhone}" th:text="${charity.contactPhone}">555-1234</div>
+                </td>
+                <td class="contact-cell">
+                    <div th:if="${charity.primaryContact != null}">
+                        <div class="contact-name" th:text="${charity.primaryContact.fullName != null and !#strings.isEmpty(charity.primaryContact.fullName) ? charity.primaryContact.fullName : charity.primaryContact.username}">Jane Smith</div>
+                        <div class="contact-username">@<span th:text="${charity.primaryContact.username}">jsmith</span></div>
+                        <div class="charity-contact" th:if="${charity.primaryContact.email}" th:text="${charity.primaryContact.email}">jane@org.com</div>
+                        <div class="charity-contact" th:if="${charity.primaryContact.phone}" th:text="${charity.primaryContact.phone}">555-1234</div>
+                    </div>
+                    <div th:if="${charity.primaryContact == null}">
+                        <span class="badge-not-registered">Not registered yet</span>
+                        <div class="followup-hint" th:if="${charity.contactEmail}">
+                            Follow up: <span th:text="${charity.contactEmail}">email</span>
+                        </div>
+                    </div>
+                </td>
+                <td class="facilitators-cell">
+                    <div th:with="facilitators=${facilitatorsByCharity != null ? facilitatorsByCharity.get(charity.id) : null}">
+                        <div th:if="${facilitators != null and !facilitators.isEmpty()}">
+                            <div class="facilitator-row" th:each="fac : ${facilitators}">
+                                <div class="facilitator-name" th:text="${fac.fullName}">Jane Smith</div>
+                                <div class="facilitator-meta">
+                                    ID <span th:text="${fac.id}">42</span>
+                                    &middot; @<span th:text="${fac.username}">jsmith</span>
+                                </div>
+                                <div class="charity-contact" th:if="${fac.email}" th:text="${fac.email}">email</div>
+                            </div>
+                        </div>
+                        <span th:if="${facilitators == null or facilitators.isEmpty()}" class="badge-empty">No facilitators</span>
+                    </div>
                 </td>
                 <td>
                     <span th:if="${charity.city}" th:text="${charity.city + ', ' + (charity.state ?: '')}">City, State</span>
