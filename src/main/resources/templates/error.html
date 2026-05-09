@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${status != null ? status + ' &mdash; SafelyNested' : 'Something went wrong &mdash; SafelyNested'}">Error - SafelyNested</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #1f2937;
+        }
+        .card {
+            background: #fff;
+            max-width: 540px;
+            width: 100%;
+            padding: 40px 36px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+        .icon {
+            font-size: 56px;
+            line-height: 1;
+            margin-bottom: 14px;
+        }
+        .icon.not-found { color: #4f46e5; }
+        .icon.server { color: #dc2626; }
+        .icon.generic { color: #6b7280; }
+        .status {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+        h1 {
+            font-size: 28px;
+            color: #111827;
+            margin-bottom: 12px;
+            line-height: 1.2;
+        }
+        p.message {
+            color: #4b5563;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 22px;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: 11px 22px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+        .btn-primary {
+            background: #4f46e5;
+            color: #fff;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4338ca;
+            border: 1px solid #e0e7ff;
+        }
+        .path {
+            display: inline-block;
+            margin-top: 14px;
+            padding: 4px 10px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 12px;
+            color: #4b5563;
+            word-break: break-all;
+        }
+        .footer {
+            margin-top: 24px;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+    <!-- 404 -->
+    <div th:if="${status != null and status == 404}">
+        <div class="icon not-found">🧭</div>
+        <div class="status">404 &mdash; Not Found</div>
+        <h1>We couldn't find that page.</h1>
+        <p class="message">
+            The link you followed may be broken, or the page may have been moved. Double-check the URL,
+            or head back home to find what you were looking for.
+        </p>
+    </div>
+
+    <!-- 5xx server error -->
+    <div th:if="${status != null and status >= 500}">
+        <div class="icon server">⚠️</div>
+        <div class="status" th:text="${status} + ' &mdash; ' + (${error} ?: 'Server Error')">500 — Server Error</div>
+        <h1>Something went wrong on our end.</h1>
+        <p class="message">
+            The team has been notified and we're looking into it. If this is urgent &mdash; for instance,
+            you're trying to confirm housing for a family tonight &mdash; contact your SafelyNested
+            administrator directly.
+        </p>
+    </div>
+
+    <!-- 4xx other (401, 403, 405, 400, etc.) -->
+    <div th:if="${status != null and status &gt;= 400 and status &lt; 500 and status != 404}">
+        <div class="icon generic">🔒</div>
+        <div class="status" th:text="${status} + ' &mdash; ' + (${error} ?: 'Request Error')">400 — Request Error</div>
+        <h1>That request couldn't be completed.</h1>
+        <p class="message" th:if="${status == 401}">
+            You need to sign in to view this page.
+        </p>
+        <p class="message" th:if="${status == 403}">
+            Your account doesn't have permission to access that page.
+        </p>
+        <p class="message" th:if="${status != 401 and status != 403}">
+            The request couldn't be processed. Try again, or head back home and start over.
+        </p>
+    </div>
+
+    <!-- Status missing or unknown -->
+    <div th:if="${status == null or status &lt; 400}">
+        <div class="icon generic">😕</div>
+        <div class="status">Unexpected Error</div>
+        <h1>Something didn't work as expected.</h1>
+        <p class="message">
+            We're not sure what happened. Try going back home and giving it another shot.
+        </p>
+    </div>
+
+    <div class="actions">
+        <a href="/" class="btn btn-primary">Back to home</a>
+        <a href="/login" class="btn btn-secondary">Sign in</a>
+    </div>
+
+    <div class="path" th:if="${path != null and !#strings.isEmpty(path)}"
+         th:text="${path}">/some/path</div>
+
+    <div class="footer">SafelyNested &mdash; A Safe Place, Every Night</div>
+</div>
+
+</body>
+</html>
