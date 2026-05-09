@@ -35,11 +35,21 @@
                         Donors supporting <strong th:text="${charity.charityName}">Charity Name</strong>
                     </p>
                 </div>
-                <a th:href="@{/charity-partner/{cid}/donors/setup(cid=${charity.id})}"
-                   class="btn btn-success"
-                   sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
-                    <i class="fas fa-user-plus me-1"></i> Set Up a Donor
-                </a>
+                <div class="d-flex gap-2 align-items-center">
+                    <a th:href="@{/charity-partner/{cid}/donors/setup-requests(cid=${charity.id})}"
+                       class="btn btn-outline-primary"
+                       sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
+                        <i class="fas fa-list me-1"></i> View My Requests
+                        <span th:if="${pendingDonorSetupCount != null and pendingDonorSetupCount > 0}"
+                              class="badge rounded-pill bg-warning text-dark ms-1"
+                              th:text="${pendingDonorSetupCount}">0</span>
+                    </a>
+                    <a th:href="@{/charity-partner/{cid}/donors/setup(cid=${charity.id})}"
+                       class="btn btn-success"
+                       sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
+                        <i class="fas fa-user-plus me-1"></i> Set Up a Donor
+                    </a>
+                </div>
             </div>
 
             <!-- Alert Messages -->

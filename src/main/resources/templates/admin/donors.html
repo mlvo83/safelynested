@@ -162,6 +162,39 @@
             margin-top: 5px;
         }
 
+        a.stat-card {
+            display: block;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        a.stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            text-decoration: none;
+        }
+        .stat-card.pending {
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+        }
+        .stat-card.pending .stat-value {
+            color: #c2410c;
+        }
+        .stat-card.pending .stat-label {
+            color: #9a3412;
+            font-weight: 600;
+        }
+        .stat-card.pending.zero {
+            background: white;
+            border: 1px solid #e5e7eb;
+        }
+        .stat-card.pending.zero .stat-value {
+            color: #9ca3af;
+        }
+        .stat-card.pending.zero .stat-label {
+            color: #6b7280;
+            font-weight: normal;
+        }
+
         .card {
             background: white;
             border-radius: 10px;
@@ -304,6 +337,13 @@
             <div class="stat-value" th:text="${donors.?[user.enabled == true].size()}">0</div>
             <div class="stat-label">Active Accounts</div>
         </div>
+        <a th:href="@{/admin/donors/setup-requests(status='PENDING')}"
+           class="stat-card pending"
+           th:classappend="${pendingSetupRequestCount == null or pendingSetupRequestCount == 0} ? 'zero' : ''"
+           th:title="'Click to review pending setup requests'">
+            <div class="stat-value" th:text="${pendingSetupRequestCount} ?: 0">0</div>
+            <div class="stat-label">Pending Setup Requests</div>
+        </a>
     </div>
 
     <div class="card">
