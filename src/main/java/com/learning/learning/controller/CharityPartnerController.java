@@ -185,7 +185,7 @@ public class CharityPartnerController {
      * CHARITY_FACILITATOR for this charity, or a MULTI_FACILITATOR
      * authorized via multi_facilitator_charities.
      */
-    @GetMapping("/dashboard/{charityId}")
+    @GetMapping({"/{charityId}/dashboard", "/dashboard/{charityId}"})
     public String dashboardForCharity(@PathVariable Long charityId, Model model, Principal principal) {
         String username = principal.getName();
 
