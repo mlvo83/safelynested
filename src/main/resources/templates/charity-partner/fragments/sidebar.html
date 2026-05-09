@@ -9,8 +9,9 @@
         <small class="text-white-50">Charity Partner Portal</small>
     </div>
     <ul class="nav flex-column">
-        <li class="nav-item">
-            <a th:class="${activePage == 'dashboard'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/dashboard}">
+        <li class="nav-item" th:if="${charity != null}">
+            <a th:class="${activePage == 'dashboard'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/dashboard(cid=${charity.id})}">
                 <i class="fas fa-tachometer-alt me-2"></i> Dashboard
             </a>
         </li>
