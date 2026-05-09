@@ -220,10 +220,10 @@
 <nav class="navbar">
     <div class="navbar-brand">Charity Facilitator Portal</div>
     <div class="nav-links">
-        <a th:href="@{/charity-facilitator/dashboard}" class="nav-link">Dashboard</a>
-        <a th:href="@{/charity-facilitator/referrals}" class="nav-link">Referrals</a>
-        <a th:href="@{/charity-facilitator/bookings}" class="nav-link">Bookings</a>
-        <a th:href="@{/charity-partner/dashboard}" class="nav-link">Charity View</a>
+        <a th:href="@{/charity-facilitator/{cid}/dashboard(cid=${charity.id})}" class="nav-link">Dashboard</a>
+        <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="nav-link">Referrals</a>
+        <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id})}" class="nav-link">Bookings</a>
+        <a th:href="${isMultiFacilitator} ? @{/charity-partner/dashboard/{cid}(cid=${charity.id})} : @{/charity-partner/dashboard}" class="nav-link">Charity View</a>
     </div>
     <div class="navbar-right">
         <div class="user-info">
@@ -235,6 +235,8 @@
         </form>
     </div>
 </nav>
+
+<div th:replace="~{charity-facilitator/fragments/operating-banner :: operatingBanner}"></div>
 
 <div class="container">
     <div class="welcome-card">
@@ -287,31 +289,31 @@
         <div class="card">
             <h3>Review Pending Referrals</h3>
             <p>Review and approve or reject pending referrals for your charity.</p>
-            <a th:href="@{/charity-facilitator/referrals?status=PENDING}" class="card-link">Review Pending</a>
+            <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id},status='PENDING')}" class="card-link">Review Pending</a>
         </div>
 
         <div class="card">
             <h3>View All Referrals</h3>
             <p>See all referrals for your charity with their current status.</p>
-            <a th:href="@{/charity-facilitator/referrals}" class="card-link">View Referrals</a>
+            <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="card-link">View Referrals</a>
         </div>
 
         <div class="card">
             <h3>Manage Bookings</h3>
             <p>View and manage bookings, check-in and check-out guests.</p>
-            <a th:href="@{/charity-facilitator/bookings}" class="card-link">View Bookings</a>
+            <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id})}" class="card-link">View Bookings</a>
         </div>
 
         <div class="card">
             <h3>Set Up a Donor</h3>
             <p>Search for an existing donor or request a new donor account for your charity.</p>
-            <a th:href="@{/charity-partner/donors/setup}" class="card-link">Set Up a Donor</a>
+            <a th:href="@{/charity-partner/{cid}/donors/setup(cid=${charity.id})}" class="card-link">Set Up a Donor</a>
         </div>
 
         <div class="card">
             <h3>Charity Dashboard</h3>
             <p>View the charity dashboard to see invites, documents, and locations.</p>
-            <a th:href="@{/charity-partner/dashboard}" class="card-link secondary">Go to Charity View</a>
+            <a th:href="${isMultiFacilitator} ? @{/charity-partner/dashboard/{cid}(cid=${charity.id})} : @{/charity-partner/dashboard}" class="card-link secondary">Go to Charity View</a>
         </div>
     </div>
 </div>

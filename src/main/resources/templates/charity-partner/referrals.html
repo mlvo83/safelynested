@@ -38,7 +38,7 @@
                 <h1 class="h2">
                     <i class="fas fa-file-alt text-purple me-2"></i>Our Referrals
                 </h1>
-                <a th:href="@{/charity-partner/referrals/new}" class="btn btn-primary" sec:authorize="hasRole('CHARITY_PARTNER')">
+                <a th:href="@{/charity-partner/{cid}/referrals/new(cid=${charity.id})}" class="btn btn-primary" sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                     <i class="fas fa-plus me-1"></i> New Referral
                 </a>
             </div>
@@ -59,33 +59,33 @@
             <div class="card mb-4">
                 <div class="card-body py-2">
                     <div class="d-flex flex-wrap gap-2">
-                        <a th:href="@{/charity-partner/referrals}"
+                        <a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id})}"
                            th:class="${currentStatus == null} ? 'btn btn-primary btn-sm' : 'btn btn-outline-secondary btn-sm'">
                             All
                         </a>
-                        <a th:href="@{/charity-partner/referrals(status='PENDING')}"
+                        <a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id},status='PENDING')}"
                            th:class="${currentStatus == 'PENDING'} ? 'btn btn-warning btn-sm' : 'btn btn-outline-secondary btn-sm'">
                             <i class="fas fa-clock me-1"></i> Pending
                         </a>
-                        <a th:href="@{/charity-partner/referrals(status='APPROVED')}"
+                        <a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id},status='APPROVED')}"
                            th:class="${currentStatus == 'APPROVED'} ? 'btn btn-success btn-sm' : 'btn btn-outline-secondary btn-sm'">
                             <i class="fas fa-check me-1"></i> Approved
                         </a>
-                        <a th:href="@{/charity-partner/referrals(status='REJECTED')}"
+                        <a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id},status='REJECTED')}"
                            th:class="${currentStatus == 'REJECTED'} ? 'btn btn-danger btn-sm' : 'btn btn-outline-secondary btn-sm'">
                             <i class="fas fa-times me-1"></i> Rejected
                         </a>
-                        <a th:href="@{/charity-partner/referrals(status='COMPLETED')}"
+                        <a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id},status='COMPLETED')}"
                            th:class="${currentStatus == 'COMPLETED'} ? 'btn btn-info btn-sm' : 'btn btn-outline-secondary btn-sm'">
                             <i class="fas fa-check-double me-1"></i> Completed
                         </a>
-                        <a th:href="@{/charity-partner/referrals(status='CANCELLED')}"
+                        <a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id},status='CANCELLED')}"
                            th:class="${currentStatus == 'CANCELLED'} ? 'btn btn-secondary btn-sm' : 'btn btn-outline-secondary btn-sm'">
                             <i class="fas fa-ban me-1"></i> Cancelled
                         </a>
 
                         <!-- Search -->
-                        <form th:action="@{/charity-partner/referrals}" method="get" class="d-flex ms-auto">
+                        <form th:action="@{/charity-partner/{cid}/referrals(cid=${charity.id})}" method="get" class="d-flex ms-auto">
                             <input type="text" name="search" class="form-control form-control-sm"
                                    placeholder="Search by name or ref#..."
                                    th:value="${searchTerm}" style="width: 200px;">
@@ -139,15 +139,15 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <a th:href="@{/charity-partner/referrals/{id}(id=${ref.id})}"
+                                        <a th:href="@{/charity-partner/{cid}/referrals/{id}(cid=${charity.id},id=${ref.id})}"
                                            class="btn btn-outline-primary" title="View Details">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <!-- Edit button - only for PENDING referrals and CHARITY_PARTNER -->
                                         <a th:if="${ref.status.name() == 'PENDING'}"
-                                           th:href="@{/charity-partner/referrals/{id}/edit(id=${ref.id})}"
+                                           th:href="@{/charity-partner/{cid}/referrals/{id}/edit(cid=${charity.id},id=${ref.id})}"
                                            class="btn btn-outline-secondary" title="Edit"
-                                           sec:authorize="hasRole('CHARITY_PARTNER')">
+                                           sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <!-- Cancel button - not for COMPLETED or CANCELLED, only CHARITY_PARTNER -->
@@ -157,14 +157,14 @@
                                                 th:data-id="${ref.id}"
                                                 th:data-name="${ref.participantName}"
                                                 onclick="showCancelModal(this.getAttribute('data-id'), this.getAttribute('data-name'))"
-                                                sec:authorize="hasRole('CHARITY_PARTNER')">
+                                                sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                                             <i class="fas fa-ban"></i>
                                         </button>
                                         <!-- Send Invite - only for APPROVED referrals and CHARITY_PARTNER -->
                                         <a th:if="${ref.status.name() == 'APPROVED'}"
-                                           th:href="@{/charity-partner/invites/send(referralId=${ref.id})}"
+                                           th:href="@{/charity-partner/{cid}/invites/send(cid=${charity.id},referralId=${ref.id})}"
                                            class="btn btn-outline-success" title="Send Invite"
-                                           sec:authorize="hasRole('CHARITY_PARTNER')">
+                                           sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                                             <i class="fas fa-paper-plane"></i>
                                         </a>
                                     </div>
@@ -187,7 +187,7 @@
                         <p class="text-muted" th:if="${currentStatus == null and (searchTerm == null or searchTerm.isEmpty())}">
                             You haven't created any referrals yet.
                         </p>
-                        <a th:href="@{/charity-partner/referrals/new}" class="btn btn-primary mt-2" sec:authorize="hasRole('CHARITY_PARTNER')">
+                        <a th:href="@{/charity-partner/{cid}/referrals/new(cid=${charity.id})}" class="btn btn-primary mt-2" sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                             <i class="fas fa-plus me-1"></i> Create Your First Referral
                         </a>
                     </div>

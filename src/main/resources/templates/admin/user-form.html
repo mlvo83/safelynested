@@ -306,6 +306,38 @@
                 <a th:href="@{/admin/charities/new}">Create a charity</a> first to assign users.
             </div>
 
+            <!-- Multi-Charity Authorizations (only relevant when MULTI_FACILITATOR role is checked) -->
+            <div id="multiCharitySection"
+                 class="charity-section"
+                 style="display: none; margin-top: 15px; background: #ecfdf5; border: 1px solid #a7f3d0;">
+                <div class="charity-section-title" style="color: #065f46;">Multi-Charity Authorizations</div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Charities this user can facilitate for</label>
+                    <div th:if="${charities != null and !#lists.isEmpty(charities)}"
+                         style="max-height: 220px; overflow-y: auto; border: 1px solid #d1d5db; border-radius: 5px; padding: 10px; background: white;">
+                        <div th:each="charity : ${charities}" style="margin-bottom: 6px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 400; cursor: pointer;">
+                                <input type="checkbox"
+                                       name="multiFacilitatorCharityIds"
+                                       th:value="${charity.id}"
+                                       th:checked="${userDto.multiFacilitatorCharityIds != null and userDto.multiFacilitatorCharityIds.contains(charity.id)}">
+                                <span>
+                                    <strong th:text="${charity.charityName}">Charity Name</strong>
+                                    <span style="color: #6b7280; font-size: 13px;"
+                                          th:if="${charity.city}"
+                                          th:text="' — ' + ${charity.city} + (${charity.state} != null ? ', ' + ${charity.state} : '')">
+                                        — City, ST
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="help-text">
+                        Pick every charity this multi-facilitator should have access to. They'll see one card per charity on their hub when they log in.
+                    </div>
+                </div>
+            </div>
+
             <div class="button-group">
                 <a th:href="@{/admin/users}" class="btn btn-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary"
@@ -314,5 +346,36 @@
         </form>
     </div>
 </div>
+<script>
+    // Toggle the Multi-Charity Authorizations section based on whether
+    // ROLE_MULTI_FACILITATOR is checked.
+    (function() {
+        const section = document.getElementById('multiCharitySection');
+        if (!section) return;
+
+        function getMultiCheckbox() {
+            const boxes = document.querySelectorAll('input[type="checkbox"][name="roles"]');
+            for (const box of boxes) {
+                if (box.value === 'ROLE_MULTI_FACILITATOR' || box.value === 'MULTI_FACILITATOR') {
+                    return box;
+                }
+            }
+            return null;
+        }
+
+        function refresh() {
+            const cb = getMultiCheckbox();
+            section.style.display = (cb && cb.checked) ? 'block' : 'none';
+        }
+
+        // Initial state on page load
+        refresh();
+
+        // React to role changes
+        document.querySelectorAll('input[type="checkbox"][name="roles"]').forEach(box => {
+            box.addEventListener('change', refresh);
+        });
+    })();
+</script>
 </body>
 </html>

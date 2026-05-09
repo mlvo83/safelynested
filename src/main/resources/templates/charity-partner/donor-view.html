@@ -26,7 +26,7 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-1">
                             <li class="breadcrumb-item"><a th:href="@{/charity-partner/dashboard}">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/donors}">Donors</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/{cid}/donors(cid=${charity.id})}">Donors</a></li>
                             <li class="breadcrumb-item active">Donor Details</li>
                         </ol>
                     </nav>
@@ -44,7 +44,7 @@
                         Member since <span th:text="${donor.createdAt != null} ? ${#temporals.format(donor.createdAt, 'MMMM d, yyyy')} : 'Unknown'">January 1, 2024</span>
                     </p>
                 </div>
-                <a th:href="@{/charity-partner/donors}" class="btn btn-outline-secondary">
+                <a th:href="@{/charity-partner/{cid}/donors(cid=${charity.id})}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Back to Donors
                 </a>
             </div>

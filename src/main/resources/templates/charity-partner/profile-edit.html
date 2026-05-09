@@ -22,7 +22,7 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-1">
                             <li class="breadcrumb-item"><a href="/charity-partner/dashboard">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a href="/charity-partner/profile">Profile</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/{cid}/profile(cid=${charity.id})}">Profile</a></li>
                             <li class="breadcrumb-item active">Edit</li>
                         </ol>
                     </nav>
@@ -36,7 +36,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
 
-            <form action="/charity-partner/profile/edit" method="post" th:object="${charity}">
+            <form th:action="@{/charity-partner/{cid}/profile/edit(cid=${charity.id})}" method="post" th:object="${charity}">
                 <div class="row">
                     <div class="col-lg-8">
                         <!-- Organization Info -->
@@ -194,7 +194,7 @@
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-save me-1"></i> Save Changes
                                     </button>
-                                    <a href="/charity-partner/profile" class="btn btn-outline-secondary">
+                                    <a th:href="@{/charity-partner/{cid}/profile(cid=${charity.id})}" class="btn btn-outline-secondary">
                                         <i class="fas fa-times me-1"></i> Cancel
                                     </a>
                                 </div>

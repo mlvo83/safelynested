@@ -315,12 +315,14 @@
 <nav class="navbar">
     <div class="navbar-brand">Charity Facilitator Portal</div>
     <div class="nav-links">
-        <a th:href="@{/charity-facilitator/dashboard}" class="nav-link">Dashboard</a>
-        <a th:href="@{/charity-facilitator/referrals}" class="nav-link">Referrals</a>
-        <a th:href="@{/charity-facilitator/bookings}" class="nav-link">Bookings</a>
-        <a th:href="@{/charity-partner/dashboard}" class="nav-link">Charity View</a>
+        <a th:href="@{/charity-facilitator/{cid}/dashboard(cid=${charity.id})}" class="nav-link">Dashboard</a>
+        <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="nav-link">Referrals</a>
+        <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id})}" class="nav-link">Bookings</a>
+        <a th:href="${isMultiFacilitator} ? @{/charity-partner/dashboard/{cid}(cid=${charity.id})} : @{/charity-partner/dashboard}" class="nav-link">Charity View</a>
     </div>
 </nav>
+
+<div th:replace="~{charity-facilitator/fragments/operating-banner :: operatingBanner}"></div>
 
 <div class="container">
     <div class="header">
@@ -337,19 +339,19 @@
     </div>
 
     <div class="filter-tabs">
-        <a th:href="@{/charity-facilitator/referrals}"
+        <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}"
            th:class="${selectedStatus == null} ? 'filter-tab active' : 'filter-tab'">
             All Referrals
         </a>
-        <a th:href="@{/charity-facilitator/referrals(status='PENDING')}"
+        <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id},status='PENDING')}"
            th:class="${selectedStatus == 'PENDING'} ? 'filter-tab active' : 'filter-tab'">
             Pending
         </a>
-        <a th:href="@{/charity-facilitator/referrals(status='APPROVED')}"
+        <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id},status='APPROVED')}"
            th:class="${selectedStatus == 'APPROVED'} ? 'filter-tab active' : 'filter-tab'">
             Approved
         </a>
-        <a th:href="@{/charity-facilitator/referrals(status='REJECTED')}"
+        <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id},status='REJECTED')}"
            th:class="${selectedStatus == 'REJECTED'} ? 'filter-tab active' : 'filter-tab'">
             Rejected
         </a>
@@ -391,7 +393,7 @@
                 <td th:text="${#temporals.format(referral.createdAt, 'yyyy-MM-dd')}">2024-01-01</td>
                 <td>
                     <div class="action-buttons">
-                        <a th:href="@{/charity-facilitator/referrals/{id}(id=${referral.id})}"
+                        <a th:href="@{/charity-facilitator/{cid}/referrals/{id}(cid=${charity.id},id=${referral.id})}"
                            class="btn btn-view">View</a>
 
                         <button th:if="${referral.status.name() == 'PENDING'}"
@@ -405,11 +407,11 @@
                                 class="btn btn-reject">Reject</button>
 
                         <a th:if="${referral.status.name() == 'APPROVED' and referralBookingMap[referral.id] == null}"
-                           th:href="@{/charity-facilitator/bookings/new(referralId=${referral.id})}"
+                           th:href="@{/charity-facilitator/{cid}/bookings/new(cid=${charity.id},referralId=${referral.id})}"
                            class="btn btn-approve">Create Booking</a>
 
                         <a th:if="${referral.status.name() == 'APPROVED' and referralBookingMap[referral.id] != null}"
-                           th:href="@{/charity-facilitator/bookings/{id}(id=${referralBookingMap[referral.id]})}"
+                           th:href="@{/charity-facilitator/{cid}/bookings/{id}(cid=${charity.id},id=${referralBookingMap[referral.id]})}"
                            class="btn" style="background: #3b82f6; color: white;">View Booking</a>
                     </div>
                 </td>
@@ -477,16 +479,20 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const CHARITY_ID = /*[[${charity.id}]]*/ 0;
+    /*]]>*/
+
     function showApproveModal(referralId) {
         const form = document.getElementById('approveForm');
-        form.action = '/charity-facilitator/referrals/' + referralId + '/approve';
+        form.action = '/charity-facilitator/' + CHARITY_ID + '/referrals/' + referralId + '/approve';
         document.getElementById('approveModal').style.display = 'block';
     }
 
     function showRejectModal(referralId) {
         const form = document.getElementById('rejectForm');
-        form.action = '/charity-facilitator/referrals/' + referralId + '/reject';
+        form.action = '/charity-facilitator/' + CHARITY_ID + '/referrals/' + referralId + '/reject';
         document.getElementById('rejectModal').style.display = 'block';
     }
 

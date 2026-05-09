@@ -50,7 +50,9 @@ public interface DonorRepository extends JpaRepository<Donor, Long> {
     @Query("SELECT d FROM Donor d JOIN d.charities c WHERE c.id = :charityId AND (" +
             "LOWER(d.user.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(d.user.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(d.user.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+            "LOWER(d.user.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(COALESCE(d.businessName,'')) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(COALESCE(d.contactName,'')) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<Donor> searchDonorsByCharity(
             @Param("charityId") Long charityId,
             @Param("searchTerm") String searchTerm

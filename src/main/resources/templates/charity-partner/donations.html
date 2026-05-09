@@ -16,7 +16,7 @@
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="fas fa-dollar-sign me-2"></i> Donations</h1>
-                <a th:href="@{/charity-partner/donations/record}" class="btn btn-primary">
+                <a th:href="@{/charity-partner/{cid}/donations/record(cid=${charity.id})}" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i> Record Donation
                 </a>
             </div>
@@ -73,7 +73,7 @@
                         <i class="fas fa-hand-holding-heart fa-3x mb-3 d-block" style="opacity: 0.3;"></i>
                         <h5>No donations recorded yet</h5>
                         <p>Record your first donation to get started.</p>
-                        <a th:href="@{/charity-partner/donations/record}" class="btn btn-primary mt-2">
+                        <a th:href="@{/charity-partner/{cid}/donations/record(cid=${charity.id})}" class="btn btn-primary mt-2">
                             <i class="fas fa-plus me-1"></i> Record Donation
                         </a>
                     </div>

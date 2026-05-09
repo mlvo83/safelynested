@@ -266,8 +266,10 @@
 <body>
 <nav class="navbar">
     <div class="navbar-brand">Charity Facilitator Portal</div>
-    <a th:href="@{/charity-facilitator/bookings}" class="nav-link">← Back to Bookings</a>
+    <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id})}" class="nav-link">← Back to Bookings</a>
 </nav>
+
+<div th:replace="~{charity-facilitator/fragments/operating-banner :: operatingBanner}"></div>
 
 <div class="container">
     <div class="card">
@@ -405,7 +407,7 @@
                         th:text="${booking.referral.referredByCharity}">Hope Foundation</span></p>
                 <p style="margin-top: 10px;"><strong>Participant Needs:</strong></p>
                 <p th:text="${booking.referral.needsDescription}">Description of participant needs...</p>
-                <a th:href="@{/charity-facilitator/referrals/{id}(id=${booking.referral.id})}"
+                <a th:href="@{/charity-facilitator/{cid}/referrals/{id}(cid=${charity.id},id=${booking.referral.id})}"
                    class="btn btn-referral"
                    style="margin-top: 15px; display: inline-block; padding: 8px 16px; font-size: 13px;">
                     View Full Referral →
@@ -455,7 +457,7 @@
         </div>
 
         <div class="action-buttons">
-            <a th:href="@{/charity-facilitator/bookings}" class="btn btn-back">← Back to Bookings</a>
+            <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id})}" class="btn btn-back">← Back to Bookings</a>
 
             <div style="margin-left: auto; display: flex; gap: 15px;">
                 <button th:if="${booking.bookingStatus.name() == 'CONFIRMED' || booking.bookingStatus.name() == 'PENDING'}"
@@ -488,7 +490,7 @@
         <div class="modal-header">
             <h2>Check In Guest</h2>
         </div>
-        <form th:action="@{/charity-facilitator/bookings/{id}/checkin(id=${booking.id})}" method="post">
+        <form th:action="@{/charity-facilitator/{cid}/bookings/{id}/checkin(cid=${charity.id},id=${booking.id})}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
             <div class="form-group">
@@ -510,7 +512,7 @@
         <div class="modal-header">
             <h2>Check Out Guest</h2>
         </div>
-        <form th:action="@{/charity-facilitator/bookings/{id}/checkout(id=${booking.id})}" method="post">
+        <form th:action="@{/charity-facilitator/{cid}/bookings/{id}/checkout(cid=${charity.id},id=${booking.id})}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
             <div class="form-group">
@@ -532,7 +534,7 @@
         <div class="modal-header">
             <h2>Update Booking Status</h2>
         </div>
-        <form th:action="@{/charity-facilitator/bookings/{id}/status(id=${booking.id})}" method="post">
+        <form th:action="@{/charity-facilitator/{cid}/bookings/{id}/status(cid=${charity.id},id=${booking.id})}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
             <div class="form-group">
@@ -567,7 +569,7 @@
         <div class="modal-header">
             <h2>Cancel Booking</h2>
         </div>
-        <form th:action="@{/charity-facilitator/bookings/{id}/cancel(id=${booking.id})}" method="post">
+        <form th:action="@{/charity-facilitator/{cid}/bookings/{id}/cancel(cid=${charity.id},id=${booking.id})}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
             <div class="form-group">

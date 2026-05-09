@@ -213,12 +213,14 @@
 <nav class="navbar">
     <div class="navbar-brand">Charity Facilitator Portal</div>
     <div class="nav-links">
-        <a th:href="@{/charity-facilitator/dashboard}" class="nav-link">Dashboard</a>
-        <a th:href="@{/charity-facilitator/referrals}" class="nav-link">Referrals</a>
-        <a th:href="@{/charity-facilitator/bookings}" class="nav-link">Bookings</a>
-        <a th:href="@{/charity-partner/dashboard}" class="nav-link">Charity View</a>
+        <a th:href="@{/charity-facilitator/{cid}/dashboard(cid=${charity.id})}" class="nav-link">Dashboard</a>
+        <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="nav-link">Referrals</a>
+        <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id})}" class="nav-link">Bookings</a>
+        <a th:href="${isMultiFacilitator} ? @{/charity-partner/dashboard/{cid}(cid=${charity.id})} : @{/charity-partner/dashboard}" class="nav-link">Charity View</a>
     </div>
 </nav>
+
+<div th:replace="~{charity-facilitator/fragments/operating-banner :: operatingBanner}"></div>
 
 <div class="container">
     <div class="header">
@@ -230,19 +232,19 @@
     <div th:if="${error}" class="alert alert-danger" th:text="${error}">Error</div>
 
     <div class="filter-tabs">
-        <a th:href="@{/charity-facilitator/bookings}"
+        <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id})}"
            th:class="${selectedStatus == null} ? 'filter-tab active' : 'filter-tab'">
             All Bookings
         </a>
-        <a th:href="@{/charity-facilitator/bookings(status='CONFIRMED')}"
+        <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id},status='CONFIRMED')}"
            th:class="${selectedStatus == 'CONFIRMED'} ? 'filter-tab active' : 'filter-tab'">
             Confirmed
         </a>
-        <a th:href="@{/charity-facilitator/bookings(status='CHECKED_IN')}"
+        <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id},status='CHECKED_IN')}"
            th:class="${selectedStatus == 'CHECKED_IN'} ? 'filter-tab active' : 'filter-tab'">
             Checked In
         </a>
-        <a th:href="@{/charity-facilitator/bookings(status='COMPLETED')}"
+        <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id},status='COMPLETED')}"
            th:class="${selectedStatus == 'COMPLETED'} ? 'filter-tab active' : 'filter-tab'">
             Completed
         </a>
@@ -301,7 +303,7 @@
                     <span th:if="${booking.bookingStatus == null}" class="badge badge-pending">PENDING</span>
                 </td>
                 <td>
-                    <a th:href="@{/charity-facilitator/bookings/{id}(id=${booking.id})}" class="btn btn-view">View</a>
+                    <a th:href="@{/charity-facilitator/{cid}/bookings/{id}(cid=${charity.id},id=${booking.id})}" class="btn btn-view">View</a>
                 </td>
             </tr>
             </tbody>

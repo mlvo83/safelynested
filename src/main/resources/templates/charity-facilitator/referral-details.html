@@ -301,8 +301,10 @@
 <body>
 <nav class="navbar">
     <div class="navbar-brand">Charity Facilitator Portal</div>
-    <a th:href="@{/charity-facilitator/referrals}" class="nav-link">← Back to Referrals</a>
+    <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="nav-link">← Back to Referrals</a>
 </nav>
+
+<div th:replace="~{charity-facilitator/fragments/operating-banner :: operatingBanner}"></div>
 
 <div class="container">
     <div th:if="${success}" style="padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;"
@@ -411,7 +413,7 @@
         </div>
 
         <div class="action-buttons">
-            <a th:href="@{/charity-facilitator/referrals}" class="btn btn-back">← Back to List</a>
+            <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="btn btn-back">← Back to List</a>
 
             <div style="margin-left: auto; display: flex; gap: 15px;">
                 <button th:if="${referral.status.name() == 'PENDING'}"
@@ -425,11 +427,11 @@
                 </button>
 
                 <a th:if="${referral.status.name() == 'APPROVED' and existingBookingId == null}"
-                   th:href="@{/charity-facilitator/bookings/new(referralId=${referral.id})}"
+                   th:href="@{/charity-facilitator/{cid}/bookings/new(cid=${charity.id},referralId=${referral.id})}"
                    class="btn btn-booking">Create Booking</a>
 
                 <a th:if="${referral.status.name() == 'APPROVED' and existingBookingId != null}"
-                   th:href="@{/charity-facilitator/bookings/{id}(id=${existingBookingId})}"
+                   th:href="@{/charity-facilitator/{cid}/bookings/{id}(cid=${charity.id},id=${existingBookingId})}"
                    class="btn" style="background: #3b82f6; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none;">View Booking</a>
             </div>
         </div>
@@ -489,16 +491,20 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const CHARITY_ID = /*[[${charity.id}]]*/ 0;
+    /*]]>*/
+
     function showApproveModal(referralId) {
         const form = document.getElementById('approveForm');
-        form.action = '/charity-facilitator/referrals/' + referralId + '/approve';
+        form.action = '/charity-facilitator/' + CHARITY_ID + '/referrals/' + referralId + '/approve';
         document.getElementById('approveModal').style.display = 'block';
     }
 
     function showRejectModal(referralId) {
         const form = document.getElementById('rejectForm');
-        form.action = '/charity-facilitator/referrals/' + referralId + '/reject';
+        form.action = '/charity-facilitator/' + CHARITY_ID + '/referrals/' + referralId + '/reject';
         document.getElementById('rejectModal').style.display = 'block';
     }
 

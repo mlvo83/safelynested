@@ -35,6 +35,11 @@
                         Donors supporting <strong th:text="${charity.charityName}">Charity Name</strong>
                     </p>
                 </div>
+                <a th:href="@{/charity-partner/{cid}/donors/setup(cid=${charity.id})}"
+                   class="btn btn-success"
+                   sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
+                    <i class="fas fa-user-plus me-1"></i> Set Up a Donor
+                </a>
             </div>
 
             <!-- Alert Messages -->
@@ -84,7 +89,7 @@
             <!-- Search Filter -->
             <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <form th:action="@{/charity-partner/donors}" method="get" class="row g-3 align-items-end">
+                    <form th:action="@{/charity-partner/{cid}/donors(cid=${charity.id})}" method="get" class="row g-3 align-items-end">
                         <div class="col-md-6">
                             <label for="search" class="form-label">Search Donors</label>
                             <input type="text" class="form-control" id="search" name="search"
@@ -96,7 +101,7 @@
                             </button>
                         </div>
                         <div class="col-md-3">
-                            <a th:href="@{/charity-partner/donors}" class="btn btn-outline-secondary w-100">
+                            <a th:href="@{/charity-partner/{cid}/donors(cid=${charity.id})}" class="btn btn-outline-secondary w-100">
                                 <i class="fas fa-times me-1"></i> Clear
                             </a>
                         </div>
@@ -162,7 +167,7 @@
                                 </span>
                             </td>
                             <td>
-                                <a th:href="@{/charity-partner/donors/{id}(id=${donor.id})}"
+                                <a th:href="@{/charity-partner/{cid}/donors/{id}(cid=${charity.id},id=${donor.id})}"
                                    class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye me-1"></i>View
                                 </a>

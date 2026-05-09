@@ -68,12 +68,22 @@ public class SecurityConfig {
                         // Role-based access control
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/facilitator/**").hasRole("FACILITATOR")
-                        .requestMatchers("/charity-facilitator/**").hasRole("CHARITY_FACILITATOR")
+                        .requestMatchers("/charity-facilitator/**").hasAnyRole("CHARITY_FACILITATOR", "MULTI_FACILITATOR")
+                        .requestMatchers("/multi-facilitator/**").hasRole("MULTI_FACILITATOR")
+                        // Charity-scoped partner paths (numeric charity ID in URL): all three
+                        // partner/facilitator roles allowed at the security layer; per-request
+                        // authorization is enforced in the controller via canFacilitateForCharity.
+                        .requestMatchers("/charity-partner/{cid:[0-9]+}/**").hasAnyRole("CHARITY_PARTNER", "CHARITY_FACILITATOR", "MULTI_FACILITATOR")
+                        // Legacy /charity-partner/dashboard/{cid} kept for backward compat
+                        // with the Phase 5 dashboard view; subsumed by the matcher above
+                        // when {cid} is numeric, but still useful for clarity.
+                        .requestMatchers("/charity-partner/dashboard/*").hasAnyRole("CHARITY_PARTNER", "CHARITY_FACILITATOR", "MULTI_FACILITATOR")
+                        // Legacy un-scoped paths (single-charity users only)
                         .requestMatchers("/charity-partner/**").hasAnyRole("CHARITY_PARTNER", "CHARITY_FACILITATOR")
                         .requestMatchers("/donor/**").hasRole("DONOR")
                         .requestMatchers("/location-admin/**").hasAnyRole("ADMIN", "LOCATION_ADMIN")
                         .requestMatchers("/location-partner/**").hasRole("LOCATION_PARTNER")
-                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "CHARITY_FACILITATOR", "LOCATION_ADMIN", "LOCATION_PARTNER", "DONOR")
+                        .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN", "FACILITATOR", "CHARITY_PARTNER", "CHARITY_FACILITATOR", "MULTI_FACILITATOR", "LOCATION_ADMIN", "LOCATION_PARTNER", "DONOR")
                         // Dashboard requires authentication
                         .requestMatchers("/home").authenticated()
 

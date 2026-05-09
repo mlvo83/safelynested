@@ -30,7 +30,7 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-1">
                             <li class="breadcrumb-item"><a th:href="@{/charity-partner/dashboard}">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/referrals}">Referrals</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id})}">Referrals</a></li>
                             <li class="breadcrumb-item active" th:text="${referral.referralNumber}">REF-001</li>
                         </ol>
                     </nav>
@@ -41,16 +41,16 @@
                 </div>
                 <div class="btn-toolbar">
                     <a th:if="${referral.status.name() == 'PENDING'}"
-                       th:href="@{/charity-partner/referrals/{id}/edit(id=${referral.id})}"
+                       th:href="@{/charity-partner/{cid}/referrals/{id}/edit(cid=${charity.id},id=${referral.id})}"
                        class="btn btn-outline-primary me-2">
                         <i class="fas fa-edit me-1"></i> Edit
                     </a>
                     <a th:if="${referral.status.name() == 'APPROVED'}"
-                       th:href="@{/charity-partner/invites/send(referralId=${referral.id})}"
+                       th:href="@{/charity-partner/{cid}/invites/send(cid=${charity.id},referralId=${referral.id})}"
                        class="btn btn-success me-2">
                         <i class="fas fa-paper-plane me-1"></i> Send Invite
                     </a>
-                    <a th:href="@{/charity-partner/documents/upload(referralId=${referral.id})}"
+                    <a th:href="@{/charity-partner/{cid}/documents/upload(cid=${charity.id},referralId=${referral.id})}"
                        class="btn btn-outline-secondary">
                         <i class="fas fa-upload me-1"></i> Upload Document
                     </a>
@@ -174,7 +174,7 @@
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i> Documents</h5>
-                            <a th:href="@{/charity-partner/documents/upload(referralId=${referral.id})}"
+                            <a th:href="@{/charity-partner/{cid}/documents/upload(cid=${charity.id},referralId=${referral.id})}"
                                class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-upload me-1"></i> Upload
                             </a>
@@ -208,7 +208,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <a th:href="@{/charity-partner/documents/{id}/download(id=${doc.id})}"
+                                            <a th:href="@{/charity-partner/{cid}/documents/{id}/download(cid=${charity.id},id=${doc.id})}"
                                                class="btn btn-sm btn-outline-primary" title="Download">
                                                 <i class="fas fa-download"></i>
                                             </a>
@@ -231,7 +231,7 @@
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="fas fa-envelope me-2"></i> Invites Sent</h5>
                             <a th:if="${referral.status.name() == 'APPROVED'}"
-                               th:href="@{/charity-partner/invites/send(referralId=${referral.id})}"
+                               th:href="@{/charity-partner/{cid}/invites/send(cid=${charity.id},referralId=${referral.id})}"
                                class="btn btn-sm btn-outline-success">
                                 <i class="fas fa-paper-plane me-1"></i> Send Invite
                             </a>
@@ -268,7 +268,7 @@
                                         <td th:text="${invite.sentAt != null ? #temporals.format(invite.sentAt, 'MMM dd, yyyy') : 'Not sent'}">Jan 01, 2024</td>
                                         <td>
                                             <form th:if="${invite.status.name() != 'COMPLETED' and invite.status.name() != 'CANCELLED'}"
-                                                  th:action="@{/charity-partner/invites/{id}/resend(id=${invite.id})}"
+                                                  th:action="@{/charity-partner/{cid}/invites/{id}/resend(cid=${charity.id},id=${invite.id})}"
                                                   method="post" class="d-inline">
                                                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                                                 <button type="submit" class="btn btn-sm btn-outline-primary" title="Resend">
@@ -300,21 +300,21 @@
                         <div class="card-body">
                             <div class="d-grid gap-2">
                                 <a th:if="${referral.status.name() == 'PENDING'}"
-                                   th:href="@{/charity-partner/referrals/{id}/edit(id=${referral.id})}"
+                                   th:href="@{/charity-partner/{cid}/referrals/{id}/edit(cid=${charity.id},id=${referral.id})}"
                                    class="btn btn-outline-primary">
                                     <i class="fas fa-edit me-2"></i> Edit Referral
                                 </a>
                                 <a th:if="${referral.status.name() == 'APPROVED'}"
-                                   th:href="@{/charity-partner/invites/send(referralId=${referral.id})}"
+                                   th:href="@{/charity-partner/{cid}/invites/send(cid=${charity.id},referralId=${referral.id})}"
                                    class="btn btn-success">
                                     <i class="fas fa-paper-plane me-2"></i> Send Invite
                                 </a>
-                                <a th:href="@{/charity-partner/documents/upload(referralId=${referral.id})}"
+                                <a th:href="@{/charity-partner/{cid}/documents/upload(cid=${charity.id},referralId=${referral.id})}"
                                    class="btn btn-outline-secondary">
                                     <i class="fas fa-upload me-2"></i> Upload Document
                                 </a>
                                 <form th:if="${referral.status.name() != 'COMPLETED' and referral.status.name() != 'CANCELLED'}"
-                                      th:action="@{/charity-partner/referrals/{id}/cancel(id=${referral.id})}"
+                                      th:action="@{/charity-partner/{cid}/referrals/{id}/cancel(cid=${charity.id},id=${referral.id})}"
                                       method="post"
                                       onsubmit="return confirm('Are you sure you want to cancel this referral?');">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
@@ -363,7 +363,7 @@
             </div>
 
             <div class="mb-4">
-                <a th:href="@{/charity-partner/referrals}" class="btn btn-outline-secondary">
+                <a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id})}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Back to Referrals
                 </a>
             </div>

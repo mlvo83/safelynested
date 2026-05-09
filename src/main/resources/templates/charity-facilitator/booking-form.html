@@ -207,8 +207,10 @@
 <body>
 <nav class="navbar">
     <div class="navbar-brand">Charity Facilitator Portal</div>
-    <a th:href="@{/charity-facilitator/referrals}" class="nav-link">← Back to Referrals</a>
+    <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="nav-link">← Back to Referrals</a>
 </nav>
+
+<div th:replace="~{charity-facilitator/fragments/operating-banner :: operatingBanner}"></div>
 
 <div class="container">
     <div class="card">
@@ -224,7 +226,7 @@
             <p><strong>Needs:</strong> <span th:text="${referral.needsDescription}">Description</span></p>
         </div>
 
-        <form th:action="@{/charity-facilitator/bookings/new}" th:object="${bookingDto}" method="post">
+        <form th:action="@{/charity-facilitator/{cid}/bookings/new(cid=${charity.id})}" th:object="${bookingDto}" method="post">
             <input type="hidden" th:field="*{referralId}">
 
             <!-- Location Section -->
@@ -438,7 +440,7 @@
             </div>
 
             <div class="button-group">
-                <a th:href="@{/charity-facilitator/referrals}" class="btn btn-secondary">Cancel</a>
+                <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="btn btn-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary">Create Booking</button>
             </div>
         </form>

@@ -39,6 +39,11 @@ public class StripeService {
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
+    /** Exposed so URL-scoped controllers can build their own success/cancel URLs. */
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
     @Autowired
     private DonationService donationService;
 
@@ -137,6 +142,26 @@ public class StripeService {
                                            String donorName, String donorEmail,
                                            LocalDate dateReceived, String notes,
                                            String recorderUsername) throws Exception {
+        // Backward-compat — uses the legacy un-scoped success/cancel URLs.
+        // URL-scoped callers should use the overload below.
+        return createFeePaymentSession(charityId, donationAmount, donorName, donorEmail,
+                dateReceived, notes, recorderUsername,
+                baseUrl + "/charity-partner/donations/record/success?session_id={CHECKOUT_SESSION_ID}",
+                baseUrl + "/charity-partner/donations/record/cancel");
+    }
+
+    /**
+     * Charity-scoped overload — accepts custom success/cancel URLs so a
+     * multi-facilitator's Stripe redirect lands back on the charity-scoped
+     * /charity-partner/{charityId}/donations/record/success path rather
+     * than the legacy un-scoped one (which would 500 because they have
+     * no user.charity_id).
+     */
+    public String createFeePaymentSession(Long charityId, BigDecimal donationAmount,
+                                           String donorName, String donorEmail,
+                                           LocalDate dateReceived, String notes,
+                                           String recorderUsername,
+                                           String successUrl, String cancelUrl) throws Exception {
         Charity charity = charityRepository.findById(charityId)
                 .orElseThrow(() -> new RuntimeException("Charity not found"));
 
@@ -144,25 +169,21 @@ public class StripeService {
             throw new RuntimeException("This charity is not currently active.");
         }
 
-        // Calculate the 10% fee
         BigDecimal feeAmount = donationAmount.multiply(TOTAL_FEE_RATE).setScale(2, RoundingMode.HALF_UP);
-
-        // Convert fee to cents for Stripe
         long feeInCents = feeAmount.multiply(new BigDecimal("100")).longValue();
 
         if (feeInCents < 50) {
             throw new RuntimeException("Minimum donation amount is $5.00 (fee must be at least $0.50).");
         }
 
-        // Truncate notes to 500 chars (Stripe metadata limit)
         String truncatedNotes = notes != null && notes.length() > 500 ? notes.substring(0, 500) : notes;
 
         SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
                 .addPaymentMethodType(SessionCreateParams.PaymentMethodType.US_BANK_ACCOUNT)
-                .setSuccessUrl(baseUrl + "/charity-partner/donations/record/success?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl(baseUrl + "/charity-partner/donations/record/cancel")
+                .setSuccessUrl(successUrl)
+                .setCancelUrl(cancelUrl)
                 .addLineItem(
                         SessionCreateParams.LineItem.builder()
                                 .setQuantity(1L)
