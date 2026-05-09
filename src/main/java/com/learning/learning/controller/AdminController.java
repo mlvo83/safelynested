@@ -8,8 +8,11 @@ import com.learning.learning.entity.User;
 import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityRepository;
 import com.learning.learning.repository.DonationRepository;
+import com.learning.learning.entity.MultiFacilitatorCharity;
 import com.learning.learning.repository.UserRepository;
+import com.learning.learning.service.MultiFacilitatorService;
 import com.learning.learning.service.UserService;
+import java.security.Principal;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -41,6 +44,9 @@ public class AdminController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private MultiFacilitatorService multiFacilitatorService;
+
     // ========================================
     // USER MANAGEMENT
     // ========================================
@@ -64,6 +70,7 @@ public class AdminController {
     public String createUser(
             @Valid @ModelAttribute("userDto") UserDto userDto,
             BindingResult bindingResult,
+            Principal principal,
             Model model,
             RedirectAttributes redirectAttributes) {
 
@@ -74,7 +81,8 @@ public class AdminController {
         }
 
         try {
-            userService.createUser(userDto);
+            User created = userService.createUser(userDto);
+            syncMultiFacilitatorAssignments(created, userDto, principal);
             redirectAttributes.addFlashAttribute("success",
                     "User created successfully!");
             return "redirect:/admin/users";
@@ -104,6 +112,12 @@ public class AdminController {
                     .collect(Collectors.toList()));
         }
 
+        // Pre-populate multi-charity authorizations
+        List<Long> currentMultiCharityIds = multiFacilitatorService.getAssignmentsForUser(id).stream()
+                .map(a -> a.getCharity().getId())
+                .collect(Collectors.toList());
+        userDto.setMultiFacilitatorCharityIds(currentMultiCharityIds);
+
         model.addAttribute("userDto", userDto);
         model.addAttribute("userId", id);
         model.addAttribute("roles", userService.getAllRoles());
@@ -117,6 +131,7 @@ public class AdminController {
             @PathVariable Long id,
             @Valid @ModelAttribute("userDto") UserDto userDto,
             BindingResult bindingResult,
+            Principal principal,
             Model model,
             RedirectAttributes redirectAttributes) {
 
@@ -129,7 +144,8 @@ public class AdminController {
         }
 
         try {
-            userService.updateUser(id, userDto);
+            User updated = userService.updateUser(id, userDto);
+            syncMultiFacilitatorAssignments(updated, userDto, principal);
             redirectAttributes.addFlashAttribute("success", "User updated successfully!");
             return "redirect:/admin/users";
         } catch (RuntimeException e) {
@@ -139,6 +155,32 @@ public class AdminController {
             model.addAttribute("charities", charityRepository.findByIsActiveTrue());
             model.addAttribute("isEdit", true);
             return "admin/user-form";
+        }
+    }
+
+    /**
+     * Reconcile multi_facilitator_charities rows for a user against
+     * the charity IDs submitted on the form. If the user no longer has
+     * the MULTI_FACILITATOR role, all assignments are removed.
+     */
+    private void syncMultiFacilitatorAssignments(User user, UserDto userDto, Principal principal) {
+        boolean hasMultiRole = userDto.getRoles() != null
+                && (userDto.getRoles().contains("ROLE_MULTI_FACILITATOR")
+                    || userDto.getRoles().contains("MULTI_FACILITATOR"));
+
+        User assignedBy = principal != null
+                ? userRepository.findByUsername(principal.getName()).orElse(null)
+                : null;
+
+        if (hasMultiRole) {
+            multiFacilitatorService.syncAssignments(user.getId(),
+                    userDto.getMultiFacilitatorCharityIds(),
+                    assignedBy);
+        } else {
+            // Role removed — clear all assignments
+            multiFacilitatorService.syncAssignments(user.getId(),
+                    java.util.Collections.emptyList(),
+                    assignedBy);
         }
     }
 

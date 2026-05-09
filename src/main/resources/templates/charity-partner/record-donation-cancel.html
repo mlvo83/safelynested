@@ -35,7 +35,7 @@
                     </div>
 
                     <div class="d-flex gap-3 justify-content-center">
-                        <a th:href="@{/charity-partner/donations/record}" class="btn btn-primary">
+                        <a th:href="@{/charity-partner/{cid}/donations/record(cid=${charity.id})}" class="btn btn-primary">
                             <i class="fas fa-redo me-1"></i> Try Again
                         </a>
                         <a th:href="@{/charity-partner/dashboard}" class="btn btn-outline-secondary">

@@ -51,6 +51,9 @@ public class DocumentService {
     @Autowired
     private CharityService charityService;
 
+    @Autowired
+    private com.learning.learning.repository.CharityRepository charityRepository;
+
     // Allowed file types
     private static final List<String> ALLOWED_MIME_TYPES = List.of(
             "application/pdf",
@@ -78,40 +81,63 @@ public class DocumentService {
             String description,
             String username
     ) throws IOException {
-        // Validate file
+        Charity charity = charityService.getCharityForUser(username);
+        return uploadDocumentInternal(file, referralId, charity, documentType, description, username);
+    }
+
+    /**
+     * Charity-scoped upload — used by URL-scoped partner endpoints
+     * (multi-facilitators) where the charity comes from the URL, not
+     * user.charity_id. The caller is expected to have already
+     * authorized the user against this charityId.
+     */
+    @Transactional
+    public Document uploadDocumentForCharity(
+            MultipartFile file,
+            Long referralId,
+            Long charityId,
+            Document.DocumentType documentType,
+            String description,
+            String username
+    ) throws IOException {
+        Charity charity = charityRepository.findById(charityId)
+                .orElseThrow(() -> new RuntimeException("Charity not found: " + charityId));
+        return uploadDocumentInternal(file, referralId, charity, documentType, description, username);
+    }
+
+    private Document uploadDocumentInternal(
+            MultipartFile file,
+            Long referralId,
+            Charity charity,
+            Document.DocumentType documentType,
+            String description,
+            String username
+    ) throws IOException {
         validateFile(file);
 
-        // Get user and charity
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Charity charity = charityService.getCharityForUser(username);
-
-        // Get referral (with multi-tenant check)
         Referral referral = null;
         if (referralId != null) {
             referral = referralRepository.findByIdAndCharityId(referralId, charity.getId())
                     .orElseThrow(() -> new RuntimeException("Referral not found or access denied"));
         }
 
-        // Generate unique file name
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
         String uniqueFileName = generateUniqueFileName(originalFileName);
 
-        // Create storage key: {charityId}/{referralId or 'general'}/{uniqueFileName}
         String storageKey = charity.getId() + "/" + (referralId != null ? referralId : "general") + "/" + uniqueFileName;
 
-        // Store file using storage service (local or S3)
         storageService.store(file, storageKey);
 
-        // Create document record
         Document document = new Document();
         document.setReferral(referral);
         document.setCharity(charity);
         document.setUploadedBy(user);
         document.setDocumentType(documentType);
         document.setFileName(originalFileName);
-        document.setFilePath(storageKey); // Store the storage key, not full path
+        document.setFilePath(storageKey);
         document.setFileSize(file.getSize());
         document.setMimeType(file.getContentType());
         document.setDescription(description);
@@ -119,7 +145,6 @@ public class DocumentService {
 
         Document savedDocument = documentRepository.save(document);
 
-        // Update referral document status if applicable
         if (referral != null && referral.getDocumentsRequired()) {
             referral.setDocumentsUploaded(true);
             referralRepository.save(referral);
@@ -152,38 +177,57 @@ public class DocumentService {
             String description,
             String username
     ) throws IOException {
-        // Validate file
+        Charity charity = charityService.getCharityForUser(username);
+        return uploadDocumentForInviteInternal(file, inviteId, charity, documentType, description, username);
+    }
+
+    /**
+     * Charity-scoped overload — used by URL-scoped partner endpoints
+     * (multi-facilitators).
+     */
+    @Transactional
+    public Document uploadDocumentForInviteByCharity(
+            MultipartFile file,
+            Long inviteId,
+            Long charityId,
+            Document.DocumentType documentType,
+            String description,
+            String username
+    ) throws IOException {
+        Charity charity = charityRepository.findById(charityId)
+                .orElseThrow(() -> new RuntimeException("Charity not found: " + charityId));
+        return uploadDocumentForInviteInternal(file, inviteId, charity, documentType, description, username);
+    }
+
+    private Document uploadDocumentForInviteInternal(
+            MultipartFile file,
+            Long inviteId,
+            Charity charity,
+            Document.DocumentType documentType,
+            String description,
+            String username
+    ) throws IOException {
         validateFile(file);
 
-        // Get user and charity
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Charity charity = charityService.getCharityForUser(username);
-
-        // Get invite (with multi-tenant check)
         ReferralInvite invite = referralInviteRepository.findById(inviteId)
                 .orElseThrow(() -> new RuntimeException("Invite not found"));
 
-        // Verify invite belongs to user's charity
         if (invite.getCharity() == null || !invite.getCharity().getId().equals(charity.getId())) {
             throw new RuntimeException("Access denied: Invite does not belong to your charity");
         }
 
-        // Generate unique file name
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
         String uniqueFileName = generateUniqueFileName(originalFileName);
-
-        // Create storage key: {charityId}/invites/{inviteId}/{uniqueFileName}
         String storageKey = charity.getId() + "/invites/" + inviteId + "/" + uniqueFileName;
 
-        // Store file
         storageService.store(file, storageKey);
 
-        // Create document record
         Document document = new Document();
         document.setInvite(invite);
-        document.setReferral(invite.getReferral()); // Link to referral if exists
+        document.setReferral(invite.getReferral());
         document.setCharity(charity);
         document.setUploadedBy(user);
         document.setDocumentType(documentType);
@@ -489,10 +533,60 @@ public class DocumentService {
     }
 
     /**
+     * Charity-scoped overload — caller has already authorized the user.
+     */
+    public List<Document> getDocumentsForCharityById(Long charityId) {
+        return documentRepository.findByCharityIdOrderByUploadedAtDesc(charityId);
+    }
+
+    /**
+     * Charity-scoped access check — used by URL-scoped partner endpoints.
+     * Caller has already authorized the user against this charityId.
+     * Throws if the document does not belong to the charity.
+     */
+    public Document getDocumentForCharity(Long documentId, Long charityId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+        if (document.getCharity() == null || !document.getCharity().getId().equals(charityId)) {
+            throw new RuntimeException("Access denied: document does not belong to this charity");
+        }
+        return document;
+    }
+
+    /**
+     * Charity-scoped download — caller has already authorized the user.
+     */
+    public Resource downloadDocumentForCharity(Long documentId, Long charityId) throws IOException {
+        Document document = getDocumentForCharity(documentId, charityId);
+        java.io.InputStream inputStream = storageService.retrieve(document.getFilePath());
+        return new InputStreamResource(inputStream);
+    }
+
+    /**
+     * Charity-scoped delete — caller has already authorized the user.
+     */
+    @Transactional
+    public void deleteDocumentForCharity(Long documentId, Long charityId) throws IOException {
+        Document document = getDocumentForCharity(documentId, charityId);
+        storageService.delete(document.getFilePath());
+        documentRepository.delete(document);
+    }
+
+    /**
      * Get documents for a specific referral (with access control)
      */
     public List<Document> getDocumentsForReferral(Long referralId, String username) {
         Long charityId = charityService.getCharityIdForUser(username);
+        return documentRepository.findByReferralIdAndCharityId(referralId, charityId);
+    }
+
+    /**
+     * Charity-scoped overload — used by URL-scoped partner endpoints
+     * (e.g. multi-facilitators) where the charity comes from the URL,
+     * not from user.charity_id. The caller is expected to have already
+     * verified the user is authorized to view this charity's data.
+     */
+    public List<Document> getDocumentsForReferralByCharity(Long referralId, Long charityId) {
         return documentRepository.findByReferralIdAndCharityId(referralId, charityId);
     }
 

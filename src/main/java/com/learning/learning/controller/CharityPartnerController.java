@@ -9,6 +9,7 @@ import com.learning.learning.service.DonorDashboardService;
 import com.learning.learning.service.DonorService;
 import com.learning.learning.service.DonorSetupRequestService;
 import com.learning.learning.service.InviteService;
+import com.learning.learning.service.MultiFacilitatorService;
 import com.learning.learning.service.StripeService;
 import com.learning.learning.service.TeamInviteService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,6 +76,12 @@ public class CharityPartnerController {
     private UserRepository userRepository;
 
     @Autowired
+    private MultiFacilitatorService multiFacilitatorService;
+
+    @Autowired
+    private CharityRepository charityRepository;
+
+    @Autowired
     private TeamInviteService teamInviteService;
 
     @Autowired
@@ -89,6 +96,22 @@ public class CharityPartnerController {
             return donorSetupRequestService.countPendingRequestsForCharity(charityId);
         } catch (Exception e) {
             return 0L;
+        }
+    }
+
+    /**
+     * Default 'charity' model attribute so every page in the partner
+     * sidebar can reference ${charity.id} safely. Endpoint methods
+     * that explicitly set 'charity' (e.g. dashboardForCharity for a
+     * different charity) override this default.
+     */
+    @ModelAttribute("charity")
+    public Charity defaultCharity(Principal principal) {
+        if (principal == null) return null;
+        try {
+            return charityService.getCharityForUser(principal.getName());
+        } catch (Exception e) {
+            return null;
         }
     }
 
@@ -124,34 +147,129 @@ public class CharityPartnerController {
     // ========================================
 
     /**
-     * Charity partner dashboard
+     * Charity partner dashboard for the user's primary charity (legacy
+     * un-scoped URL). For multi-facilitators (who have no primary
+     * charity), redirect to the hub instead.
      */
     @GetMapping("/dashboard")
     public String dashboard(Model model, Principal principal) {
         String username = principal.getName();
-        Charity charity = charityService.getCharityForUser(username);
+
+        Charity charity = null;
+        try {
+            charity = charityService.getCharityForUser(username);
+        } catch (Exception ignored) {
+            // Falls through to the multi-facilitator branch below.
+        }
+
+        if (charity == null) {
+            User user = userRepository.findByUsername(username).orElse(null);
+            if (user != null && (user.hasRole("ROLE_MULTI_FACILITATOR") || user.hasRole("MULTI_FACILITATOR"))) {
+                return "redirect:/multi-facilitator/hub";
+            }
+            return "redirect:/access-denied";
+        }
+
+        return renderDashboard(charity, username, /*includeInviteStats=*/ true, model);
+    }
+
+    /**
+     * Charity-scoped partner dashboard. Used by:
+     *   - Multi-facilitators clicking "Charity View" from the facilitator
+     *     side (they have no user.charity_id, so the legacy /dashboard
+     *     can't infer which charity they want).
+     *   - Single-charity users who already pass through; allowed for
+     *     consistency.
+     *
+     * Authorization: caller must either be the CHARITY_PARTNER /
+     * CHARITY_FACILITATOR for this charity, or a MULTI_FACILITATOR
+     * authorized via multi_facilitator_charities.
+     */
+    @GetMapping("/dashboard/{charityId}")
+    public String dashboardForCharity(@PathVariable Long charityId, Model model, Principal principal) {
+        String username = principal.getName();
+
+        // Authorize: either a facilitator path, or the user's own charity.
+        boolean authorized = multiFacilitatorService.canFacilitateForCharity(username, charityId);
+        if (!authorized) {
+            try {
+                Charity userCharity = charityService.getCharityForUser(username);
+                authorized = userCharity != null && charityId.equals(userCharity.getId());
+            } catch (Exception ignored) {
+                // not authorized
+            }
+        }
+        if (!authorized) return "redirect:/access-denied";
+
+        Charity charity = charityRepository.findById(charityId)
+                .orElse(null);
+        if (charity == null) return "redirect:/access-denied";
+
+        // Multi-facilitators don't own this charity's invites, so skip
+        // those stats for them — the template renders 0s safely.
+        boolean isOwnCharity = false;
+        try {
+            Charity userCharity = charityService.getCharityForUser(username);
+            isOwnCharity = userCharity != null && charityId.equals(userCharity.getId());
+        } catch (Exception ignored) {}
+
+        return renderDashboard(charity, username, isOwnCharity, model);
+    }
+
+    /**
+     * Authorize the current user to act on a specific charity via
+     * URL-scoped /charity-partner/{charityId}/... paths. Returns the
+     * Charity if the user is one of: CHARITY_PARTNER / CHARITY_FACILITATOR
+     * with user.charity_id == charityId, or MULTI_FACILITATOR with a
+     * matching row in multi_facilitator_charities. Returns null if not
+     * authorized — caller should redirect to /access-denied.
+     */
+    private Charity resolvePartnerCharity(Principal principal, Long charityId) {
+        if (principal == null || charityId == null) return null;
+        String username = principal.getName();
+
+        // Path 1: multi-facilitator authorization
+        if (multiFacilitatorService.canFacilitateForCharity(username, charityId)) {
+            return charityRepository.findById(charityId).orElse(null);
+        }
+
+        // Path 2: user's own charity (CHARITY_PARTNER / CHARITY_FACILITATOR)
+        try {
+            Charity userCharity = charityService.getCharityForUser(username);
+            if (userCharity != null && charityId.equals(userCharity.getId())) {
+                return userCharity;
+            }
+        } catch (Exception ignored) { }
+
+        return null;
+    }
+
+    /**
+     * Shared dashboard rendering. Pass includeInviteStats=false when
+     * the viewer is not the charity's primary user (e.g., a multi-
+     * facilitator just looking at this charity's status).
+     */
+    private String renderDashboard(Charity charity, String username, boolean includeInviteStats, Model model) {
         Long charityId = charity.getId();
 
-        // Get dashboard statistics
         Map<String, Object> stats = charityService.getCharityDashboardStats(charityId);
         model.addAttribute("stats", stats);
 
-        // Get recent referrals
         List<Referral> recentReferrals = referralRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
         model.addAttribute("recentReferrals", recentReferrals.stream().limit(10).toList());
 
-        // Get charity info
         model.addAttribute("charity", charity);
         model.addAttribute("username", username);
         model.addAttribute("role", "Charity Partner");
 
-        // Get remaining referrals this month
         int remainingReferrals = charityService.getRemainingReferralsThisMonth(charityId);
         model.addAttribute("remainingReferrals", remainingReferrals);
 
-        // Get invite stats
-        Map<String, Object> inviteStats = inviteService.getInviteStats(username);
-        model.addAttribute("inviteStats", inviteStats);
+        if (includeInviteStats) {
+            model.addAttribute("inviteStats", inviteService.getInviteStats(username));
+        } else {
+            model.addAttribute("inviteStats", null);
+        }
 
         return "charity-partner/dashboard";
     }
@@ -364,6 +482,210 @@ public class CharityPartnerController {
 
         redirectAttributes.addFlashAttribute("success", "Referral cancelled successfully");
         return "redirect:/charity-partner/referrals";
+    }
+
+    // ========================================
+    // REFERRALS - CHARITY-SCOPED PATHS (Phase 5b-1)
+    // Mirror the legacy endpoints above but accept {charityId} in the
+    // URL so multi-facilitators can access them. Per-request
+    // authorization via resolvePartnerCharity. Single-charity users
+    // can use these too — sidebar links route everyone here going
+    // forward.
+    // ========================================
+
+    @GetMapping("/{charityId}/referrals")
+    public String listReferralsScoped(
+            @PathVariable Long charityId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<Referral> referrals;
+        if (search != null && !search.isEmpty()) {
+            referrals = referralRepository.searchReferralsByCharity(charityId, search);
+        } else if (status != null && !status.isEmpty()) {
+            try {
+                Referral.ReferralStatus referralStatus = Referral.ReferralStatus.valueOf(status.toUpperCase());
+                referrals = referralRepository.findByCharityIdAndStatusOrderByCreatedAtDesc(charityId, referralStatus);
+            } catch (IllegalArgumentException e) {
+                referrals = referralRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
+            }
+        } else {
+            referrals = referralRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
+        }
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("referrals", referrals);
+        model.addAttribute("statuses", Referral.ReferralStatus.values());
+        model.addAttribute("currentStatus", status);
+        model.addAttribute("searchTerm", search);
+
+        return "charity-partner/referrals";
+    }
+
+    @GetMapping("/{charityId}/referrals/{id}")
+    public String viewReferralScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        Referral referral = referralRepository.findByIdAndCharityId(id, charityId)
+                .orElse(null);
+        if (referral == null) return "redirect:/charity-partner/" + charityId + "/referrals";
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("referral", referral);
+        model.addAttribute("documents", documentService.getDocumentsForReferralByCharity(id, charityId));
+        model.addAttribute("invites", inviteService.getInvitesForReferralByCharity(id, charityId));
+
+        return "charity-partner/referral-view";
+    }
+
+    @GetMapping("/{charityId}/referrals/new")
+    public String showCreateReferralFormScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        if (!charityService.canCreateReferral(charityId)) {
+            redirectAttributes.addFlashAttribute("error", "Monthly referral limit reached");
+            return "redirect:/charity-partner/" + charityId + "/referrals";
+        }
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("referral", new Referral());
+        model.addAttribute("urgencyLevels", Referral.UrgencyLevel.values());
+
+        return "charity-partner/referral-form";
+    }
+
+    @PostMapping("/{charityId}/referrals/new")
+    public String createReferralScoped(
+            @PathVariable Long charityId,
+            @ModelAttribute Referral referral,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!charityService.canCreateReferral(charityId)) {
+            redirectAttributes.addFlashAttribute("error", "Monthly referral limit reached");
+            return "redirect:/charity-partner/" + charityId + "/referrals";
+        }
+
+        referral.setCharity(charity);
+        referral.setReferredByUser(user);
+        referral.setStatus(Referral.ReferralStatus.PENDING);
+        referral.setReferralNumber(generateReferralNumber());
+
+        referralRepository.save(referral);
+
+        redirectAttributes.addFlashAttribute("success", "Referral created successfully");
+        return "redirect:/charity-partner/" + charityId + "/referrals/" + referral.getId();
+    }
+
+    @GetMapping("/{charityId}/referrals/{id}/edit")
+    public String showEditReferralFormScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Model model,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        Referral referral = referralRepository.findByIdAndCharityId(id, charityId)
+                .orElse(null);
+        if (referral == null) return "redirect:/charity-partner/" + charityId + "/referrals";
+
+        if (!referral.isEditable()) {
+            redirectAttributes.addFlashAttribute("error", "Referral cannot be edited after submission");
+            return "redirect:/charity-partner/" + charityId + "/referrals/" + id;
+        }
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("referral", referral);
+        model.addAttribute("urgencyLevels", Referral.UrgencyLevel.values());
+
+        return "charity-partner/referral-form";
+    }
+
+    @PostMapping("/{charityId}/referrals/{id}/edit")
+    public String updateReferralScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            @ModelAttribute Referral updatedReferral,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        Referral existingReferral = referralRepository.findByIdAndCharityId(id, charityId)
+                .orElse(null);
+        if (existingReferral == null) return "redirect:/charity-partner/" + charityId + "/referrals";
+
+        if (!existingReferral.isEditable()) {
+            redirectAttributes.addFlashAttribute("error", "Referral cannot be edited after submission");
+            return "redirect:/charity-partner/" + charityId + "/referrals/" + id;
+        }
+
+        existingReferral.setParticipantName(updatedReferral.getParticipantName());
+        existingReferral.setParticipantAge(updatedReferral.getParticipantAge());
+        existingReferral.setParticipantEmail(updatedReferral.getParticipantEmail());
+        existingReferral.setParticipantPhone(updatedReferral.getParticipantPhone());
+        existingReferral.setNeedsDescription(updatedReferral.getNeedsDescription());
+        existingReferral.setUrgencyLevel(updatedReferral.getUrgencyLevel());
+        existingReferral.setDocumentsRequired(updatedReferral.getDocumentsRequired());
+        existingReferral.setAllowedZipCodes(updatedReferral.getAllowedZipCodes());
+
+        referralRepository.save(existingReferral);
+
+        redirectAttributes.addFlashAttribute("success", "Referral updated successfully");
+        return "redirect:/charity-partner/" + charityId + "/referrals/" + id;
+    }
+
+    @PostMapping("/{charityId}/referrals/{id}/cancel")
+    public String cancelReferralScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        Referral referral = referralRepository.findByIdAndCharityId(id, charityId)
+                .orElse(null);
+        if (referral == null) return "redirect:/charity-partner/" + charityId + "/referrals";
+
+        if (referral.getStatus() == Referral.ReferralStatus.COMPLETED) {
+            redirectAttributes.addFlashAttribute("error", "Cannot cancel completed referral");
+            return "redirect:/charity-partner/" + charityId + "/referrals/" + id;
+        }
+
+        referral.setStatus(Referral.ReferralStatus.CANCELLED);
+        referralRepository.save(referral);
+
+        redirectAttributes.addFlashAttribute("success", "Referral cancelled successfully");
+        return "redirect:/charity-partner/" + charityId + "/referrals";
     }
 
     // ========================================
@@ -704,6 +1026,786 @@ public class CharityPartnerController {
         }
 
         return "redirect:/charity-partner/invites";
+    }
+
+    // ========================================
+    // PROFILE + TEAM - CHARITY-SCOPED PATHS (Phase 5b-6)
+    // ========================================
+
+    @GetMapping("/{charityId}/profile")
+    public String viewProfileScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        model.addAttribute("charity", charity);
+        return "charity-partner/profile";
+    }
+
+    @GetMapping("/{charityId}/profile/edit")
+    public String showEditProfileFormScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        model.addAttribute("charity", charity);
+        return "charity-partner/profile-edit";
+    }
+
+    @PostMapping("/{charityId}/profile/edit")
+    public String updateProfileScoped(
+            @PathVariable Long charityId,
+            // IMPORTANT: must use a name OTHER than "charity" — the controller
+            // has an @ModelAttribute("charity") that returns null for
+            // multi-facilitators, which would silently swallow the form
+            // binding if this parameter defaulted to the same key.
+            @ModelAttribute("updatedCharity") Charity updatedCharity,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity existingCharity = resolvePartnerCharity(principal, charityId);
+        if (existingCharity == null) return "redirect:/access-denied";
+
+        try {
+            charityService.updateCharityForAuthorized(existingCharity, updatedCharity);
+            redirectAttributes.addFlashAttribute("success", "Profile updated successfully");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to update profile: " + e.getMessage());
+        }
+        return "redirect:/charity-partner/" + charityId + "/profile";
+    }
+
+    @GetMapping("/{charityId}/team")
+    public String teamPageScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        User user = userRepository.findByUsername(principal.getName()).orElse(null);
+
+        // Only the charity's primary contact, a Charity Facilitator, or a
+        // Multi-Facilitator authorized for this charity can manage the team.
+        boolean isPrimary = charity.getPrimaryContact() != null
+                && user != null
+                && charity.getPrimaryContact().getId().equals(user.getId());
+        boolean isFacilitator = user != null
+                && (user.hasRole("ROLE_CHARITY_FACILITATOR") || user.hasRole("CHARITY_FACILITATOR")
+                    || user.hasRole("ROLE_MULTI_FACILITATOR") || user.hasRole("MULTI_FACILITATOR"));
+
+        if (!isPrimary && !isFacilitator) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Only the primary contact or a charity facilitator can manage team members.");
+            return "redirect:/charity-partner/" + charityId + "/dashboard";
+        }
+
+        List<User> teamMembers = userRepository.findByCharityId(charityId);
+        List<TeamInvite> invites = teamInviteService.getInvitesForCharity(charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("teamMembers", teamMembers);
+        model.addAttribute("invites", invites);
+        model.addAttribute("allowedDomain", charity.getAllowedEmailDomain());
+        model.addAttribute("activePage", "team");
+
+        return "charity-partner/team";
+    }
+
+    @PostMapping("/{charityId}/team/invite")
+    public String sendTeamInviteScoped(
+            @PathVariable Long charityId,
+            @RequestParam String email,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String message,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        try {
+            User invitedBy = userRepository.findByUsername(principal.getName())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            teamInviteService.sendTeamInvite(charity, invitedBy, email.trim().toLowerCase(),
+                    firstName, lastName, message);
+            redirectAttributes.addFlashAttribute("success",
+                    "Invitation sent to " + email + " successfully!");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/charity-partner/" + charityId + "/team";
+    }
+
+    @PostMapping("/{charityId}/team/invite/{id}/cancel")
+    public String cancelTeamInviteScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        try {
+            teamInviteService.cancelInvite(id, charityId);
+            redirectAttributes.addFlashAttribute("success", "Invitation cancelled.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/charity-partner/" + charityId + "/team";
+    }
+
+    // ========================================
+    // DONORS + DONATIONS - CHARITY-SCOPED PATHS (Phase 5b-5)
+    // ========================================
+
+    @GetMapping("/{charityId}/donors")
+    public String listDonorsScoped(
+            @PathVariable Long charityId,
+            @RequestParam(required = false) String search,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<Donor> donors;
+        if (search != null && !search.trim().isEmpty()) {
+            donors = donorService.searchDonorsForCharity(charityId, search);
+        } else {
+            donors = donorService.getDonorsForCharity(charityId);
+        }
+        long donorCount = donorService.countDonorsForCharity(charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("donors", donors);
+        model.addAttribute("donorCount", donorCount);
+        model.addAttribute("searchTerm", search);
+
+        return "charity-partner/donors";
+    }
+
+    @GetMapping("/{charityId}/donors/{id}")
+    public String viewDonorScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        Donor donor = donorService.getDonorByIdWithCharities(id);
+        if (!donor.isAssociatedWithCharity(charityId)) {
+            return "redirect:/charity-partner/" + charityId + "/donors?error=Access+denied";
+        }
+
+        List<Donation> donations = donationService.getDonationsForDonorAtCharity(id, charityId);
+        DonorDashboardService.DonorDashboardStats stats = donorDashboardService.getDashboardStatsForCharity(id, charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("donor", donor);
+        model.addAttribute("donations", donations);
+        model.addAttribute("stats", stats);
+
+        return "charity-partner/donor-view";
+    }
+
+    @GetMapping("/{charityId}/donors/setup")
+    public String donorSetupPageScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("anonymityPreferences", DonorSetupRequest.AnonymityPreference.values());
+        model.addAttribute("contactMethods", DonorSetupRequest.PreferredContactMethod.values());
+
+        return "charity-partner/donor-setup";
+    }
+
+    @GetMapping("/{charityId}/donors/search-all")
+    @ResponseBody
+    public List<Map<String, Object>> searchAllDonorsScoped(
+            @PathVariable Long charityId,
+            @RequestParam String q,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return List.of();
+
+        List<Donor> donors = donorRepository.searchDonorsWithCharities(q);
+        return donors.stream().map(donor -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", donor.getId());
+            map.put("name", donor.getDisplayName());
+            map.put("email", donor.getDonorEmail());
+            map.put("type", donor.getDonorType() != null ? donor.getDonorType().getDisplayName() : "Individual");
+            map.put("isVerified", donor.getIsVerified() != null && donor.getIsVerified());
+            map.put("alreadyLinked", donor.isAssociatedWithCharity(charityId));
+            return map;
+        }).toList();
+    }
+
+    @PostMapping("/{charityId}/donors/setup/link")
+    public String submitLinkRequestScoped(
+            @PathVariable Long charityId,
+            @RequestParam Long donorId,
+            @RequestParam(required = false) String notes,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        try {
+            Donor donor = donorService.getDonorByIdWithCharities(donorId);
+            donorSetupRequestService.createLinkRequest(donor, charity, user, notes);
+            redirectAttributes.addFlashAttribute("success",
+                    "Request to link donor has been submitted for admin review.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/charity-partner/" + charityId + "/donors/setup-requests";
+    }
+
+    @PostMapping("/{charityId}/donors/setup/new")
+    public String submitNewDonorRequestScoped(
+            @PathVariable Long charityId,
+            @RequestParam String donorType,
+            @RequestParam(required = false) String firstName,
+            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String streetAddress,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String zipCode,
+            @RequestParam(required = false) String companyName,
+            @RequestParam(required = false) String contactName,
+            @RequestParam(required = false) String taxId,
+            @RequestParam(required = false) String anonymityPreference,
+            @RequestParam(required = false) String preferredContactMethod,
+            @RequestParam(required = false) String notes,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        try {
+            Donor.DonorType type = Donor.DonorType.valueOf(donorType);
+            DonorSetupRequest.AnonymityPreference anonPref = null;
+            if (anonymityPreference != null && !anonymityPreference.isEmpty()) {
+                anonPref = DonorSetupRequest.AnonymityPreference.valueOf(anonymityPreference);
+            }
+            DonorSetupRequest.PreferredContactMethod contactMethod = null;
+            if (preferredContactMethod != null && !preferredContactMethod.isEmpty()) {
+                contactMethod = DonorSetupRequest.PreferredContactMethod.valueOf(preferredContactMethod);
+            }
+            donorSetupRequestService.createNewDonorRequest(
+                    charity, user, type, firstName, lastName, email, phone,
+                    streetAddress, city, state, zipCode,
+                    companyName, contactName, taxId,
+                    anonPref, contactMethod, notes);
+            redirectAttributes.addFlashAttribute("success",
+                    "New donor request has been submitted for admin review.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/charity-partner/" + charityId + "/donors/setup-requests";
+    }
+
+    @GetMapping("/{charityId}/donors/setup-requests")
+    public String listSetupRequestsScoped(
+            @PathVariable Long charityId,
+            @RequestParam(required = false) String status,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<DonorSetupRequest> requests;
+        if (status != null && !status.isEmpty()) {
+            try {
+                DonorSetupRequest.RequestStatus requestStatus =
+                        DonorSetupRequest.RequestStatus.valueOf(status.toUpperCase());
+                requests = donorSetupRequestService.getRequestsForCharity(charityId, requestStatus);
+            } catch (IllegalArgumentException e) {
+                requests = donorSetupRequestService.getRequestsForCharity(charityId);
+            }
+        } else {
+            requests = donorSetupRequestService.getRequestsForCharity(charityId);
+        }
+        long pendingCount = donorSetupRequestService.countPendingRequestsForCharity(charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("requests", requests);
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("currentStatus", status);
+
+        return "charity-partner/donor-setup-requests";
+    }
+
+    // --- Donations (with Stripe fee payment) ---
+
+    @GetMapping("/{charityId}/donations")
+    public String listDonationsScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<Donation> donations = donationService.getDonationsForCharity(charityId);
+        model.addAttribute("charity", charity);
+        model.addAttribute("donations", donations);
+        model.addAttribute("activePage", "donations");
+        return "charity-partner/donations";
+    }
+
+    @GetMapping("/{charityId}/donations/record")
+    public String showRecordDonationFormScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("activePage", "donations");
+        return "charity-partner/record-donation";
+    }
+
+    @PostMapping("/{charityId}/donations/create-fee-session")
+    public String createFeePaymentSessionScoped(
+            @PathVariable Long charityId,
+            @RequestParam BigDecimal donationAmount,
+            @RequestParam String donorName,
+            @RequestParam(required = false) String donorEmail,
+            @RequestParam String dateReceived,
+            @RequestParam(required = false) String notes,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        try {
+            LocalDate parsedDate = LocalDate.parse(dateReceived);
+
+            if (donationAmount.compareTo(new BigDecimal("5.00")) < 0) {
+                throw new RuntimeException("Minimum donation amount is $5.00.");
+            }
+            if (parsedDate.isAfter(LocalDate.now())) {
+                throw new RuntimeException("Date received cannot be in the future.");
+            }
+
+            // Build charity-scoped success/cancel URLs so the post-Stripe
+            // redirect lands back on this charity (multi-facilitators have
+            // no user.charity_id to fall back to).
+            String successUrl = stripeService.getBaseUrl()
+                    + "/charity-partner/" + charityId + "/donations/record/success?session_id={CHECKOUT_SESSION_ID}";
+            String cancelUrl = stripeService.getBaseUrl()
+                    + "/charity-partner/" + charityId + "/donations/record/cancel";
+
+            String checkoutUrl = stripeService.createFeePaymentSession(
+                    charityId, donationAmount, donorName, donorEmail,
+                    parsedDate, notes, principal.getName(),
+                    successUrl, cancelUrl);
+            return "redirect:" + checkoutUrl;
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/charity-partner/" + charityId + "/donations/record";
+        }
+    }
+
+    @GetMapping("/{charityId}/donations/record/success")
+    public String feePaymentSuccessScoped(
+            @PathVariable Long charityId,
+            @RequestParam("session_id") String sessionId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        try {
+            com.stripe.model.checkout.Session session = stripeService.retrieveSession(sessionId);
+            BigDecimal feeAmount = new BigDecimal(session.getAmountTotal())
+                    .divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
+            model.addAttribute("feeAmount", feeAmount);
+
+            String donationAmountStr = session.getMetadata().get("donation_amount");
+            if (donationAmountStr != null) {
+                model.addAttribute("donationAmount", new BigDecimal(donationAmountStr));
+            }
+
+            donationService.findByFeeStripeSessionId(sessionId).ifPresent(donation -> {
+                model.addAttribute("donation", donation);
+            });
+        } catch (Exception e) {
+            model.addAttribute("error", "Unable to retrieve payment details.");
+        }
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("activePage", "donations");
+        return "charity-partner/record-donation-success";
+    }
+
+    @GetMapping("/{charityId}/donations/record/cancel")
+    public String feePaymentCancelScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("activePage", "donations");
+        return "charity-partner/record-donation-cancel";
+    }
+
+    @GetMapping("/{charityId}/donations/calculate-fees")
+    @ResponseBody
+    public Map<String, Object> calculateDonationFeesScoped(
+            @PathVariable Long charityId,
+            @RequestParam BigDecimal donationAmount,
+            Principal principal
+    ) {
+        // Authorization: only authorized users can see fee calculation for this charity
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return Map.of("error", "access denied");
+
+        DonationService.DonationBreakdown breakdown = donationService.calculateFees(donationAmount);
+        BigDecimal feeAmount = breakdown.platformFee().add(breakdown.facilitatorFee());
+        int nightsFunded = donationService.calculateNightsFunded(breakdown.netAmount(), charityId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("donationAmount", donationAmount);
+        result.put("platformFee", breakdown.platformFee());
+        result.put("facilitatorFee", breakdown.facilitatorFee());
+        result.put("feeAmount", feeAmount);
+        result.put("netAmount", breakdown.netAmount());
+        result.put("nightsFunded", nightsFunded);
+        return result;
+    }
+
+    // ========================================
+    // DOCUMENTS - CHARITY-SCOPED PATHS (Phase 5b-4)
+    // ========================================
+
+    @GetMapping("/{charityId}/documents")
+    public String listDocumentsScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<Document> documents = documentService.getDocumentsForCharityById(charityId);
+        model.addAttribute("charity", charity);
+        model.addAttribute("documents", documents);
+        model.addAttribute("documentTypes", Document.DocumentType.values());
+
+        return "charity-partner/documents";
+    }
+
+    @GetMapping("/{charityId}/documents/upload")
+    public String showUploadFormScoped(
+            @PathVariable Long charityId,
+            @RequestParam(required = false) Long referralId,
+            @RequestParam(required = false) Long inviteId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<Referral> referrals = referralRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
+        List<ReferralInvite> invites = inviteService.getInvitesForCharityById(charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("referrals", referrals);
+        model.addAttribute("invites", invites);
+        model.addAttribute("documentTypes", Document.DocumentType.values());
+        model.addAttribute("selectedReferralId", referralId);
+        model.addAttribute("selectedInviteId", inviteId);
+
+        return "charity-partner/document-upload";
+    }
+
+    @PostMapping("/{charityId}/documents/upload")
+    public String uploadDocumentScoped(
+            @PathVariable Long charityId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(required = false) Long referralId,
+            @RequestParam(required = false) Long inviteId,
+            @RequestParam Document.DocumentType documentType,
+            @RequestParam(required = false) String description,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        try {
+            if (inviteId != null) {
+                documentService.uploadDocumentForInviteByCharity(
+                        file, inviteId, charityId, documentType, description, principal.getName());
+                redirectAttributes.addFlashAttribute("success", "Document uploaded to invite successfully");
+                return "redirect:/charity-partner/" + charityId + "/invites";
+            }
+
+            documentService.uploadDocumentForCharity(
+                    file, referralId, charityId, documentType, description, principal.getName());
+            redirectAttributes.addFlashAttribute("success", "Document uploaded successfully");
+
+            if (referralId != null) {
+                return "redirect:/charity-partner/" + charityId + "/referrals/" + referralId;
+            }
+            return "redirect:/charity-partner/" + charityId + "/documents";
+
+        } catch (IOException e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to upload document: " + e.getMessage());
+            return "redirect:/charity-partner/" + charityId + "/documents/upload";
+        }
+    }
+
+    @GetMapping("/{charityId}/documents/{id}/download")
+    public ResponseEntity<Resource> downloadDocumentScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            Document document = documentService.getDocumentForCharity(id, charityId);
+            Resource resource = documentService.downloadDocumentForCharity(id, charityId);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(document.getMimeType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getFileName() + "\"")
+                    .body(resource);
+        } catch (IOException e) {
+            throw new RuntimeException("Error downloading file", e);
+        }
+    }
+
+    @PostMapping("/{charityId}/documents/{id}/delete")
+    public String deleteDocumentScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        try {
+            documentService.deleteDocumentForCharity(id, charityId);
+            redirectAttributes.addFlashAttribute("success", "Document deleted successfully");
+        } catch (IOException e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to delete document: " + e.getMessage());
+        }
+        return "redirect:/charity-partner/" + charityId + "/documents";
+    }
+
+    // ========================================
+    // INVITES - CHARITY-SCOPED PATHS (Phase 5b-2)
+    // ========================================
+
+    @GetMapping("/{charityId}/invites")
+    public String listInvitesScoped(
+            @PathVariable Long charityId,
+            @RequestParam(required = false) String status,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<ReferralInvite> invites;
+        if (status != null && !status.isEmpty()) {
+            try {
+                ReferralInvite.InviteStatus inviteStatus = ReferralInvite.InviteStatus.valueOf(status.toUpperCase());
+                invites = inviteService.getInvitesByStatusForCharity(charityId, inviteStatus);
+            } catch (IllegalArgumentException e) {
+                invites = inviteService.getInvitesForCharityById(charityId);
+            }
+        } else {
+            invites = inviteService.getInvitesForCharityById(charityId);
+        }
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("invites", invites);
+        model.addAttribute("statuses", ReferralInvite.InviteStatus.values());
+        model.addAttribute("currentStatus", status);
+        model.addAttribute("inviteStats", inviteService.getInviteStatsForCharity(charityId));
+
+        return "charity-partner/invites";
+    }
+
+    @GetMapping("/{charityId}/invites/send")
+    public String showSendInviteFormScoped(
+            @PathVariable Long charityId,
+            @RequestParam(required = false) Long referralId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<Referral> referrals = referralRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
+        List<CharityLocation> locations = locationRepository.findByCharityIdAndIsActiveTrue(charityId);
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("referrals", referrals);
+        model.addAttribute("locations", locations);
+        model.addAttribute("inviteTypes", ReferralInvite.InviteType.values());
+        model.addAttribute("selectedReferralId", referralId);
+
+        if (referralId != null) {
+            referralRepository.findByIdAndCharityId(referralId, charityId)
+                    .ifPresent(referral -> {
+                        model.addAttribute("recipientName", referral.getParticipantName());
+                        model.addAttribute("recipientEmail", referral.getParticipantEmail());
+                        model.addAttribute("recipientPhone", referral.getParticipantPhone());
+                    });
+        }
+
+        return "charity-partner/invite-form";
+    }
+
+    @PostMapping("/{charityId}/invites/send")
+    public String sendInviteScoped(
+            @PathVariable Long charityId,
+            @RequestParam(required = false) Long referralId,
+            @RequestParam String recipientName,
+            @RequestParam(required = false) String recipientEmail,
+            @RequestParam(required = false) String recipientPhone,
+            @RequestParam ReferralInvite.InviteType inviteType,
+            @RequestParam(required = false) String message,
+            @RequestParam(required = false) String needsDescription,
+            @RequestParam(required = false) String allowedZipCodes,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if ((recipientEmail == null || recipientEmail.trim().isEmpty()) &&
+                (recipientPhone == null || recipientPhone.trim().isEmpty())) {
+            redirectAttributes.addFlashAttribute("error", "Please provide either an email or phone number");
+            return "redirect:/charity-partner/" + charityId + "/invites/send";
+        }
+
+        try {
+            ReferralInvite invite = new ReferralInvite();
+            invite.setRecipientName(recipientName);
+            invite.setRecipientEmail(recipientEmail);
+            invite.setRecipientPhone(recipientPhone);
+            invite.setInviteType(inviteType);
+            invite.setMessage(message);
+            invite.setNeedsDescription(needsDescription);
+            invite.setAllowedZipCodes(allowedZipCodes);
+            invite.setStatus(ReferralInvite.InviteStatus.PENDING);
+            invite.setInviteToken(UUID.randomUUID().toString());
+            invite.setExpiresAt(LocalDateTime.now().plusDays(7));
+            invite.setCreatedAt(LocalDateTime.now());
+            invite.setCreatedBy(user);
+
+            if (referralId != null) {
+                Referral referral = referralRepository.findByIdAndCharityId(referralId, charityId)
+                        .orElse(null);
+                invite.setReferral(referral);
+            }
+            invite.setCharity(charity);
+
+            inviteService.saveAndSendInvite(invite, charityId);
+
+            redirectAttributes.addFlashAttribute("success", "Invite sent successfully to " + recipientName);
+
+            if (referralId != null) {
+                return "redirect:/charity-partner/" + charityId + "/referrals/" + referralId;
+            }
+            return "redirect:/charity-partner/" + charityId + "/invites";
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to send invite: " + e.getMessage());
+            return "redirect:/charity-partner/" + charityId + "/invites/send"
+                    + (referralId != null ? "?referralId=" + referralId : "");
+        }
+    }
+
+    @PostMapping("/{charityId}/invites/{id}/resend")
+    public String resendInviteScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        try {
+            inviteService.resendInviteByCharity(id, charityId);
+            redirectAttributes.addFlashAttribute("success", "Invite resent successfully");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to resend invite: " + e.getMessage());
+        }
+
+        return "redirect:/charity-partner/" + charityId + "/invites";
+    }
+
+    @PostMapping("/{charityId}/invites/{id}/cancel")
+    public String cancelInviteScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        try {
+            inviteService.cancelInviteByCharity(id, charityId, principal.getName());
+            redirectAttributes.addFlashAttribute("success", "Invite cancelled successfully");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Failed to cancel invite: " + e.getMessage());
+        }
+
+        return "redirect:/charity-partner/" + charityId + "/invites";
     }
 
     // ========================================
@@ -1349,6 +2451,297 @@ public class CharityPartnerController {
         model.addAttribute("charity", charity);
 
         return "charity-partner/location-view";
+    }
+
+    // ========================================
+    // LOCATIONS - CHARITY-SCOPED PATHS (Phase 5b-3)
+    // ========================================
+
+    @GetMapping("/{charityId}/locations")
+    public String listLocationsScoped(
+            @PathVariable Long charityId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        List<CharityLocation> locations;
+        if ("active".equals(status)) {
+            locations = locationRepository.findByCharityIdAndIsActiveTrue(charityId);
+        } else if ("inactive".equals(status)) {
+            locations = locationRepository.findByCharityIdAndIsActiveFalse(charityId);
+        } else {
+            locations = locationRepository.findByCharityIdOrderByLocationNameAsc(charityId);
+        }
+
+        if (search != null && !search.trim().isEmpty()) {
+            String searchLower = search.toLowerCase().trim();
+            locations = locations.stream()
+                    .filter(l ->
+                            (l.getLocationName() != null && l.getLocationName().toLowerCase().contains(searchLower)) ||
+                                    (l.getCity() != null && l.getCity().toLowerCase().contains(searchLower)) ||
+                                    (l.getState() != null && l.getState().toLowerCase().contains(searchLower)) ||
+                                    (l.getZipCode() != null && l.getZipCode().contains(search.trim()))
+                    )
+                    .toList();
+        }
+
+        long totalLocations = locationRepository.countByCharityId(charityId);
+        long activeLocations = locationRepository.countByCharityIdAndIsActive(charityId, true);
+
+        List<com.learning.learning.entity.PartnerLocation> partnerLocations =
+                partnerLocationRepository.findActiveLinkedToCharity(charityId);
+
+        if (search != null && !search.trim().isEmpty()) {
+            String searchLower = search.toLowerCase().trim();
+            partnerLocations = partnerLocations.stream()
+                    .filter(pl ->
+                            (pl.getName() != null && pl.getName().toLowerCase().contains(searchLower)) ||
+                                    (pl.getCity() != null && pl.getCity().toLowerCase().contains(searchLower)) ||
+                                    (pl.getState() != null && pl.getState().toLowerCase().contains(searchLower)) ||
+                                    (pl.getZipCode() != null && pl.getZipCode().contains(search.trim()))
+                    )
+                    .toList();
+        }
+
+        model.addAttribute("charity", charity);
+        model.addAttribute("locations", locations);
+        model.addAttribute("partnerLocations", partnerLocations);
+        model.addAttribute("totalLocations", totalLocations);
+        model.addAttribute("activeLocations", activeLocations);
+        model.addAttribute("selectedStatus", status);
+        model.addAttribute("search", search);
+
+        return "charity-partner/locations";
+    }
+
+    @GetMapping("/{charityId}/locations/new")
+    public String showCreateLocationFormScoped(
+            @PathVariable Long charityId,
+            Model model,
+            Principal principal
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        model.addAttribute("location", new CharityLocation());
+        model.addAttribute("charity", charity);
+        model.addAttribute("isEdit", false);
+
+        return "charity-partner/location-form";
+    }
+
+    @PostMapping("/{charityId}/locations/new")
+    public String createLocationScoped(
+            @PathVariable Long charityId,
+            @RequestParam String locationName,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String zipCode,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) Integer capacity,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String servicesOffered,
+            @RequestParam(required = false) String hoursOfOperation,
+            @RequestParam(required = false) Boolean isActive,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        if (locationRepository.existsByCharityIdAndLocationName(charityId, locationName)) {
+            redirectAttributes.addFlashAttribute("error", "Location name already exists");
+            return "redirect:/charity-partner/" + charityId + "/locations/new";
+        }
+
+        CharityLocation location = new CharityLocation();
+        location.setCharity(charity);
+        location.setLocationName(locationName);
+        location.setAddress(address);
+        location.setCity(city);
+        location.setState(state);
+        location.setZipCode(zipCode);
+        location.setCountry(country != null ? country : "USA");
+        location.setPhone(phone);
+        location.setEmail(email);
+        location.setCapacity(capacity);
+        location.setDescription(description);
+        location.setServicesOffered(servicesOffered);
+        location.setHoursOfOperation(hoursOfOperation);
+        location.setIsActive(Boolean.TRUE.equals(isActive));
+
+        locationRepository.save(location);
+
+        redirectAttributes.addFlashAttribute("success", "Location '" + locationName + "' created successfully!");
+        return "redirect:/charity-partner/" + charityId + "/locations";
+    }
+
+    @GetMapping("/{charityId}/locations/{id}")
+    public String viewLocationScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Model model,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        CharityLocation location = locationRepository.findById(id)
+                .filter(loc -> loc.getCharity().getId().equals(charityId))
+                .orElse(null);
+        if (location == null) {
+            redirectAttributes.addFlashAttribute("error", "Location not found");
+            return "redirect:/charity-partner/" + charityId + "/locations";
+        }
+
+        model.addAttribute("location", location);
+        model.addAttribute("charity", charity);
+
+        return "charity-partner/location-view";
+    }
+
+    @GetMapping("/{charityId}/locations/{id}/edit")
+    public String showEditLocationFormScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Model model,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        CharityLocation location = locationRepository.findById(id)
+                .filter(loc -> loc.getCharity().getId().equals(charityId))
+                .orElse(null);
+        if (location == null) {
+            redirectAttributes.addFlashAttribute("error", "Location not found");
+            return "redirect:/charity-partner/" + charityId + "/locations";
+        }
+
+        model.addAttribute("location", location);
+        model.addAttribute("charity", charity);
+        model.addAttribute("isEdit", true);
+
+        return "charity-partner/location-form";
+    }
+
+    @PostMapping("/{charityId}/locations/{id}/edit")
+    public String updateLocationScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            @RequestParam String locationName,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String zipCode,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) Integer capacity,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String servicesOffered,
+            @RequestParam(required = false) String hoursOfOperation,
+            @RequestParam(required = false) Boolean isActive,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        CharityLocation existingLocation = locationRepository.findById(id)
+                .filter(loc -> loc.getCharity().getId().equals(charityId))
+                .orElse(null);
+        if (existingLocation == null) {
+            redirectAttributes.addFlashAttribute("error", "Location not found");
+            return "redirect:/charity-partner/" + charityId + "/locations";
+        }
+
+        if (!existingLocation.getLocationName().equals(locationName)) {
+            if (locationRepository.existsByCharityIdAndLocationName(charityId, locationName)) {
+                redirectAttributes.addFlashAttribute("error", "Location name already exists");
+                return "redirect:/charity-partner/" + charityId + "/locations/" + id + "/edit";
+            }
+        }
+
+        existingLocation.setLocationName(locationName);
+        existingLocation.setAddress(address);
+        existingLocation.setCity(city);
+        existingLocation.setState(state);
+        existingLocation.setZipCode(zipCode);
+        existingLocation.setCountry(country != null ? country : "USA");
+        existingLocation.setPhone(phone);
+        existingLocation.setEmail(email);
+        existingLocation.setCapacity(capacity);
+        existingLocation.setDescription(description);
+        existingLocation.setServicesOffered(servicesOffered);
+        existingLocation.setHoursOfOperation(hoursOfOperation);
+        existingLocation.setIsActive(Boolean.TRUE.equals(isActive));
+
+        locationRepository.save(existingLocation);
+
+        redirectAttributes.addFlashAttribute("success", "Location '" + locationName + "' updated successfully!");
+        return "redirect:/charity-partner/" + charityId + "/locations";
+    }
+
+    @PostMapping({"/{charityId}/locations/{id}/toggle-active", "/{charityId}/locations/{id}/toggle-status"})
+    public String toggleLocationActiveScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        CharityLocation location = locationRepository.findById(id)
+                .filter(loc -> loc.getCharity().getId().equals(charityId))
+                .orElse(null);
+        if (location == null) {
+            redirectAttributes.addFlashAttribute("error", "Location not found");
+            return "redirect:/charity-partner/" + charityId + "/locations";
+        }
+
+        boolean newStatus = !(location.getIsActive() != null && location.getIsActive());
+        location.setIsActive(newStatus);
+        locationRepository.save(location);
+
+        String statusText = newStatus ? "activated" : "deactivated";
+        redirectAttributes.addFlashAttribute("success", "Location '" + location.getLocationName() + "' " + statusText);
+        return "redirect:/charity-partner/" + charityId + "/locations";
+    }
+
+    @PostMapping("/{charityId}/locations/{id}/delete")
+    public String deleteLocationScoped(
+            @PathVariable Long charityId,
+            @PathVariable Long id,
+            Principal principal,
+            RedirectAttributes redirectAttributes
+    ) {
+        Charity charity = resolvePartnerCharity(principal, charityId);
+        if (charity == null) return "redirect:/access-denied";
+
+        CharityLocation location = locationRepository.findById(id)
+                .filter(loc -> loc.getCharity().getId().equals(charityId))
+                .orElse(null);
+        if (location == null) {
+            redirectAttributes.addFlashAttribute("error", "Location not found");
+            return "redirect:/charity-partner/" + charityId + "/locations";
+        }
+
+        String locationName = location.getLocationName();
+        locationRepository.delete(location);
+
+        redirectAttributes.addFlashAttribute("success", "Location '" + locationName + "' deleted");
+        return "redirect:/charity-partner/" + charityId + "/locations";
     }
 
     // ========================================

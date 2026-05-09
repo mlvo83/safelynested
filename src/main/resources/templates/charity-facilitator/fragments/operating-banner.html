@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Operating Banner Fragment</title></head>
+<body>
+
+<!--
+    Operating-as banner. Shown above every charity-facilitator page so
+    the user always knows which charity they are acting on. For
+    multi-charity facilitators, includes a "back to all charities"
+    link to the hub. Single-charity facilitators see the same banner
+    without the back link.
+
+    Required model attributes:
+      - charity              (Charity entity for the active charity)
+      - isMultiFacilitator   (Boolean, supplied by CharityFacilitatorController)
+-->
+<div th:fragment="operatingBanner" class="op-banner">
+    <style>
+        .op-banner {
+            background: #fef3c7;
+            border-bottom: 2px solid #fde68a;
+            padding: 8px 24px;
+            font-size: 13px;
+            color: #78350f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .op-banner .op-label {
+            text-transform: uppercase;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            color: #92400e;
+            margin-right: 8px;
+        }
+        .op-banner .op-charity {
+            font-weight: 700;
+            color: #78350f;
+            font-size: 14px;
+        }
+        .op-banner .op-location {
+            margin-left: 6px;
+            color: #b45309;
+            font-size: 12px;
+        }
+        .op-banner .op-back {
+            color: #78350f;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 4px 12px;
+            border: 1px solid #fde68a;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.5);
+            transition: background 0.15s;
+        }
+        .op-banner .op-back:hover { background: rgba(255,255,255,0.9); }
+    </style>
+
+    <div>
+        <span class="op-label">Operating as</span>
+        <span class="op-charity" th:text="${charity != null ? charity.charityName : ''}">Charity Name</span>
+        <span class="op-location"
+              th:if="${charity != null and charity.city != null}"
+              th:text="'— ' + ${charity.city} + (${charity.state} != null ? ', ' + ${charity.state} : '')">— City, ST</span>
+    </div>
+
+    <a th:if="${isMultiFacilitator}"
+       th:href="@{/multi-facilitator/hub}"
+       class="op-back">&larr; All charities</a>
+</div>
+
+</body>
+</html>

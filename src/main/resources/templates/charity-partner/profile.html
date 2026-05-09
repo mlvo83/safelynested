@@ -23,7 +23,7 @@
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2"><i class="fas fa-building me-2"></i> Organization Profile</h1>
-                <a href="/charity-partner/profile/edit" class="btn btn-primary" sec:authorize="hasRole('CHARITY_PARTNER')">
+                <a th:href="@{/charity-partner/{cid}/profile/edit(cid=${charity.id})}" class="btn btn-primary" sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                     <i class="fas fa-edit me-1"></i> Edit Profile
                 </a>
             </div>
@@ -165,10 +165,10 @@
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <a href="/charity-partner/profile/edit" class="btn btn-outline-primary">
+                                <a th:href="@{/charity-partner/{cid}/profile/edit(cid=${charity.id})}" class="btn btn-outline-primary">
                                     <i class="fas fa-edit me-2"></i> Edit Profile
                                 </a>
-                                <a href="/charity-partner/locations" class="btn btn-outline-secondary">
+                                <a th:href="@{/charity-partner/{cid}/locations(cid=${charity.id})}" class="btn btn-outline-secondary">
                                     <i class="fas fa-map-marker-alt me-2"></i> Manage Locations
                                 </a>
                             </div>

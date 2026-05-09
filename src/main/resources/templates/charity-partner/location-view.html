@@ -26,7 +26,7 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-1">
                             <li class="breadcrumb-item"><a th:href="@{/charity-partner/dashboard}">Dashboard</a></li>
-                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/locations}">Locations</a></li>
+                            <li class="breadcrumb-item"><a th:href="@{/charity-partner/{cid}/locations(cid=${charity.id})}">Locations</a></li>
                             <li class="breadcrumb-item active" th:text="${location.locationName}">Location</li>
                         </ol>
                     </nav>
@@ -38,10 +38,10 @@
                     </h1>
                 </div>
                 <div class="btn-group">
-                    <a th:href="@{/charity-partner/locations/{id}/edit(id=${location.id})}" class="btn btn-primary">
+                    <a th:href="@{/charity-partner/{cid}/locations/{id}/edit(cid=${charity.id},id=${location.id})}" class="btn btn-primary">
                         <i class="fas fa-edit me-1"></i> Edit
                     </a>
-                    <form th:action="@{/charity-partner/locations/{id}/toggle-status(id=${location.id})}" method="post" class="d-inline">
+                    <form th:action="@{/charity-partner/{cid}/locations/{id}/toggle-status(cid=${charity.id},id=${location.id})}" method="post" class="d-inline">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit" th:class="${location.isActive ? 'btn btn-warning' : 'btn btn-success'}">
                             <i th:class="${location.isActive ? 'fas fa-pause' : 'fas fa-play'}" class="me-1"></i>
@@ -215,7 +215,7 @@
 
             <!-- Back Button -->
             <div class="mt-4">
-                <a th:href="@{/charity-partner/locations}" class="btn btn-outline-secondary">
+                <a th:href="@{/charity-partner/{cid}/locations(cid=${charity.id})}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Back to Locations
                 </a>
             </div>

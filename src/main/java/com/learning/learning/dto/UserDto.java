@@ -33,6 +33,9 @@ public class UserDto {
     private String lastName;
     private String phone;
 
-    // Charity assignment
+    // Charity assignment (single-charity roles: CHARITY_PARTNER, CHARITY_FACILITATOR)
     private Long charityId;
+
+    // Multi-charity authorizations (only relevant when MULTI_FACILITATOR role is selected)
+    private List<Long> multiFacilitatorCharityIds = new ArrayList<>();
 }

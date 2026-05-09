@@ -19,6 +19,7 @@ import java.util.Set;
  * Routes users to different pages based on their role after successful login:
  * - ROLE_ADMIN              → /home
  * - ROLE_FACILITATOR        → /facilitator/dashboard
+ * - ROLE_MULTI_FACILITATOR  → /multi-facilitator/hub (charity picker)
  * - ROLE_CHARITY_FACILITATOR → /charity-partner/dashboard (with link to facilitator functions)
  * - ROLE_CHARITY_PARTNER    → /charity-partner/dashboard
  * - ROLE_DONOR              → /donor/dashboard
@@ -43,6 +44,8 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             redirectUrl = "/home";
         } else if (roles.contains("ROLE_FACILITATOR")) {
             redirectUrl = "/facilitator/dashboard";
+        } else if (roles.contains("ROLE_MULTI_FACILITATOR")) {
+            redirectUrl = "/multi-facilitator/hub";
         } else if (roles.contains("ROLE_CHARITY_FACILITATOR")) {
             redirectUrl = "/charity-partner/dashboard";
         } else if (roles.contains("ROLE_CHARITY_PARTNER")) {

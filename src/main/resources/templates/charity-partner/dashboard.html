@@ -39,7 +39,7 @@
                             <i class="fas fa-user me-1"></i>
                             Welcome, <strong th:text="${username}">User</strong>
                         </span>
-                    <a th:href="@{/charity-partner/referrals/new}" class="btn btn-primary" sec:authorize="hasRole('CHARITY_PARTNER')">
+                    <a th:href="@{/charity-partner/{cid}/referrals/new(cid=${charity.id})}" class="btn btn-primary" sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                         <i class="fas fa-plus me-1"></i> New Referral
                     </a>
                 </div>
@@ -188,7 +188,7 @@
                     <h5 class="mb-0">
                         <i class="fas fa-clock me-2"></i> Recent Referrals
                     </h5>
-                    <a th:href="@{/charity-partner/referrals}" class="btn btn-sm btn-outline-primary">
+                    <a th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id})}" class="btn btn-sm btn-outline-primary">
                         View All <i class="fas fa-arrow-right ms-1"></i>
                     </a>
                 </div>
@@ -208,7 +208,7 @@
                             <tbody>
                             <tr th:each="referral : ${recentReferrals}" th:if="${recentReferrals != null and !recentReferrals.empty}">
                                 <td>
-                                    <a th:href="@{/charity-partner/referrals/{id}(id=${referral.id})}"
+                                    <a th:href="@{/charity-partner/{cid}/referrals/{id}(cid=${charity.id},id=${referral.id})}"
                                        th:text="${referral.referralNumber}">REF-001</a>
                                 </td>
                                 <td th:text="${referral.participantName}">John Doe</td>
@@ -229,7 +229,7 @@
                                 </td>
                                 <td th:text="${#temporals.format(referral.createdAt, 'MMM dd, yyyy')}">Jan 01, 2024</td>
                                 <td>
-                                    <a th:href="@{/charity-partner/referrals/{id}(id=${referral.id})}"
+                                    <a th:href="@{/charity-partner/{cid}/referrals/{id}(cid=${charity.id},id=${referral.id})}"
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -239,7 +239,7 @@
                                 <td colspan="6" class="text-center text-muted py-4">
                                     <i class="fas fa-inbox fa-2x mb-2"></i>
                                     <p class="mb-0">No referrals yet</p>
-                                    <a th:href="@{/charity-partner/referrals/new}" class="btn btn-primary btn-sm mt-2" sec:authorize="hasRole('CHARITY_PARTNER')">
+                                    <a th:href="@{/charity-partner/{cid}/referrals/new(cid=${charity.id})}" class="btn btn-primary btn-sm mt-2" sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                                         Create your first referral
                                     </a>
                                 </td>
@@ -252,29 +252,29 @@
 
             <!-- Quick Actions - Only for CHARITY_PARTNER -->
             <div class="row">
-                <div class="col-md-6 mb-4" sec:authorize="hasRole('CHARITY_PARTNER')">
+                <div class="col-md-6 mb-4" sec:authorize="hasAnyRole('CHARITY_PARTNER','CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-white">
                             <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <a th:href="@{/charity-partner/referrals/new}" class="btn btn-primary">
+                                <a th:href="@{/charity-partner/{cid}/referrals/new(cid=${charity.id})}" class="btn btn-primary">
                                     <i class="fas fa-plus me-2"></i> Create New Referral
                                 </a>
-                                <a th:href="@{/charity-partner/invites/send}" class="btn btn-outline-info">
+                                <a th:href="@{/charity-partner/{cid}/invites/send(cid=${charity.id})}" class="btn btn-outline-info">
                                     <i class="fas fa-paper-plane me-2"></i> Send Invite
                                 </a>
-                                <a th:href="@{/charity-partner/documents/upload}" class="btn btn-outline-secondary">
+                                <a th:href="@{/charity-partner/{cid}/documents/upload(cid=${charity.id})}" class="btn btn-outline-secondary">
                                     <i class="fas fa-upload me-2"></i> Upload Document
                                 </a>
-                                <a th:href="@{/charity-partner/locations/new}" class="btn btn-outline-secondary">
+                                <a th:href="@{/charity-partner/{cid}/locations/new(cid=${charity.id})}" class="btn btn-outline-secondary">
                                     <i class="fas fa-map-marker-alt me-2"></i> Add Location
                                 </a>
-                                <a th:href="@{/charity-partner/donors/setup}" class="btn btn-outline-success">
+                                <a th:href="@{/charity-partner/{cid}/donors/setup(cid=${charity.id})}" class="btn btn-outline-success">
                                     <i class="fas fa-user-plus me-2"></i> Set Up a Donor
                                 </a>
-                                <a th:href="@{/charity-partner/donations/record}" class="btn btn-outline-warning">
+                                <a th:href="@{/charity-partner/{cid}/donations/record(cid=${charity.id})}" class="btn btn-outline-warning">
                                     <i class="fas fa-dollar-sign me-2"></i> Record Donation
                                 </a>
                             </div>
@@ -282,20 +282,20 @@
                     </div>
                 </div>
                 <!-- Facilitator Actions - Only for CHARITY_FACILITATOR -->
-                <div class="col-md-6 mb-4" sec:authorize="hasRole('CHARITY_FACILITATOR')">
+                <div class="col-md-6 mb-4" sec:authorize="hasAnyRole('CHARITY_FACILITATOR','MULTI_FACILITATOR')">
                     <div class="card shadow-sm h-100">
                         <div class="card-header bg-white">
                             <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Facilitator Actions</h5>
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <a th:href="@{/charity-facilitator/dashboard}" class="btn btn-success">
+                                <a th:href="@{/charity-facilitator/{cid}/dashboard(cid=${charity.id})}" class="btn btn-success">
                                     <i class="fas fa-user-shield me-2"></i> Go to Facilitator Dashboard
                                 </a>
-                                <a th:href="@{/charity-facilitator/referrals}" class="btn btn-outline-success">
+                                <a th:href="@{/charity-facilitator/{cid}/referrals(cid=${charity.id})}" class="btn btn-outline-success">
                                     <i class="fas fa-users me-2"></i> Manage Referrals
                                 </a>
-                                <a th:href="@{/charity-facilitator/bookings}" class="btn btn-outline-success">
+                                <a th:href="@{/charity-facilitator/{cid}/bookings(cid=${charity.id})}" class="btn btn-outline-success">
                                     <i class="fas fa-calendar-check me-2"></i> Manage Bookings
                                 </a>
                             </div>
@@ -321,7 +321,7 @@
                                         <i class="fas fa-clock me-1"></i> Pending Verification
                                     </span>
                             </p>
-                            <a th:href="@{/charity-partner/profile}" class="btn btn-outline-primary btn-sm">
+                            <a th:href="@{/charity-partner/{cid}/profile(cid=${charity.id})}" class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-edit me-1"></i> View Profile
                             </a>
                         </div>

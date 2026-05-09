@@ -14,28 +14,33 @@
                 <i class="fas fa-tachometer-alt me-2"></i> Dashboard
             </a>
         </li>
-        <li class="nav-item">
-            <a th:class="${activePage == 'referrals'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/referrals}">
+        <li class="nav-item" th:if="${charity != null}">
+            <a th:class="${activePage == 'referrals'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/referrals(cid=${charity.id})}">
                 <i class="fas fa-users me-2"></i> Referrals
             </a>
         </li>
-        <li class="nav-item">
-            <a th:class="${activePage == 'documents'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/documents}">
+        <li class="nav-item" th:if="${charity != null}">
+            <a th:class="${activePage == 'documents'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/documents(cid=${charity.id})}">
                 <i class="fas fa-file-alt me-2"></i> Documents
             </a>
         </li>
-        <li class="nav-item">
-            <a th:class="${activePage == 'invites'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/invites}">
+        <li class="nav-item" th:if="${charity != null}">
+            <a th:class="${activePage == 'invites'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/invites(cid=${charity.id})}">
                 <i class="fas fa-envelope me-2"></i> Invites
             </a>
         </li>
-        <li class="nav-item">
-            <a th:class="${activePage == 'locations'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/locations}">
+        <li class="nav-item" th:if="${charity != null}">
+            <a th:class="${activePage == 'locations'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/locations(cid=${charity.id})}">
                 <i class="fas fa-map-marker-alt me-2"></i> Locations
             </a>
         </li>
-        <li class="nav-item">
-            <a th:class="${activePage == 'donors'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/donors}"
+        <li class="nav-item" th:if="${charity != null}">
+            <a th:class="${activePage == 'donors'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/donors(cid=${charity.id})}"
                style="display: flex; justify-content: space-between; align-items: center;">
                 <span><i class="fas fa-hand-holding-heart me-2"></i> Donors</span>
                 <span th:if="${pendingDonorSetupCount != null and pendingDonorSetupCount > 0}"
@@ -44,23 +49,26 @@
                       style="font-size: 0.7rem;">0</span>
             </a>
         </li>
-        <li class="nav-item">
-            <a th:class="${activePage == 'donations'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/donations}">
+        <li class="nav-item" th:if="${charity != null}">
+            <a th:class="${activePage == 'donations'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/donations(cid=${charity.id})}">
                 <i class="fas fa-dollar-sign me-2"></i> Donations
             </a>
         </li>
-        <li class="nav-item">
-            <a th:class="${activePage == 'profile'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/profile}">
+        <li class="nav-item" th:if="${charity != null}">
+            <a th:class="${activePage == 'profile'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/profile(cid=${charity.id})}">
                 <i class="fas fa-building me-2"></i> Profile
             </a>
         </li>
-        <li class="nav-item" th:if="${canManageTeam}">
-            <a th:class="${activePage == 'team'} ? 'nav-link active' : 'nav-link'" th:href="@{/charity-partner/team}">
+        <li class="nav-item" th:if="${canManageTeam and charity != null}">
+            <a th:class="${activePage == 'team'} ? 'nav-link active' : 'nav-link'"
+               th:href="@{/charity-partner/{cid}/team(cid=${charity.id})}">
                 <i class="fas fa-users me-2"></i> Team
             </a>
         </li>
-        <li class="nav-item mt-3" sec:authorize="hasRole('CHARITY_FACILITATOR')">
-            <a class="nav-link" th:href="@{/charity-facilitator/dashboard}" style="background: rgba(5, 150, 105, 0.3); border-left: 3px solid #10b981;">
+        <li class="nav-item mt-3" th:if="${charity != null}" sec:authorize="hasAnyRole('CHARITY_FACILITATOR','MULTI_FACILITATOR')">
+            <a class="nav-link" th:href="@{/charity-facilitator/{cid}/dashboard(cid=${charity.id})}" style="background: rgba(5, 150, 105, 0.3); border-left: 3px solid #10b981;">
                 <i class="fas fa-user-shield me-2"></i> Facilitator Dashboard
             </a>
         </li>

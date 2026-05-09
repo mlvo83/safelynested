@@ -152,8 +152,21 @@ public class CharityService {
     @Transactional
     public Charity updateCharity(Long charityId, Charity updatedCharity, String username) {
         Charity existingCharity = getCharityById(charityId, username);
+        return applyAndSaveUpdates(existingCharity, updatedCharity);
+    }
 
-        // Update fields
+    /**
+     * Charity-scoped overload — caller has already authorized the user
+     * against this charity (e.g. via resolvePartnerCharity in URL-scoped
+     * partner endpoints). Skips the username-based access check.
+     */
+    @Transactional
+    public Charity updateCharityForAuthorized(Charity existingCharity, Charity updatedCharity) {
+        return applyAndSaveUpdates(existingCharity, updatedCharity);
+    }
+
+    private Charity applyAndSaveUpdates(Charity existingCharity, Charity updatedCharity) {
+        Long charityId = existingCharity.getId();
         if (updatedCharity.getCharityName() != null) {
             // Check if new name conflicts with another charity
             Optional<Charity> existingByName = charityRepository.findByCharityName(updatedCharity.getCharityName());

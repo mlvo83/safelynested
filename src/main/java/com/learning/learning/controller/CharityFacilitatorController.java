@@ -7,10 +7,11 @@ import com.learning.learning.entity.CharityLocation;
 import com.learning.learning.entity.Referral;
 import com.learning.learning.repository.BookingRepository;
 import com.learning.learning.repository.CharityLocationRepository;
+import com.learning.learning.repository.CharityRepository;
 import com.learning.learning.repository.PartnerLocationRepository;
 import com.learning.learning.repository.ReferralRepository;
 import com.learning.learning.service.BookingService;
-import com.learning.learning.service.CharityService;
+import com.learning.learning.service.MultiFacilitatorService;
 import com.learning.learning.service.ReferralService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,27 +26,26 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
- * Controller for Charity Facilitators.
+ * Controller for Charity Facilitators, scoped per-request to a specific
+ * charity via the {charityId} path variable. Both CHARITY_FACILITATOR
+ * (single-charity) and MULTI_FACILITATOR (multi-charity) users share
+ * this controller; per-request authorization is delegated to
+ * MultiFacilitatorService.canFacilitateForCharity.
  *
- * Charity Facilitators can:
- * - View referrals for their assigned charity only
- * - Approve/reject referrals for their charity
- * - View and manage bookings for their charity
- * - Check-in/check-out guests for their charity's bookings
- *
- * They CANNOT:
- * - See referrals/bookings from other charities
- * - Create new referrals (that's for Charity Partners)
- * - Send invites (that's for Charity Partners)
+ * URL pattern: /charity-facilitator/{charityId}/...
  */
 @Controller
-@RequestMapping("/charity-facilitator")
+@RequestMapping("/charity-facilitator/{charityId}")
 public class CharityFacilitatorController {
 
     @Autowired
-    private CharityService charityService;
+    private MultiFacilitatorService multiFacilitatorService;
+
+    @Autowired
+    private CharityRepository charityRepository;
 
     @Autowired
     private ReferralService referralService;
@@ -66,23 +66,46 @@ public class CharityFacilitatorController {
     private PartnerLocationRepository partnerLocationRepository;
 
     /**
+     * Tells templates whether the logged-in user is a multi-charity
+     * facilitator, so the operating-as banner can render a "back to
+     * all charities" link.
+     */
+    @ModelAttribute("isMultiFacilitator")
+    public Boolean isMultiFacilitator() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_MULTI_FACILITATOR"));
+    }
+
+    /**
+     * Verify the current user is authorized to facilitate for the given
+     * charity, and load the Charity record. Returns Optional.empty() if
+     * the user is not authorized — the caller should return a redirect
+     * to /access-denied.
+     */
+    private Optional<Charity> authorize(String username, Long charityId) {
+        if (!multiFacilitatorService.canFacilitateForCharity(username, charityId)) {
+            return Optional.empty();
+        }
+        return charityRepository.findById(charityId);
+    }
+
+    /**
      * Charity Facilitator Dashboard
      */
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
+    public String dashboard(@PathVariable Long charityId, Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
+        Charity charity = auth.get();
 
-        // Get charity-specific statistics
         Map<String, Object> stats = getCharityFacilitatorStats(charityId);
-
-        // Get recent referrals for this charity
         List<Referral> recentReferrals = referralRepository.findTop10ByCharityIdOrderByCreatedAtDesc(charityId);
 
-        // Get recent bookings for this charity
         List<Booking> recentBookings = bookingRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
         if (recentBookings.size() > 10) {
             recentBookings = recentBookings.subList(0, 10);
@@ -102,12 +125,15 @@ public class CharityFacilitatorController {
      * View Referrals for this Charity
      */
     @GetMapping("/referrals")
-    public String viewReferrals(@RequestParam(required = false) String status, Model model) {
+    public String viewReferrals(@PathVariable Long charityId,
+                                 @RequestParam(required = false) String status,
+                                 Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
+        Charity charity = auth.get();
 
         List<Referral> referrals;
         if (status != null && !status.isEmpty()) {
@@ -117,7 +143,6 @@ public class CharityFacilitatorController {
             referrals = referralRepository.findByCharityIdOrderByCreatedAtDesc(charityId);
         }
 
-        // Build referralId -> bookingId map for approved referrals
         List<Long> referralIds = referrals.stream().map(Referral::getId).toList();
         Map<Long, Long> referralBookingMap = new HashMap<>();
         if (!referralIds.isEmpty()) {
@@ -138,23 +163,23 @@ public class CharityFacilitatorController {
      * View Referral Details
      */
     @GetMapping("/referrals/{id}")
-    public String viewReferralDetails(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String viewReferralDetails(@PathVariable Long charityId,
+                                       @PathVariable Long id,
+                                       Model model,
+                                       RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
+        Charity charity = auth.get();
 
-        // Ensure referral belongs to this charity
-        Referral referral = referralRepository.findByIdAndCharityId(id, charityId)
-                .orElse(null);
-
+        Referral referral = referralRepository.findByIdAndCharityId(id, charityId).orElse(null);
         if (referral == null) {
             redirectAttributes.addFlashAttribute("error", "Referral not found or access denied.");
-            return "redirect:/charity-facilitator/referrals";
+            return "redirect:/charity-facilitator/" + charityId + "/referrals";
         }
 
-        // Check if this referral already has a booking
         List<Booking> existingBookings = bookingRepository.findActiveBookingsByReferralIds(List.of(id));
         Long existingBookingId = existingBookings.isEmpty() ? null : existingBookings.get(0).getId();
 
@@ -170,22 +195,20 @@ public class CharityFacilitatorController {
      * Approve Referral
      */
     @PostMapping("/referrals/{id}/approve")
-    public String approveReferral(
-            @PathVariable Long id,
-            @RequestParam(required = false) String notes,
-            RedirectAttributes redirectAttributes) {
-
+    public String approveReferral(@PathVariable Long charityId,
+                                   @PathVariable Long id,
+                                   @RequestParam(required = false) String notes,
+                                   RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
 
-        // Verify referral belongs to this charity
         Referral referral = referralRepository.findByIdAndCharityId(id, charityId).orElse(null);
         if (referral == null) {
             redirectAttributes.addFlashAttribute("error", "Referral not found or access denied.");
-            return "redirect:/charity-facilitator/referrals";
+            return "redirect:/charity-facilitator/" + charityId + "/referrals";
         }
 
         try {
@@ -195,29 +218,27 @@ public class CharityFacilitatorController {
             redirectAttributes.addFlashAttribute("error", "Error approving referral: " + e.getMessage());
         }
 
-        return "redirect:/charity-facilitator/referrals";
+        return "redirect:/charity-facilitator/" + charityId + "/referrals";
     }
 
     /**
      * Reject Referral
      */
     @PostMapping("/referrals/{id}/reject")
-    public String rejectReferral(
-            @PathVariable Long id,
-            @RequestParam String reason,
-            RedirectAttributes redirectAttributes) {
-
+    public String rejectReferral(@PathVariable Long charityId,
+                                  @PathVariable Long id,
+                                  @RequestParam String reason,
+                                  RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
 
-        // Verify referral belongs to this charity
         Referral referral = referralRepository.findByIdAndCharityId(id, charityId).orElse(null);
         if (referral == null) {
             redirectAttributes.addFlashAttribute("error", "Referral not found or access denied.");
-            return "redirect:/charity-facilitator/referrals";
+            return "redirect:/charity-facilitator/" + charityId + "/referrals";
         }
 
         try {
@@ -230,19 +251,22 @@ public class CharityFacilitatorController {
             redirectAttributes.addFlashAttribute("error", "Error rejecting referral: " + e.getMessage());
         }
 
-        return "redirect:/charity-facilitator/referrals";
+        return "redirect:/charity-facilitator/" + charityId + "/referrals";
     }
 
     /**
      * View All Bookings for this Charity
      */
     @GetMapping("/bookings")
-    public String viewBookings(@RequestParam(required = false) String status, Model model) {
+    public String viewBookings(@PathVariable Long charityId,
+                                @RequestParam(required = false) String status,
+                                Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
+        Charity charity = auth.get();
 
         List<Booking> bookings;
         if (status != null && !status.isEmpty()) {
@@ -264,21 +288,24 @@ public class CharityFacilitatorController {
      * View Booking Details
      */
     @GetMapping("/bookings/{id}")
-    public String viewBookingDetails(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String viewBookingDetails(@PathVariable Long charityId,
+                                      @PathVariable Long id,
+                                      Model model,
+                                      RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
+        Charity charity = auth.get();
 
         Booking booking = bookingService.getBookingById(id);
 
-        // Verify booking belongs to this charity
-        if (booking.getReferral() == null ||
-            booking.getReferral().getCharity() == null ||
-            !booking.getReferral().getCharity().getId().equals(charityId)) {
+        if (booking.getReferral() == null
+                || booking.getReferral().getCharity() == null
+                || !booking.getReferral().getCharity().getId().equals(charityId)) {
             redirectAttributes.addFlashAttribute("error", "Booking not found or access denied.");
-            return "redirect:/charity-facilitator/bookings";
+            return "redirect:/charity-facilitator/" + charityId + "/bookings";
         }
 
         model.addAttribute("username", username);
@@ -292,30 +319,31 @@ public class CharityFacilitatorController {
      * Show Create Booking Form
      */
     @GetMapping("/bookings/new")
-    public String showCreateBookingForm(@RequestParam Long referralId, Model model, RedirectAttributes redirectAttributes) {
+    public String showCreateBookingForm(@PathVariable Long charityId,
+                                         @RequestParam Long referralId,
+                                         Model model,
+                                         RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
+        Charity charity = auth.get();
 
-        // Verify referral belongs to this charity
         Referral referral = referralRepository.findByIdAndCharityId(referralId, charityId).orElse(null);
         if (referral == null) {
             redirectAttributes.addFlashAttribute("error", "Referral not found or access denied.");
-            return "redirect:/charity-facilitator/referrals";
+            return "redirect:/charity-facilitator/" + charityId + "/referrals";
         }
 
         if (referral.getStatus() != Referral.ReferralStatus.APPROVED) {
             redirectAttributes.addFlashAttribute("error", "Can only create bookings for approved referrals.");
-            return "redirect:/charity-facilitator/referrals/" + referralId;
+            return "redirect:/charity-facilitator/" + charityId + "/referrals/" + referralId;
         }
 
         BookingDto bookingDto = new BookingDto();
         bookingDto.setReferralId(referralId);
 
-        // Pre-select the location the participant chose on the invite —
-        // either a CharityLocation OR a PartnerLocation (mutually exclusive).
         if (referral.getSelectedLocation() != null) {
             bookingDto.setLocationId(referral.getSelectedLocation().getId());
             bookingDto.setLocationSelection("charity:" + referral.getSelectedLocation().getId());
@@ -324,14 +352,9 @@ public class CharityFacilitatorController {
             bookingDto.setLocationSelection("partner:" + referral.getSelectedPartnerLocation().getId());
         }
 
-        // Get active locations for this charity
         List<CharityLocation> locations = charityLocationRepository.findByCharityIdAndIsActiveTrue(charityId);
-
-        // Partner properties linked to this charity
         List<com.learning.learning.entity.PartnerLocation> partnerLocations =
                 partnerLocationRepository.findActiveLinkedToCharity(charityId);
-
-        // Get available donations for this charity
         List<BookingService.AvailableDonation> availableDonations =
                 bookingService.getAvailableDonationsForCharity(charityId);
 
@@ -347,15 +370,9 @@ public class CharityFacilitatorController {
         return "charity-facilitator/booking-form";
     }
 
-    /**
-     * Adds preferred-location callout info to the model — a friendly label
-     * and type so the booking form can display "Participant's preferred
-     * location: X" above the dropdown. Helps facilitators not miss the
-     * participant's choice.
-     */
     private void addPreferredLocationToModel(Model model, Referral referral) {
         if (referral.getSelectedLocation() != null) {
-            com.learning.learning.entity.CharityLocation cl = referral.getSelectedLocation();
+            CharityLocation cl = referral.getSelectedLocation();
             String label = cl.getLocationName();
             if (cl.getCity() != null) label += " — " + cl.getCity();
             if (cl.getState() != null) label += ", " + cl.getState();
@@ -379,23 +396,22 @@ public class CharityFacilitatorController {
      * Create Booking
      */
     @PostMapping("/bookings/new")
-    public String createBooking(
-            @Valid @ModelAttribute("bookingDto") BookingDto bookingDto,
-            BindingResult bindingResult,
-            Model model,
-            RedirectAttributes redirectAttributes) {
-
+    public String createBooking(@PathVariable Long charityId,
+                                 @Valid @ModelAttribute("bookingDto") BookingDto bookingDto,
+                                 BindingResult bindingResult,
+                                 Model model,
+                                 RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
+        Charity charity = auth.get();
 
-        // Verify referral belongs to this charity
         Referral referral = referralRepository.findByIdAndCharityId(bookingDto.getReferralId(), charityId).orElse(null);
         if (referral == null) {
             redirectAttributes.addFlashAttribute("error", "Referral not found or access denied.");
-            return "redirect:/charity-facilitator/referrals";
+            return "redirect:/charity-facilitator/" + charityId + "/referrals";
         }
 
         if (bindingResult.hasErrors()) {
@@ -418,10 +434,10 @@ public class CharityFacilitatorController {
             Booking booking = bookingService.createBooking(bookingDto, username);
             redirectAttributes.addFlashAttribute("success",
                     "Booking created successfully! Confirmation Code: " + booking.getConfirmationCode());
-            return "redirect:/charity-facilitator/bookings";
+            return "redirect:/charity-facilitator/" + charityId + "/bookings";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error creating booking: " + e.getMessage());
-            return "redirect:/charity-facilitator/referrals/" + bookingDto.getReferralId();
+            return "redirect:/charity-facilitator/" + charityId + "/referrals/" + bookingDto.getReferralId();
         }
     }
 
@@ -429,26 +445,23 @@ public class CharityFacilitatorController {
      * Update Booking Status
      */
     @PostMapping("/bookings/{id}/status")
-    public String updateBookingStatus(
-            @PathVariable Long id,
-            @RequestParam String status,
-            @RequestParam(required = false) String completionNotes,
-            RedirectAttributes redirectAttributes) {
-
+    public String updateBookingStatus(@PathVariable Long charityId,
+                                       @PathVariable Long id,
+                                       @RequestParam String status,
+                                       @RequestParam(required = false) String completionNotes,
+                                       RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
 
         Booking booking = bookingService.getBookingById(id);
-
-        // Verify booking belongs to this charity
-        if (booking.getReferral() == null ||
-            booking.getReferral().getCharity() == null ||
-            !booking.getReferral().getCharity().getId().equals(charityId)) {
+        if (booking.getReferral() == null
+                || booking.getReferral().getCharity() == null
+                || !booking.getReferral().getCharity().getId().equals(charityId)) {
             redirectAttributes.addFlashAttribute("error", "Booking not found or access denied.");
-            return "redirect:/charity-facilitator/bookings";
+            return "redirect:/charity-facilitator/" + charityId + "/bookings";
         }
 
         try {
@@ -459,32 +472,29 @@ public class CharityFacilitatorController {
             redirectAttributes.addFlashAttribute("error", "Error updating booking: " + e.getMessage());
         }
 
-        return "redirect:/charity-facilitator/bookings";
+        return "redirect:/charity-facilitator/" + charityId + "/bookings";
     }
 
     /**
      * Cancel Booking
      */
     @PostMapping("/bookings/{id}/cancel")
-    public String cancelBooking(
-            @PathVariable Long id,
-            @RequestParam String reason,
-            RedirectAttributes redirectAttributes) {
-
+    public String cancelBooking(@PathVariable Long charityId,
+                                 @PathVariable Long id,
+                                 @RequestParam String reason,
+                                 RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
 
         Booking booking = bookingService.getBookingById(id);
-
-        // Verify booking belongs to this charity
-        if (booking.getReferral() == null ||
-            booking.getReferral().getCharity() == null ||
-            !booking.getReferral().getCharity().getId().equals(charityId)) {
+        if (booking.getReferral() == null
+                || booking.getReferral().getCharity() == null
+                || !booking.getReferral().getCharity().getId().equals(charityId)) {
             redirectAttributes.addFlashAttribute("error", "Booking not found or access denied.");
-            return "redirect:/charity-facilitator/bookings";
+            return "redirect:/charity-facilitator/" + charityId + "/bookings";
         }
 
         try {
@@ -497,32 +507,29 @@ public class CharityFacilitatorController {
             redirectAttributes.addFlashAttribute("error", "Error cancelling booking: " + e.getMessage());
         }
 
-        return "redirect:/charity-facilitator/bookings";
+        return "redirect:/charity-facilitator/" + charityId + "/bookings";
     }
 
     /**
      * Check-in Guest
      */
     @PostMapping("/bookings/{id}/checkin")
-    public String checkInGuest(
-            @PathVariable Long id,
-            @RequestParam(required = false) String notes,
-            RedirectAttributes redirectAttributes) {
-
+    public String checkInGuest(@PathVariable Long charityId,
+                                @PathVariable Long id,
+                                @RequestParam(required = false) String notes,
+                                RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
 
         Booking booking = bookingService.getBookingById(id);
-
-        // Verify booking belongs to this charity
-        if (booking.getReferral() == null ||
-            booking.getReferral().getCharity() == null ||
-            !booking.getReferral().getCharity().getId().equals(charityId)) {
+        if (booking.getReferral() == null
+                || booking.getReferral().getCharity() == null
+                || !booking.getReferral().getCharity().getId().equals(charityId)) {
             redirectAttributes.addFlashAttribute("error", "Booking not found or access denied.");
-            return "redirect:/charity-facilitator/bookings";
+            return "redirect:/charity-facilitator/" + charityId + "/bookings";
         }
 
         try {
@@ -532,32 +539,29 @@ public class CharityFacilitatorController {
             redirectAttributes.addFlashAttribute("error", "Error checking in guest: " + e.getMessage());
         }
 
-        return "redirect:/charity-facilitator/bookings/" + id;
+        return "redirect:/charity-facilitator/" + charityId + "/bookings/" + id;
     }
 
     /**
      * Check-out Guest
      */
     @PostMapping("/bookings/{id}/checkout")
-    public String checkOutGuest(
-            @PathVariable Long id,
-            @RequestParam(required = false) String notes,
-            RedirectAttributes redirectAttributes) {
-
+    public String checkOutGuest(@PathVariable Long charityId,
+                                 @PathVariable Long id,
+                                 @RequestParam(required = false) String notes,
+                                 RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
 
-        Charity charity = charityService.getCharityForUser(username);
-        Long charityId = charity.getId();
+        Optional<Charity> auth = authorize(username, charityId);
+        if (auth.isEmpty()) return "redirect:/access-denied";
 
         Booking booking = bookingService.getBookingById(id);
-
-        // Verify booking belongs to this charity
-        if (booking.getReferral() == null ||
-            booking.getReferral().getCharity() == null ||
-            !booking.getReferral().getCharity().getId().equals(charityId)) {
+        if (booking.getReferral() == null
+                || booking.getReferral().getCharity() == null
+                || !booking.getReferral().getCharity().getId().equals(charityId)) {
             redirectAttributes.addFlashAttribute("error", "Booking not found or access denied.");
-            return "redirect:/charity-facilitator/bookings";
+            return "redirect:/charity-facilitator/" + charityId + "/bookings";
         }
 
         try {
@@ -567,7 +571,7 @@ public class CharityFacilitatorController {
             redirectAttributes.addFlashAttribute("error", "Error checking out guest: " + e.getMessage());
         }
 
-        return "redirect:/charity-facilitator/bookings/" + id;
+        return "redirect:/charity-facilitator/" + charityId + "/bookings/" + id;
     }
 
     /**
@@ -576,13 +580,11 @@ public class CharityFacilitatorController {
     private Map<String, Object> getCharityFacilitatorStats(Long charityId) {
         Map<String, Object> stats = new HashMap<>();
 
-        // Referral stats
         stats.put("pendingReferrals", referralRepository.countByCharityIdAndStatus(charityId, Referral.ReferralStatus.PENDING));
         stats.put("approvedReferrals", referralRepository.countByCharityIdAndStatus(charityId, Referral.ReferralStatus.APPROVED));
         stats.put("rejectedReferrals", referralRepository.countByCharityIdAndStatus(charityId, Referral.ReferralStatus.REJECTED));
         stats.put("totalReferrals", referralRepository.countByCharityId(charityId));
 
-        // Booking stats
         stats.put("confirmedBookings", bookingRepository.countByCharityIdAndStatus(charityId, Booking.BookingStatus.CONFIRMED));
         stats.put("checkedInBookings", bookingRepository.countByCharityIdAndStatus(charityId, Booking.BookingStatus.CHECKED_IN));
         stats.put("completedBookings", bookingRepository.countByCharityIdAndStatus(charityId, Booking.BookingStatus.COMPLETED));

@@ -171,6 +171,58 @@
     the exact URLs, button names, required fields, validations, and what happens behind the scenes &mdash; including
     which emails are sent and which records change. Because real families depend on these workflows being executed
     correctly, every step in this document has been verified against the application's source code.
+    <br><br>
+    <strong>About the URLs in this document.</strong> Every facilitator URL is scoped to a specific charity via a
+    <code>{charityId}</code> path segment &mdash; for example, <code>/charity-facilitator/42/dashboard</code> for the
+    facilitator dashboard of charity #42. Single-charity facilitators are routed to their own charity automatically
+    after login, so the ID rarely matters. Multi-charity facilitators (users with the <strong>Multi-Charity
+    Facilitator</strong> role) start on a hub at <code>/multi-facilitator/hub</code> and pick a charity first &mdash;
+    see the <em>If you facilitate for more than one charity</em> section below.
+</div>
+
+<h2>If you facilitate for more than one charity</h2>
+
+<p>
+    SafelyNested has a separate <strong>Multi-Charity Facilitator</strong> role for people who help several
+    charities. If your account has this role, your experience differs in two specific ways from a single-charity
+    facilitator. Otherwise the rest of this document applies as written.
+</p>
+
+<h4>1. After login you land on a hub, not a dashboard</h4>
+<p>
+    When you log in, you're routed to <code>/multi-facilitator/hub</code> instead of straight to a charity
+    dashboard. The hub shows one card per charity you're authorized to facilitate, with the at-a-glance counts
+    that matter most:
+</p>
+<ul>
+    <li><strong>Pending Referrals</strong> &mdash; families waiting for your approve/reject decision. Cards with
+        any pending referrals are visually flagged in amber to draw your attention.</li>
+    <li><strong>Confirmed Bookings</strong> &mdash; reservations ready for arrival.</li>
+    <li><strong>Checked In</strong> &mdash; families currently on site at one of that charity's locations.</li>
+</ul>
+<p>
+    Click any card to enter that charity's facilitator experience. From that point, every action you take is
+    scoped to that one charity &mdash; the URL carries its <code>charityId</code>.
+</p>
+
+<h4>2. The "Operating as: <em>Charity</em>" banner is your safety net</h4>
+<p>
+    Once you're inside a charity, every facilitator page shows an amber banner across the top reading
+    <strong>OPERATING AS &mdash; <em>Charity Name</em> &mdash; <em>City, ST</em></strong>, with a pill button on
+    the right labelled <strong>&larr; All charities</strong>. The banner is your constant context cue:
+    if you forget which charity you were working in, look up. The link returns you to the hub so you can
+    pick a different one.
+</p>
+<p>
+    Single-charity facilitators see the same banner but without the back-link &mdash; it just confirms which charity
+    they're acting on.
+</p>
+
+<div class="callout">
+    <strong>Browser-tab safety.</strong> Because the charity ID lives in the URL (not in your session),
+    you can safely open two charities in two browser tabs and they won't interfere. Approving a referral in
+    Tab&nbsp;1 acts on the charity in Tab&nbsp;1's URL; the same in Tab&nbsp;2 acts on Tab&nbsp;2's. Bookmarks
+    work the same way &mdash; each one points at a specific charity.
 </div>
 
 <div class="toc">
@@ -222,7 +274,7 @@
     <div class="task-body">
         <div class="meta-row">
             <div class="meta-cell"><div class="meta-label">When</div>Every time you log in &mdash; orient yourself before doing anything else.</div>
-            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/dashboard</code></div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/{charityId}/dashboard</code></div>
         </div>
 
         <p>The Facilitator Dashboard is the green-themed page you land on after login. It shows the operating health of your charity at a glance: how many referrals are awaiting your review, how many are approved, how many bookings are active, and recent activity.</p>
@@ -268,7 +320,7 @@
     <div class="task-body">
         <div class="meta-row">
             <div class="meta-cell"><div class="meta-label">When</div>Reviewing what's pending; finding a specific referral.</div>
-            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/referrals</code></div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/{charityId}/referrals</code></div>
         </div>
 
         <p>The Referrals page lists every referral submitted under your charity, newest first. You can filter by status to focus on what needs attention.</p>
@@ -300,7 +352,7 @@
     <div class="task-body">
         <div class="meta-row">
             <div class="meta-cell"><div class="meta-label">When</div>Before approving or rejecting any pending referral.</div>
-            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/referrals/{id}</code></div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/{charityId}/referrals/{id}</code></div>
         </div>
 
         <p>The Referral Details page is where you read everything the charity partner has captured about the family being referred. <strong>Always read this carefully before approving</strong> &mdash; once approved, a booking can be created and a real stay reserved.</p>
@@ -419,7 +471,7 @@
     <div class="task-body">
         <div class="meta-row">
             <div class="meta-cell"><div class="meta-label">When</div>Tracking what's checked in, what's coming up, what's complete.</div>
-            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/bookings</code></div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>/charity-facilitator/{charityId}/bookings</code></div>
         </div>
 
         <p>This is the master list of every booking ever created for your charity, regardless of who created it. Optional <code>?status=</code> filter accepts: <code>PENDING</code>, <code>CONFIRMED</code>, <code>CHECKED_IN</code>, <code>CHECKED_OUT</code>, <code>CANCELLED</code>, <code>NO_SHOW</code>, <code>COMPLETED</code>.</p>
@@ -451,7 +503,7 @@
     <div class="task-body">
         <div class="meta-row">
             <div class="meta-cell"><div class="meta-label">When</div>The referral is approved and you're ready to reserve a stay for the family.</div>
-            <div class="meta-cell"><div class="meta-label">Where</div><code>GET /charity-facilitator/bookings/new?referralId=X</code> &rarr; <code>POST /charity-facilitator/bookings/new</code></div>
+            <div class="meta-cell"><div class="meta-label">Where</div><code>GET /charity-facilitator/{charityId}/bookings/new?referralId=X</code> &rarr; <code>POST /charity-facilitator/{charityId}/bookings/new</code></div>
         </div>
 
         <p>This is the heart of the facilitator's job: turning an approved referral into a real reservation. The booking form is long but most of it is pre-filled or optional. Required fields are marked with <span class="req">*</span>.</p>

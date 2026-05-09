@@ -99,7 +99,7 @@
                 <h1 class="h2">
                     <i class="fas fa-paper-plane me-2"></i>Send Invite
                 </h1>
-                <a th:href="@{/charity-partner/invites}" class="btn btn-outline-secondary">
+                <a th:href="@{/charity-partner/{cid}/invites(cid=${charity.id})}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-1"></i> Back to Invites
                 </a>
             </div>
@@ -116,7 +116,7 @@
 
             <div class="row">
                 <div class="col-lg-8">
-                    <form id="inviteForm" th:action="@{/charity-partner/invites/send}" method="post">
+                    <form id="inviteForm" th:action="@{/charity-partner/{cid}/invites/send(cid=${charity.id})}" method="post">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
                         <!-- Recipient Information -->
@@ -214,7 +214,7 @@
                             <button type="submit" id="submitBtn" class="btn btn-primary btn-lg">
                                 <i class="fas fa-paper-plane me-2"></i><span id="submitBtnText">Send Invite</span>
                             </button>
-                            <a th:href="@{/charity-partner/invites}" class="btn btn-outline-secondary btn-lg">
+                            <a th:href="@{/charity-partner/{cid}/invites(cid=${charity.id})}" class="btn btn-outline-secondary btn-lg">
                                 Cancel
                             </a>
                         </div>
@@ -255,7 +255,7 @@
                             <div th:if="${locations == null or locations.isEmpty()}" class="text-muted">
                                 <i class="fas fa-exclamation-triangle text-warning me-2"></i>
                                 No active locations.
-                                <a th:href="@{/charity-partner/locations/new}">Add a location</a> first.
+                                <a th:href="@{/charity-partner/{cid}/locations/new(cid=${charity.id})}">Add a location</a> first.
                             </div>
                         </div>
                     </div>

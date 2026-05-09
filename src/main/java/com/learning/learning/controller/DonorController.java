@@ -64,6 +64,7 @@ public class DonorController {
     public String listDonors(Model model) {
         List<Donor> donors = donorService.getAllDonors();
         model.addAttribute("donors", donors);
+        model.addAttribute("pendingSetupRequestCount", donorSetupRequestService.countPendingRequests());
         return "admin/donors";
     }
 
@@ -72,6 +73,7 @@ public class DonorController {
         List<Donor> donors = donorService.searchDonors(q);
         model.addAttribute("donors", donors);
         model.addAttribute("searchTerm", q);
+        model.addAttribute("pendingSetupRequestCount", donorSetupRequestService.countPendingRequests());
         return "admin/donors";
     }
 

@@ -88,10 +88,10 @@
                     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
                     <div class="d-flex gap-3 justify-content-center">
-                        <a th:href="@{/charity-partner/donations/record}" class="btn btn-primary">
+                        <a th:href="@{/charity-partner/{cid}/donations/record(cid=${charity.id})}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> Record Another Donation
                         </a>
-                        <a th:href="@{/charity-partner/donations}" class="btn btn-outline-secondary">
+                        <a th:href="@{/charity-partner/{cid}/donations(cid=${charity.id})}" class="btn btn-outline-secondary">
                             <i class="fas fa-list me-1"></i> View All Donations
                         </a>
                     </div>

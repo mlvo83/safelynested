@@ -110,6 +110,26 @@ public class InviteService {
     }
 
     /**
+     * Charity-scoped overload — used by URL-scoped partner endpoints
+     * (e.g. multi-facilitators) where the charity comes from the URL,
+     * not from user.charity_id. The caller is expected to have already
+     * verified the user is authorized to view this charity's data.
+     */
+    public List<ReferralInvite> getInvitesForReferralByCharity(Long referralId, Long charityId) {
+        return referralInviteRepository.findByReferralId(referralId).stream()
+                .filter(invite -> {
+                    if (invite.getCharity() != null) {
+                        return invite.getCharity().getId().equals(charityId);
+                    }
+                    if (invite.getReferral() != null && invite.getReferral().getCharity() != null) {
+                        return invite.getReferral().getCharity().getId().equals(charityId);
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Get all invites for a specific referral
      */
     public List<ReferralInvite> getInvitesForReferral(Long referralId, String username) {
@@ -136,6 +156,34 @@ public class InviteService {
     public List<ReferralInvite> getInvitesForCharity(String username) {
         Charity charity = charityService.getCharityForUser(username);
         return referralInviteRepository.findAllByCharityId(charity.getId());
+    }
+
+    public List<ReferralInvite> getInvitesForCharityById(Long charityId) {
+        return referralInviteRepository.findAllByCharityId(charityId);
+    }
+
+    public List<ReferralInvite> getInvitesByStatusForCharity(Long charityId, ReferralInvite.InviteStatus status) {
+        return referralInviteRepository.findAllByCharityId(charityId).stream()
+                .filter(i -> {
+                    if (status == ReferralInvite.InviteStatus.SENT) {
+                        return i.getStatus() == ReferralInvite.InviteStatus.SENT
+                                || i.getStatus() == ReferralInvite.InviteStatus.OPENED;
+                    }
+                    return i.getStatus() == status;
+                })
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, Object> getInviteStatsForCharity(Long charityId) {
+        List<ReferralInvite> all = referralInviteRepository.findAllByCharityId(charityId);
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("sent", all.stream().filter(i -> i.getStatus() == ReferralInvite.InviteStatus.SENT
+                || i.getStatus() == ReferralInvite.InviteStatus.OPENED).count());
+        stats.put("opened", all.stream().filter(i -> i.getStatus() == ReferralInvite.InviteStatus.OPENED).count());
+        stats.put("completed", all.stream().filter(i -> i.getStatus() == ReferralInvite.InviteStatus.COMPLETED).count());
+        stats.put("pending", all.stream().filter(i -> i.getStatus() == ReferralInvite.InviteStatus.PENDING).count());
+        stats.put("expired", all.stream().filter(i -> i.getStatus() == ReferralInvite.InviteStatus.EXPIRED).count());
+        return stats;
     }
 
     /**
@@ -202,12 +250,21 @@ public class InviteService {
      * Save and send invite
      */
     public ReferralInvite saveAndSendInvite(ReferralInvite invite, String username) {
+        Long charityId = charityService.getCharityIdForUser(username);
+        return saveAndSendInvite(invite, charityId);
+    }
+
+    /**
+     * Charity-scoped overload. Caller is expected to have already
+     * authorized the user against this charityId. Used by URL-scoped
+     * partner endpoints (multi-facilitators) where charityId comes
+     * from the URL, not user.charity_id.
+     */
+    public ReferralInvite saveAndSendInvite(ReferralInvite invite, Long charityId) {
         System.out.println("=== SAVE AND SEND INVITE START ===");
         System.out.println("Recipient: " + invite.getRecipientName());
         System.out.println("Initial Status: " + invite.getStatus());
 
-        // Verify charity ownership
-        Long charityId = charityService.getCharityIdForUser(username);
         Charity charity = invite.getCharity();
 
         if (charity == null || !charity.getId().equals(charityId)) {
@@ -384,50 +441,61 @@ public class InviteService {
      * Resend an invite
      */
     public ReferralInvite resendInvite(Long inviteId, String username) {
-        Charity charity = charityService.getCharityForUser(username);
+        Long charityId = charityService.getCharityIdForUser(username);
+        return resendInviteByCharity(inviteId, charityId);
+    }
 
+    /**
+     * Charity-scoped overload. Caller is expected to have already
+     * authorized the user against this charityId.
+     */
+    public ReferralInvite resendInviteByCharity(Long inviteId, Long charityId) {
         ReferralInvite invite = referralInviteRepository.findById(inviteId)
                 .orElseThrow(() -> new RuntimeException("Invite not found"));
 
-        // Verify ownership
         Long inviteCharityId = invite.getCharity() != null ? invite.getCharity().getId() :
                 (invite.getReferral() != null && invite.getReferral().getCharity() != null ?
                         invite.getReferral().getCharity().getId() : null);
 
-        if (inviteCharityId == null || !inviteCharityId.equals(charity.getId())) {
+        if (inviteCharityId == null || !inviteCharityId.equals(charityId)) {
             throw new RuntimeException("Access denied");
         }
 
-        // Generate new token and reset expiry
         invite.setInviteToken(UUID.randomUUID().toString());
         invite.setExpiresAt(LocalDateTime.now().plusDays(7));
         invite.setStatus(ReferralInvite.InviteStatus.PENDING);
 
-        return saveAndSendInvite(invite, username);
+        return saveAndSendInvite(invite, charityId);
     }
 
     /**
      * Cancel an invite
      */
     public void cancelInvite(Long inviteId, String username) {
-        Charity charity = charityService.getCharityForUser(username);
+        Long charityId = charityService.getCharityIdForUser(username);
+        cancelInviteByCharity(inviteId, charityId, username);
+    }
 
+    /**
+     * Charity-scoped overload. Caller is expected to have already
+     * authorized the user against this charityId.
+     */
+    public void cancelInviteByCharity(Long inviteId, Long charityId, String actingUsername) {
         ReferralInvite invite = referralInviteRepository.findById(inviteId)
                 .orElseThrow(() -> new RuntimeException("Invite not found"));
 
-        // Verify ownership
         Long inviteCharityId = invite.getCharity() != null ? invite.getCharity().getId() :
                 (invite.getReferral() != null && invite.getReferral().getCharity() != null ?
                         invite.getReferral().getCharity().getId() : null);
 
-        if (inviteCharityId == null || !inviteCharityId.equals(charity.getId())) {
+        if (inviteCharityId == null || !inviteCharityId.equals(charityId)) {
             throw new RuntimeException("Access denied");
         }
 
         invite.setStatus(ReferralInvite.InviteStatus.CANCELLED);
         referralInviteRepository.save(invite);
 
-        logger.info("Invite {} cancelled by user {}", inviteId, username);
+        logger.info("Invite {} cancelled by user {}", inviteId, actingUsername);
     }
 
     /**

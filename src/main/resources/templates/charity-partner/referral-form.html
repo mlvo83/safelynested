@@ -58,7 +58,7 @@
             </div>
 
             <!-- Form -->
-            <form th:action="${referral.id != null ? '/charity-partner/referrals/' + referral.id + '/edit' : '/charity-partner/referrals/new'}"
+            <form th:action="${referral.id != null ? '/charity-partner/' + charity.id + '/referrals/' + referral.id + '/edit' : '/charity-partner/' + charity.id + '/referrals/new'}"
                   method="post"
                   th:object="${referral}">
 
