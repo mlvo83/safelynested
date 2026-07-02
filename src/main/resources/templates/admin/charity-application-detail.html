@@ -235,7 +235,7 @@
                         <span class="info-value" th:text="${app.adminNotes}"></span>
                     </div>
                 </div>
-                <div th:if="${app.rejected && app.rejectionReason}" class="rejection-box" style="margin-top: 15px;">
+                <div th:if="${app.rejected && app.rejectionReason != null}" class="rejection-box" style="margin-top: 15px;">
                     <strong>Rejection Reason:</strong>
                     <p th:text="${app.rejectionReason}" style="margin-top: 5px;"></p>
                 </div>
