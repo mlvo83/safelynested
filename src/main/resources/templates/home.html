@@ -197,6 +197,12 @@
     </div>
 
     <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
+      <h3>Charity Applications</h3>
+      <p>Review pending charity partner applications, then approve to create the charity and send a registration invite, or reject with a reason.</p>
+      <a th:href="@{/admin/charity-applications}" class="card-link">View Applications</a>
+    </div>
+
+    <div class="card" sec:authorize="hasRole('ROLE_ADMIN')" th:if="${isAdmin}">
       <h3>Stay Partner Applications</h3>
       <p>Review and manage applications from individuals and businesses wanting to provide temporary housing.</p>
       <a th:href="@{/admin/stay-partner-applications}" class="card-link">View Applications</a>
