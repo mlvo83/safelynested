@@ -39,6 +39,8 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @media (max-width: 768px) { .form-row, .form-row-3 { grid-template-columns: 1fr; } }
     </style>
+    <!-- Cloudflare Turnstile (only loaded when a site key is configured) -->
+    <script th:if="${turnstileEnabled}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
     <nav class="navbar">
@@ -59,6 +61,13 @@
 
         <form action="/charity-application/apply" method="post" id="applicationForm" th:action="@{/charity-application/apply}">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <!-- Honeypot: hidden from real users; bots that fill it are rejected server-side. -->
+            <div aria-hidden="true" style="position:absolute; left:-9999px; top:-9999px; width:1px; height:1px; overflow:hidden;">
+                <label for="nickname">Leave this field empty</label>
+                <input type="text" id="nickname" name="nickname" tabindex="-1" autocomplete="off">
+            </div>
+
             <!-- Organization Information -->
             <div class="card">
                 <div class="card-header"><h3>Organization Information</h3></div>
@@ -152,8 +161,9 @@
                 <div class="card-header"><h3>About Your Organization</h3></div>
                 <div class="card-body">
                     <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" rows="3" placeholder="Briefly describe your organization and the communities you serve..."></textarea>
+                        <label class="required">Description</label>
+                        <textarea name="description" rows="3" required minlength="40" placeholder="Briefly describe your organization and the communities you serve..."></textarea>
+                        <div class="help-text">Tell us who you are and who you serve — at least a sentence or two.</div>
                     </div>
                     <div class="form-group">
                         <label>Mission Statement</label>
@@ -178,6 +188,13 @@
                             on behalf of myself and the organization I represent. <span style="color:#dc3545;">*</span>
                         </label>
                     </div>
+                </div>
+            </div>
+
+            <!-- CAPTCHA -->
+            <div class="card" th:if="${turnstileEnabled}">
+                <div class="card-body">
+                    <div class="cf-turnstile" th:attr="data-sitekey=${turnstileSiteKey}"></div>
                 </div>
             </div>
 

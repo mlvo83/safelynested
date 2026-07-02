@@ -2,8 +2,12 @@ package com.learning.learning.controller;
 
 import com.learning.learning.entity.CharityApplication;
 import com.learning.learning.entity.RegistrationToken;
+import com.learning.learning.security.SubmissionRateLimiter;
 import com.learning.learning.service.CharityApplicationService;
 import com.learning.learning.service.RegistrationTokenService;
+import com.learning.learning.service.TurnstileVerificationService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,14 +22,32 @@ public class CharityApplicationController {
 
     private static final Logger logger = LoggerFactory.getLogger(CharityApplicationController.class);
 
+    /** Session key holding the time the apply form was rendered (time-trap). */
+    private static final String FORM_LOADED_AT = "charityAppFormLoadedAt";
+    /** A genuine human takes well over this long to fill the form; faster = bot. */
+    private static final long MIN_FILL_MILLIS = 3000L;
+    /** Rate limit: max submissions per IP within the window below. */
+    private static final int RATE_LIMIT_MAX = 10;
+    private static final long RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000L; // 1 hour
+
     @Autowired
     private CharityApplicationService applicationService;
 
     @Autowired
     private RegistrationTokenService registrationTokenService;
 
+    @Autowired
+    private TurnstileVerificationService turnstileService;
+
+    @Autowired
+    private SubmissionRateLimiter rateLimiter;
+
     @GetMapping("/apply")
-    public String showApplicationForm(Model model) {
+    public String showApplicationForm(HttpSession session, Model model) {
+        // Stamp the render time so the POST handler can reject instant (bot) submits.
+        session.setAttribute(FORM_LOADED_AT, System.currentTimeMillis());
+        model.addAttribute("turnstileEnabled", turnstileService.isEnabled());
+        model.addAttribute("turnstileSiteKey", turnstileService.getSiteKey());
         return "public/charity-application-apply";
     }
 
@@ -47,7 +69,45 @@ public class CharityApplicationController {
             @RequestParam(required = false) String website,
             @RequestParam(required = false) Integer estimatedReferralsPerMonth,
             @RequestParam(required = false) Boolean agreeToTerms,
+            @RequestParam(required = false) String nickname,
+            @RequestParam(name = "cf-turnstile-response", required = false) String turnstileToken,
+            HttpServletRequest request,
+            HttpSession session,
             RedirectAttributes redirectAttributes) {
+
+        String clientIp = clientIp(request);
+
+        // 1) Honeypot — a hidden field real users never see. Bots fill it.
+        //    Silently pretend success so the bot doesn't retry or adapt.
+        if (nickname != null && !nickname.isBlank()) {
+            logger.warn("Charity application blocked (honeypot tripped) from IP {}", clientIp);
+            return "redirect:/charity-application/confirmation/SUBMITTED";
+        }
+
+        // 2) Time-trap — a form filled faster than a human possibly could is a bot.
+        Long loadedAt = (Long) session.getAttribute(FORM_LOADED_AT);
+        if (loadedAt == null || System.currentTimeMillis() - loadedAt < MIN_FILL_MILLIS) {
+            logger.warn("Charity application blocked (submitted too fast) from IP {}", clientIp);
+            redirectAttributes.addFlashAttribute("error",
+                    "Your submission came in unusually fast. Please review your details and submit again.");
+            return "redirect:/charity-application/apply";
+        }
+
+        // 3) Rate limit — cap how many applications one source can fire off.
+        if (!rateLimiter.allow("charity-apply:" + clientIp, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS)) {
+            logger.warn("Charity application rate-limited for IP {}", clientIp);
+            redirectAttributes.addFlashAttribute("error",
+                    "Too many applications have been submitted from your connection. Please try again later.");
+            return "redirect:/charity-application/apply";
+        }
+
+        // 4) CAPTCHA — verify the Turnstile challenge (skipped if not configured).
+        if (!turnstileService.verify(turnstileToken, clientIp)) {
+            logger.warn("Charity application blocked (CAPTCHA failed) from IP {}", clientIp);
+            redirectAttributes.addFlashAttribute("error",
+                    "CAPTCHA verification failed. Please complete the challenge and submit again.");
+            return "redirect:/charity-application/apply";
+        }
 
         try {
             // Server-side enforcement of the Terms checkbox
@@ -73,6 +133,7 @@ public class CharityApplicationController {
             application.setEstimatedReferralsPerMonth(estimatedReferralsPerMonth);
 
             CharityApplication saved = applicationService.submitApplication(application);
+            session.removeAttribute(FORM_LOADED_AT);
             return "redirect:/charity-application/confirmation/" + saved.getApplicationNumber();
 
         } catch (RuntimeException e) {
@@ -80,6 +141,15 @@ public class CharityApplicationController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/charity-application/apply";
         }
+    }
+
+    /** Best-effort client IP, honouring a reverse proxy / Cloudflare X-Forwarded-For header. */
+    private static String clientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     @GetMapping("/confirmation/{applicationNumber}")

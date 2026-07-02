@@ -33,6 +33,9 @@ public class CharityApplicationService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private CharityApplicationValidator validator;
+
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
@@ -42,6 +45,9 @@ public class CharityApplicationService {
 
     @Transactional
     public CharityApplication submitApplication(CharityApplication application) {
+        // Reject low-effort / junk content before it ever reaches the DB.
+        validator.validate(application);
+
         if (applicationRepository.existsPendingByEmail(application.getContactEmail())) {
             throw new RuntimeException("A pending application already exists for this email address. Please check your application status instead.");
         }
