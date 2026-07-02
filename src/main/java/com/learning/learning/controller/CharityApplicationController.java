@@ -84,6 +84,12 @@ public class CharityApplicationController {
             return "redirect:/charity-application/confirmation/SUBMITTED";
         }
 
+        // Preserve everything the applicant typed so any error redirect can
+        // repopulate the form instead of wiping it.
+        repopulate(redirectAttributes, charityName, organizationType, einTaxId, website,
+                contactName, contactEmail, contactPhone, address, city, state, zipCode,
+                country, description, missionStatement, estimatedReferralsPerMonth, agreeToTerms);
+
         // 2) Time-trap — a form filled faster than a human possibly could is a bot.
         Long loadedAt = (Long) session.getAttribute(FORM_LOADED_AT);
         if (loadedAt == null || System.currentTimeMillis() - loadedAt < MIN_FILL_MILLIS) {
@@ -150,6 +156,39 @@ public class CharityApplicationController {
             return forwarded.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    /**
+     * Flashes the submitted field values so an error redirect back to the apply
+     * form can repopulate what the applicant already typed, rather than clearing it.
+     */
+    private void repopulate(RedirectAttributes ra,
+            String charityName, String organizationType, String einTaxId, String website,
+            String contactName, String contactEmail, String contactPhone,
+            String address, String city, String state, String zipCode, String country,
+            String description, String missionStatement, Integer estimatedReferralsPerMonth,
+            Boolean agreeToTerms) {
+        ra.addFlashAttribute("charityName", nz(charityName));
+        ra.addFlashAttribute("organizationType", nz(organizationType));
+        ra.addFlashAttribute("einTaxId", nz(einTaxId));
+        ra.addFlashAttribute("website", nz(website));
+        ra.addFlashAttribute("contactName", nz(contactName));
+        ra.addFlashAttribute("contactEmail", nz(contactEmail));
+        ra.addFlashAttribute("contactPhone", nz(contactPhone));
+        ra.addFlashAttribute("address", nz(address));
+        ra.addFlashAttribute("city", nz(city));
+        ra.addFlashAttribute("state", nz(state));
+        ra.addFlashAttribute("zipCode", nz(zipCode));
+        ra.addFlashAttribute("country", nz(country));
+        ra.addFlashAttribute("description", nz(description));
+        ra.addFlashAttribute("missionStatement", nz(missionStatement));
+        ra.addFlashAttribute("estimatedReferralsPerMonth",
+                estimatedReferralsPerMonth == null ? "" : estimatedReferralsPerMonth);
+        ra.addFlashAttribute("agreeToTerms", Boolean.TRUE.equals(agreeToTerms));
+    }
+
+    private static String nz(String s) {
+        return s == null ? "" : s;
     }
 
     @GetMapping("/confirmation/{applicationNumber}")

@@ -74,30 +74,30 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="required">Organization Name</label>
-                        <input type="text" name="charityName" required maxlength="200" placeholder="e.g., Hope Family Services">
+                        <input type="text" name="charityName" required maxlength="200" placeholder="e.g., Hope Family Services" th:value="${charityName}">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Organization Type</label>
                             <select name="organizationType">
                                 <option value="">Select type...</option>
-                                <option value="Nonprofit">Nonprofit</option>
-                                <option value="School">School</option>
-                                <option value="Church">Church / Religious Organization</option>
-                                <option value="Government">Government Agency</option>
-                                <option value="Community">Community Organization</option>
-                                <option value="Other">Other</option>
+                                <option value="Nonprofit" th:selected="${organizationType == 'Nonprofit'}">Nonprofit</option>
+                                <option value="School" th:selected="${organizationType == 'School'}">School</option>
+                                <option value="Church" th:selected="${organizationType == 'Church'}">Church / Religious Organization</option>
+                                <option value="Government" th:selected="${organizationType == 'Government'}">Government Agency</option>
+                                <option value="Community" th:selected="${organizationType == 'Community'}">Community Organization</option>
+                                <option value="Other" th:selected="${organizationType == 'Other'}">Other</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label>EIN / Tax ID</label>
-                            <input type="text" name="einTaxId" maxlength="20" placeholder="XX-XXXXXXX">
+                            <input type="text" name="einTaxId" maxlength="20" placeholder="XX-XXXXXXX" th:value="${einTaxId}">
                             <div class="help-text">Optional. Used for verification purposes.</div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Website</label>
-                        <input type="url" name="website" maxlength="255" placeholder="https://www.yourorganization.org">
+                        <input type="url" name="website" maxlength="255" placeholder="https://www.yourorganization.org" th:value="${website}">
                     </div>
                 </div>
             </div>
@@ -108,17 +108,17 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="required">Contact Name</label>
-                        <input type="text" name="contactName" required maxlength="200" placeholder="Full name of primary contact">
+                        <input type="text" name="contactName" required maxlength="200" placeholder="Full name of primary contact" th:value="${contactName}">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="required">Email Address</label>
-                            <input type="email" name="contactEmail" required maxlength="100" placeholder="contact@organization.org">
+                            <input type="email" name="contactEmail" required maxlength="100" placeholder="contact@organization.org" th:value="${contactEmail}">
                             <div class="help-text">This will be used to create your account after approval.</div>
                         </div>
                         <div class="form-group">
                             <label>Phone Number</label>
-                            <input type="tel" name="contactPhone" maxlength="20" placeholder="(555) 123-4567">
+                            <input type="tel" name="contactPhone" maxlength="20" placeholder="(555) 123-4567" th:value="${contactPhone}">
                         </div>
                     </div>
                 </div>
@@ -130,27 +130,27 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label>Street Address</label>
-                        <input type="text" name="address" maxlength="500" placeholder="123 Main Street">
+                        <input type="text" name="address" maxlength="500" placeholder="123 Main Street" th:value="${address}">
                     </div>
                     <div class="form-row-3">
                         <div class="form-group">
                             <label>City</label>
-                            <input type="text" name="city" maxlength="100" placeholder="City">
+                            <input type="text" name="city" maxlength="100" placeholder="City" th:value="${city}">
                         </div>
                         <div class="form-group">
                             <label>State / Province</label>
-                            <input type="text" name="state" maxlength="50" placeholder="State">
+                            <input type="text" name="state" maxlength="50" placeholder="State" th:value="${state}">
                         </div>
                         <div class="form-group">
                             <label>ZIP / Postal Code</label>
-                            <input type="text" name="zipCode" maxlength="20" placeholder="ZIP Code">
+                            <input type="text" name="zipCode" maxlength="20" placeholder="ZIP Code" th:value="${zipCode}">
                         </div>
                     </div>
                     <div class="form-group">
                         <label>Country</label>
                         <select name="country">
-                            <option value="USA" selected>United States</option>
-                            <option value="CAN">Canada</option>
+                            <option value="USA" th:selected="${country == null or country == '' or country == 'USA'}">United States</option>
+                            <option value="CAN" th:selected="${country == 'CAN'}">Canada</option>
                         </select>
                     </div>
                 </div>
@@ -162,16 +162,16 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label class="required">Description</label>
-                        <textarea name="description" rows="3" required minlength="40" placeholder="Briefly describe your organization and the communities you serve..."></textarea>
+                        <textarea name="description" rows="3" required minlength="40" placeholder="Briefly describe your organization and the communities you serve..." th:text="${description}"></textarea>
                         <div class="help-text">Tell us who you are and who you serve — at least a sentence or two.</div>
                     </div>
                     <div class="form-group">
                         <label>Mission Statement</label>
-                        <textarea name="missionStatement" rows="3" placeholder="Your organization's mission statement..."></textarea>
+                        <textarea name="missionStatement" rows="3" placeholder="Your organization's mission statement..." th:text="${missionStatement}"></textarea>
                     </div>
                     <div class="form-group">
                         <label>Estimated Referrals Per Month</label>
-                        <input type="number" name="estimatedReferralsPerMonth" min="1" max="500" placeholder="How many families do you expect to refer per month?">
+                        <input type="number" name="estimatedReferralsPerMonth" min="1" max="500" placeholder="How many families do you expect to refer per month?" th:value="${estimatedReferralsPerMonth}">
                     </div>
                 </div>
             </div>
@@ -181,6 +181,7 @@
                 <div class="card-body">
                     <div style="display: flex; gap: 10px; align-items: flex-start;">
                         <input type="checkbox" id="agreeToTerms" name="agreeToTerms" value="true" required
+                               th:checked="${agreeToTerms}"
                                style="margin-top: 4px; width: 18px; height: 18px;">
                         <label for="agreeToTerms" style="font-size: 14px; color: #333; line-height: 1.5;">
                             By submitting, I agree to the
