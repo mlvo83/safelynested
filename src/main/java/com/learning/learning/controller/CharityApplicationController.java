@@ -69,7 +69,7 @@ public class CharityApplicationController {
             @RequestParam(required = false) String website,
             @RequestParam(required = false) Integer estimatedReferralsPerMonth,
             @RequestParam(required = false) Boolean agreeToTerms,
-            @RequestParam(required = false) String nickname,
+            @RequestParam(name = "hp_field", required = false) String hpField,
             @RequestParam(name = "cf-turnstile-response", required = false) String turnstileToken,
             HttpServletRequest request,
             HttpSession session,
@@ -79,7 +79,11 @@ public class CharityApplicationController {
 
         // 1) Honeypot — a hidden field real users never see. Bots fill it.
         //    Silently pretend success so the bot doesn't retry or adapt.
-        if (nickname != null && !nickname.isBlank()) {
+        //    NOTE: the field is deliberately named "hp_field" (not something like
+        //    "nickname") because browsers and password managers autofill semantic
+        //    names, which would make a real applicant trip this and silently lose
+        //    their submission.
+        if (hpField != null && !hpField.isBlank()) {
             logger.warn("Charity application blocked (honeypot tripped) from IP {}", clientIp);
             return "redirect:/charity-application/confirmation/SUBMITTED";
         }
@@ -91,8 +95,12 @@ public class CharityApplicationController {
                 country, description, missionStatement, estimatedReferralsPerMonth, agreeToTerms);
 
         // 2) Time-trap — a form filled faster than a human possibly could is a bot.
+        //    Only enforce when we actually have the render timestamp. A NULL means
+        //    the session lapsed (e.g. a real applicant took a long time on a long
+        //    form) — do NOT block on that, or we'd reject legitimate submissions.
+        //    The honeypot, rate limiter, CAPTCHA and content validator still apply.
         Long loadedAt = (Long) session.getAttribute(FORM_LOADED_AT);
-        if (loadedAt == null || System.currentTimeMillis() - loadedAt < MIN_FILL_MILLIS) {
+        if (loadedAt != null && System.currentTimeMillis() - loadedAt < MIN_FILL_MILLIS) {
             logger.warn("Charity application blocked (submitted too fast) from IP {}", clientIp);
             redirectAttributes.addFlashAttribute("error",
                     "Your submission came in unusually fast. Please review your details and submit again.");
