@@ -4,6 +4,7 @@ import com.learning.learning.entity.*;
 import com.learning.learning.repository.CharityApplicationRepository;
 import com.learning.learning.repository.CharityRepository;
 import com.learning.learning.repository.RegistrationTokenRepository;
+import com.learning.learning.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,8 +38,15 @@ public class CharityApplicationService {
     @Autowired
     private CharityApplicationValidator validator;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
+
+    /** Optional override for who receives new-application notifications (comma-separated). */
+    @Value("${app.admin-notification-email:}")
+    private String adminNotificationEmail;
 
     // ========================================
     // SUBMIT APPLICATION
@@ -62,6 +71,14 @@ public class CharityApplicationService {
             sendConfirmationEmail(application);
         } catch (Exception e) {
             logger.error("Failed to send confirmation email for {}: {}", application.getApplicationNumber(), e.getMessage());
+        }
+
+        // Notify staff so a submission is never invisible until someone happens to
+        // check the dashboard. Failure here must not roll back the saved application.
+        try {
+            sendAdminNotification(application);
+        } catch (Exception e) {
+            logger.error("Failed to send admin notification for {}: {}", application.getApplicationNumber(), e.getMessage());
         }
 
         return application;
@@ -216,6 +233,50 @@ public class CharityApplicationService {
         String subject = "Application Update: " + application.getApplicationNumber() + " - SafelyNested";
         String html = buildRejectionEmailHtml(application);
         emailService.sendHtmlEmail(application.getContactEmail(), subject, html);
+    }
+
+    /**
+     * Notifies staff that a new charity application has arrived. Recipients come
+     * from {@code app.admin-notification-email} when set, otherwise every enabled
+     * admin user with an email on file. Sends individually so one bad address
+     * doesn't stop the rest.
+     */
+    private void sendAdminNotification(CharityApplication application) {
+        List<String> recipients = resolveAdminRecipients();
+        if (recipients.isEmpty()) {
+            logger.warn("No admin notification recipients configured or found — charity application {} "
+                    + "is only visible on the admin dashboard.", application.getApplicationNumber());
+            return;
+        }
+        String subject = "New Charity Application: " + application.getApplicationNumber()
+                + " (" + application.getCharityName() + ")";
+        String html = buildAdminNotificationEmailHtml(application);
+        for (String to : recipients) {
+            try {
+                emailService.sendHtmlEmail(to, subject, html);
+            } catch (Exception e) {
+                logger.error("Failed to send admin notification for {} to {}: {}",
+                        application.getApplicationNumber(), to, e.getMessage());
+            }
+        }
+    }
+
+    private List<String> resolveAdminRecipients() {
+        // Explicit configuration wins (comma-separated shared inbox / distro list).
+        if (adminNotificationEmail != null && !adminNotificationEmail.isBlank()) {
+            return Arrays.stream(adminNotificationEmail.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .distinct()
+                    .toList();
+        }
+        // Otherwise fall back to every enabled admin's email on file.
+        return userRepository.findAdminRecipients().stream()
+                .map(User::getEmail)
+                .filter(e -> e != null && !e.isBlank())
+                .map(String::trim)
+                .distinct()
+                .toList();
     }
 
     private String buildConfirmationEmailHtml(CharityApplication application) {
@@ -403,5 +464,68 @@ public class CharityApplicationService {
                 application.getCharityName(),
                 application.getRejectionReason()
         );
+    }
+
+    private String buildAdminNotificationEmailHtml(CharityApplication application) {
+        String reviewUrl = baseUrl + "/admin/charity-applications/" + application.getId();
+
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: #1B2A4A; color: white; padding: 24px 30px; border-radius: 10px 10px 0 0; }
+                    .header h2 { margin: 0; font-size: 20px; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .info-box { background: white; padding: 20px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #2A9D8F; }
+                    .info-box p { margin: 6px 0; }
+                    .label { color: #5B6677; font-size: 13px; }
+                    .btn { display: inline-block; background: #2A9D8F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 16px; font-weight: bold; }
+                    .footer { text-align: center; margin-top: 24px; color: #888; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h2>New Charity Application</h2>
+                    </div>
+                    <div class="content">
+                        <p>A new charity application has been submitted and is awaiting review.</p>
+
+                        <div class="info-box">
+                            <p><span class="label">Application #:</span> <strong>%s</strong></p>
+                            <p><span class="label">Organization:</span> <strong>%s</strong></p>
+                            <p><span class="label">Contact:</span> %s</p>
+                            <p><span class="label">Email:</span> %s</p>
+                            <p><span class="label">Phone:</span> %s</p>
+                            <p><span class="label">Location:</span> %s, %s</p>
+                        </div>
+
+                        <a href="%s" class="btn">Review Application</a>
+
+                        <p style="margin-top: 24px;">You can also find it under <strong>Charity Applications</strong> on the admin dashboard.</p>
+                    </div>
+                    <div class="footer">
+                        <p>SafelyNested — internal notification. Do not forward.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(
+                application.getApplicationNumber(),
+                application.getCharityName(),
+                nullSafe(application.getContactName()),
+                nullSafe(application.getContactEmail()),
+                nullSafe(application.getContactPhone()),
+                nullSafe(application.getCity()),
+                nullSafe(application.getState()),
+                reviewUrl
+        );
+    }
+
+    private static String nullSafe(String s) {
+        return (s == null || s.isBlank()) ? "—" : s;
     }
 }

@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -94,6 +95,14 @@ public class SecurityConfig {
                 )
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers("/api/stripe/webhook")
+                        // Store the CSRF token in a cookie rather than the HttpSession.
+                        // The public application forms (charity, stay-partner) are long,
+                        // and a session-bound token silently expires with the session —
+                        // a form left open past the session timeout would then 403 BEFORE
+                        // the controller runs, discarding the submission with no log trace.
+                        // A cookie-backed token survives session lapse, so a late submit
+                        // still succeeds instead of vanishing.
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 )
                 .formLogin(form -> form
                         .loginPage("/login")

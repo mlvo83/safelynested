@@ -31,4 +31,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "AND r.name IN ('ROLE_CHARITY_FACILITATOR', 'CHARITY_FACILITATOR') " +
            "ORDER BY u.charity.id, u.username")
     List<User> findAllCharityFacilitators();
+
+    /** Enabled admin users — used to notify staff of new public submissions. */
+    @Query("SELECT DISTINCT u FROM User u JOIN u.roles r " +
+           "WHERE u.enabled = true " +
+           "AND r.name IN ('ROLE_ADMIN', 'ADMIN') " +
+           "ORDER BY u.username")
+    List<User> findAdminRecipients();
 }
