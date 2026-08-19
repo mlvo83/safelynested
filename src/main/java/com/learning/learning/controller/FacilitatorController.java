@@ -169,9 +169,20 @@ public class FacilitatorController {
      * UPDATED: Now includes locations in the model
      */
     @GetMapping("/bookings/new")
-    public String showCreateBookingForm(@RequestParam Long referralId, Model model) {
+    public String showCreateBookingForm(@RequestParam(required = false) Long referralId,
+                                        Model model,
+                                        RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
+
+        // Booking creation only makes sense with a referral. If the URL is missing one
+        // (stale bookmark, home-screen shortcut, typed URL), redirect to the referrals
+        // list instead of returning a 400 dead-end.
+        if (referralId == null) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Please choose a referral to create a booking for.");
+            return "redirect:/facilitator/referrals";
+        }
 
         Referral referral = referralService.getReferralById(referralId);
 
