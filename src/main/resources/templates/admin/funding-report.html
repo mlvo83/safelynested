@@ -371,7 +371,9 @@
                 <tr class="donation-row" th:id="'row-' + ${donation.id}" th:onclick="'toggleBookings(' + ${donation.id} + ')'">
                     <td>
                         <span class="expand-icon">&#9654;</span>
-                        <span th:text="${donation.donor.displayName}">Donor Name</span>
+                        <!-- Use the null-safe display name: a donation may have no linked Donor
+                             (charity-recorded / manual entries store a donorName string instead). -->
+                        <span th:text="${donation.donorDisplayName}">Donor Name</span>
                     </td>
                     <td th:text="${donation.charity.charityName}">Charity Name</td>
                     <td th:text="${donation.donatedAt != null} ? ${#temporals.format(donation.donatedAt, 'MMM d, yyyy')} : '-'">Jan 1, 2024</td>
