@@ -118,6 +118,11 @@ public class DonorService {
                              String firstName, String lastName, String phone) {
         logger.info("Creating new donor: {}", username);
 
+        // Normalize a blank email to NULL. Postgres treats '' as a real value on the
+        // users.email UNIQUE constraint (only one row can be ''), whereas many NULLs are
+        // allowed — so a blank email must be stored as NULL, not ''.
+        email = blankToNull(email);
+
         // Check if username already exists
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("Username already exists: " + username);
@@ -168,13 +173,17 @@ public class DonorService {
                                       String businessName, String contactName, String taxId) {
         logger.info("Creating new business donor: {} - {}", username, businessName);
 
+        // Normalize a blank email to NULL (see createDonor) so it never collides on the
+        // users.email UNIQUE constraint.
+        email = blankToNull(email);
+
         // Check if username already exists
         if (userRepository.findByUsername(username).isPresent()) {
             throw new RuntimeException("Username already exists: " + username);
         }
 
         // Check if email already exists
-        if (email != null && !email.isEmpty() && userRepository.findByEmail(email).isPresent()) {
+        if (email != null && userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email already exists: " + email);
         }
 
@@ -486,5 +495,10 @@ public class DonorService {
      */
     public long countVerifiedDonors() {
         return donorRepository.findByIsVerified(true).size();
+    }
+
+    /** Treat a blank/empty email as NULL so it never collides on the users.email unique constraint. */
+    private static String blankToNull(String s) {
+        return (s == null || s.trim().isEmpty()) ? null : s.trim();
     }
 }

@@ -166,8 +166,9 @@
                         <h6 class="mt-4 mb-3 text-muted"><i class="fas fa-address-card me-2"></i>Contact Information</h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email</label>
-                                <input type="email" id="email" name="email" class="form-control">
+                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" id="email" name="email" class="form-control" required>
+                                <div class="form-text">Required — used as the donor's contact and login identity.</div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="phone" class="form-label">Phone</label>

@@ -459,6 +459,16 @@ public class DonorController {
     public String viewSetupRequest(@PathVariable Long id, Model model) {
         DonorSetupRequest request = donorSetupRequestService.getRequestById(id);
         model.addAttribute("request", request);
+
+        // For a pending "create new donor" request, pre-fill the login the admin will
+        // assign at approval: email (from the request), a suggested username, and a
+        // generated temporary password. All are editable on the form.
+        if (request.isPending()
+                && request.getRequestType() == DonorSetupRequest.RequestType.CREATE_NEW) {
+            model.addAttribute("suggestedEmail", request.getEmail());
+            model.addAttribute("suggestedUsername", donorSetupRequestService.suggestUsername(request));
+            model.addAttribute("suggestedPassword", donorSetupRequestService.generateTemporaryPassword());
+        }
         return "admin/donor-setup-request-detail";
     }
 
@@ -466,6 +476,9 @@ public class DonorController {
     public String approveSetupRequest(
             @PathVariable Long id,
             @RequestParam(required = false) String adminNotes,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String temporaryPassword,
             Principal principal,
             RedirectAttributes redirectAttributes) {
 
@@ -473,9 +486,18 @@ public class DonorController {
             User adminUser = userRepository.findByUsername(principal.getName())
                     .orElseThrow(() -> new RuntimeException("Admin user not found"));
 
-            DonorSetupRequest request = donorSetupRequestService.approveRequest(id, adminUser, adminNotes);
+            DonorSetupRequest request = donorSetupRequestService.approveRequest(
+                    id, adminUser, adminNotes, email, username, temporaryPassword);
             redirectAttributes.addFlashAttribute("success",
                     "Request " + request.getRequestNumber() + " approved successfully!");
+
+            // Surface the login for a newly-created donor so the admin can hand it over.
+            // The password is only shown here once (it's stored as a hash).
+            if (request.getRequestType() == DonorSetupRequest.RequestType.CREATE_NEW
+                    && request.getResultDonor() != null) {
+                redirectAttributes.addFlashAttribute("createdUsername", username);
+                redirectAttributes.addFlashAttribute("createdPassword", temporaryPassword);
+            }
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
