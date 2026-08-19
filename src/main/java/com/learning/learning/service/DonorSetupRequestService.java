@@ -64,11 +64,15 @@ public class DonorSetupRequestService {
             DonorSetupRequest.PreferredContactMethod preferredContactMethod,
             String notes) {
 
+        // Email is required for new donors — it's the donor's contact/login identity and
+        // prevents blank-email collisions on the users.email unique constraint at approval.
+        if (email == null || email.trim().isEmpty()) {
+            throw new RuntimeException("Email is required to create a new donor.");
+        }
+
         // Check for duplicate pending request by email
-        if (email != null && !email.trim().isEmpty()) {
-            if (requestRepository.existsPendingForEmailAndCharity(email.trim(), charity.getId())) {
-                throw new RuntimeException("A pending request already exists for this email address.");
-            }
+        if (requestRepository.existsPendingForEmailAndCharity(email.trim(), charity.getId())) {
+            throw new RuntimeException("A pending request already exists for this email address.");
         }
 
         DonorSetupRequest request = new DonorSetupRequest();
@@ -112,7 +116,9 @@ public class DonorSetupRequestService {
     // ========================================
 
     @Transactional
-    public DonorSetupRequest approveRequest(Long requestId, User adminUser, String adminNotes) {
+    public DonorSetupRequest approveRequest(Long requestId, User adminUser, String adminNotes,
+                                            String emailOverride, String usernameOverride,
+                                            String passwordOverride) {
         DonorSetupRequest request = getRequestById(requestId);
 
         if (!request.isPending()) {
@@ -126,22 +132,31 @@ public class DonorSetupRequestService {
             resultDonor = donorService.assignCharity(request.getExistingDonor().getId(), request.getCharity().getId());
             logger.info("Linked existing donor {} to charity {}", resultDonor.getId(), request.getCharity().getId());
         } else {
-            // Create new donor
+            // Create new donor. The admin can assign the login identity (email / username /
+            // temporary password) at approval time; fall back to the request's email and
+            // generated credentials when a value isn't supplied.
+            String email = firstNonBlank(emailOverride, request.getEmail());
+            if (isBlank(email)) {
+                throw new RuntimeException("An email address is required to create the donor account.");
+            }
+            request.setEmail(email);
+
+            String username = firstNonBlank(usernameOverride, null);
+            String password = firstNonBlank(passwordOverride, null);
+
             if (request.getDonorType() == Donor.DonorType.BUSINESS) {
-                // Generate username from company name
-                String username = generateUsername(request.getCompanyName());
-                String password = generateTemporaryPassword();
+                if (username == null) username = generateUsername(request.getCompanyName());
+                if (password == null) password = generateTemporaryPassword();
 
                 resultDonor = donorService.createBusinessDonor(
-                        username, password, request.getEmail(), request.getPhone(),
+                        username, password, email, request.getPhone(),
                         request.getCompanyName(), request.getContactName(), request.getTaxId());
             } else {
-                // Generate username from name
-                String username = generateUsername(request.getFirstName(), request.getLastName());
-                String password = generateTemporaryPassword();
+                if (username == null) username = generateUsername(request.getFirstName(), request.getLastName());
+                if (password == null) password = generateTemporaryPassword();
 
                 resultDonor = donorService.createDonor(
-                        username, password, request.getEmail(),
+                        username, password, email,
                         request.getFirstName(), request.getLastName(), request.getPhone());
             }
 
@@ -219,8 +234,16 @@ public class DonorSetupRequestService {
         return String.format("DSR-%d-%04d", year, count);
     }
 
+    /** Suggests a username for a CREATE_NEW request (business → company name, else person name). */
+    public String suggestUsername(DonorSetupRequest request) {
+        if (request.getDonorType() == Donor.DonorType.BUSINESS) {
+            return generateUsername(request.getCompanyName());
+        }
+        return generateUsername(request.getFirstName(), request.getLastName());
+    }
+
     private String generateUsername(String companyName) {
-        String base = companyName.toLowerCase().replaceAll("[^a-z0-9]", "");
+        String base = companyName == null ? "" : companyName.toLowerCase().replaceAll("[^a-z0-9]", "");
         if (base.length() > 15) base = base.substring(0, 15);
         return "donor_" + base + "_" + System.currentTimeMillis() % 10000;
     }
@@ -233,7 +256,18 @@ public class DonorSetupRequestService {
         return "donor_" + base + "_" + System.currentTimeMillis() % 10000;
     }
 
-    private String generateTemporaryPassword() {
+    public String generateTemporaryPassword() {
         return "TempPass" + System.currentTimeMillis() % 100000 + "!";
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    /** First of the two values that isn't blank (trimmed), or null if both are blank. */
+    private static String firstNonBlank(String a, String b) {
+        if (!isBlank(a)) return a.trim();
+        if (!isBlank(b)) return b.trim();
+        return null;
     }
 }

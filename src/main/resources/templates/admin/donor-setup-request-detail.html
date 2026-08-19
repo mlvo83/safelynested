@@ -58,6 +58,27 @@
         <span th:text="${error}">Error</span>
     </div>
 
+    <!-- One-time display of the created donor login (shown right after approval) -->
+    <div th:if="${createdPassword}" class="card" style="border: 2px solid #28a745;">
+        <div class="card-header" style="background:#d4edda; color:#155724;">
+            Donor Login Created — share these with the donor
+        </div>
+        <div class="card-body">
+            <div class="info-row">
+                <span class="info-label">Username</span>
+                <span class="info-value" th:text="${createdUsername}">username</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Temporary Password</span>
+                <span class="info-value" th:text="${createdPassword}">TempPass...</span>
+            </div>
+            <p style="margin-top: 12px; color: #666; font-size: 13px;">
+                This password is shown only once (it's stored as a hash). Copy it now —
+                the donor can change it after logging in.
+            </p>
+        </div>
+    </div>
+
     <div class="header">
         <div>
             <h1>
@@ -212,6 +233,26 @@
                 <div class="card-header" style="color: #28a745;">Approve Request</div>
                 <div class="card-body">
                     <form th:action="@{/admin/donors/setup-requests/{id}/approve(id=${request.id})}" method="post">
+                        <!-- Login the admin assigns to the new donor (create-new requests only) -->
+                        <div th:if="${request.requestType.name() == 'CREATE_NEW'}">
+                            <div class="form-group">
+                                <label for="email">Donor Email <span style="color: red;">*</span></label>
+                                <input type="email" id="email" name="email" class="form-control"
+                                       th:value="${suggestedEmail}" required placeholder="donor@example.com">
+                                <small style="color: #666;">Contact + login identity. Must be unique.</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="username">Username <span style="color: red;">*</span></label>
+                                <input type="text" id="username" name="username" class="form-control"
+                                       th:value="${suggestedUsername}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="temporaryPassword">Temporary Password <span style="color: red;">*</span></label>
+                                <input type="text" id="temporaryPassword" name="temporaryPassword" class="form-control"
+                                       th:value="${suggestedPassword}" required>
+                                <small style="color: #666;">Shown so you can share it with the donor; they can change it later.</small>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label for="adminNotes">Admin Notes (optional)</label>
                             <textarea id="adminNotes" name="adminNotes" class="form-control" rows="3"
