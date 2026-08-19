@@ -3,6 +3,7 @@ package com.learning.learning.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -10,12 +11,17 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "charities")
 @Data
+// Base equals/hashCode on the id only — see User for why (the Charity.verifiedBy /
+// primaryContact <-> User.charity association makes @Data's field-based hashCode recurse
+// infinitely and throw StackOverflowError).
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Charity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(name = "charity_name", nullable = false, unique = true, length = 200)
