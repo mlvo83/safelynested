@@ -320,7 +320,7 @@ public class CharityFacilitatorController {
      */
     @GetMapping("/bookings/new")
     public String showCreateBookingForm(@PathVariable Long charityId,
-                                         @RequestParam Long referralId,
+                                         @RequestParam(required = false) Long referralId,
                                          Model model,
                                          RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -329,6 +329,15 @@ public class CharityFacilitatorController {
         Optional<Charity> auth = authorize(username, charityId);
         if (auth.isEmpty()) return "redirect:/access-denied";
         Charity charity = auth.get();
+
+        // The booking form only makes sense in the context of a referral. If someone lands
+        // here without one (stale bookmark, iPad home-screen shortcut, typed URL), send them
+        // to the referrals list instead of a 400 dead-end.
+        if (referralId == null) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Please choose a referral to create a booking for.");
+            return "redirect:/charity-facilitator/" + charityId + "/referrals";
+        }
 
         Referral referral = referralRepository.findByIdAndCharityId(referralId, charityId).orElse(null);
         if (referral == null) {
