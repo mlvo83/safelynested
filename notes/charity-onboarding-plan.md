@@ -87,6 +87,34 @@ This feature adds a complete self-service onboarding flow where charities apply,
 | Application rejected | Applicant | Rejection with reason, invitation to reapply |
 | Account created | New user | Welcome email with username and login link |
 | Team invite sent | Invitee | Invitation with personal message, "Create Your Account" button (7-day token link) |
+| **Registration email resent** | Applicant/contact | Same approval email with a refreshed 7-day token link — admin-triggered |
+| **Password reset** | Registered contact | Temporary password + Sign In link — admin-triggered |
+
+---
+
+## Admin post-approval actions (added 2026-08-14)
+
+Two buttons on each **approved** row of `/admin/charity-applications` help a charity get into
+their account after approval. They are complementary — each handles one state and the other
+tells the admin why it can't:
+
+- **Resend Email** — `POST /admin/charity-applications/{id}/resend-email` →
+  `CharityApplicationService.resendApprovalEmail(id)`. For a charity that **hasn't registered**:
+  reuses the primary-contact registration token (refreshing its 7-day expiry so a stale/expired
+  link works again), or mints a fresh one if none is on file, then re-sends the approval email.
+  **Refuses** when the contact has already registered (used token, or an existing account found
+  by email) — a fresh registration link would just dead-end on "email already exists".
+- **Reset Password** — `POST /admin/charity-applications/{id}/reset-password` →
+  `CharityApplicationService.resetPrimaryContactPassword(id)` (returns a `PasswordResetResult`
+  record). For a charity that **has registered**: sets a fresh BCrypt temporary password on the
+  registered user (found via the application's *used* token, else by contact email), emails it
+  (with a Sign In link), and shows the username + temp password **once** to the admin.
+  **Refuses** when no account exists yet (directs the admin to Resend Email instead).
+
+New repository finder: `RegistrationTokenRepository.findFirstByCharityApplicationIdAndTokenTypeOrderByCreatedAtDesc`.
+Gap to note: there is **no self-service "change password"** for charity partners yet — an
+admin-set temp password stays until reset again (same as donors). A future add is a partner
+change-password page.
 
 ---
 
