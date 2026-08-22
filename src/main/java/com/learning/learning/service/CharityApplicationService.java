@@ -225,10 +225,10 @@ public class CharityApplicationService {
                 .findFirstByCharityApplicationIdAndTokenTypeOrderByCreatedAtDesc(
                         id, RegistrationToken.TokenType.PRIMARY_CONTACT)
                 .orElse(null);
-        User user = (token != null) ? token.getUsedByUser() : null;
-        if (user == null) {
-            user = userRepository.findByEmail(application.getContactEmail()).orElse(null);
-        }
+        // Only reset the account that actually registered via THIS application's token.
+        // Do NOT fall back to matching by email: a charity contact email can coincide with
+        // an unrelated account (e.g. a location partner), and we must never reset the wrong user.
+        User user = (token != null && Boolean.TRUE.equals(token.getIsUsed())) ? token.getUsedByUser() : null;
         if (user == null) {
             throw new RuntimeException("This charity's primary contact hasn't registered yet — "
                     + "use Resend Email to send their registration link instead.");
