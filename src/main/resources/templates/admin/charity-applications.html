@@ -55,6 +55,19 @@
         .dropdown-item.danger { color: #c0392b; }
         .dropdown-item.danger:hover { background: #fdecea; }
         .dropdown-divider { height: 1px; background: #eee; margin: 6px 0; }
+        /* Confirmation + progress modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 28px 32px; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); width: 90%; max-width: 420px; }
+        .modal-title { color: #333; margin-bottom: 10px; font-size: 20px; }
+        .modal-message { color: #555; font-size: 15px; line-height: 1.5; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .modal-btn { padding: 9px 18px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .modal-btn-cancel { background: #e9ecef; color: #333; }
+        .modal-btn-cancel:hover { background: #dde1e6; }
+        .modal-btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .modal-btn-primary:hover { filter: brightness(1.06); }
+        .spinner { width: 44px; height: 44px; border: 4px solid #e6e6ec; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         th { background: #f8f9fa; padding: 15px; text-align: left; font-weight: 600; color: #333; border-bottom: 2px solid #dee2e6; }
         td { padding: 15px; border-bottom: 1px solid #dee2e6; }
         tr:hover { background: #f8f9fa; }
@@ -165,14 +178,14 @@
                                     <th:block th:if="${app.status.name() == 'APPROVED'}">
                                         <div class="dropdown-divider"></div>
                                         <form th:action="@{/admin/charity-applications/{id}/resend-email(id=${app.id})}" method="post">
-                                            <button type="submit" class="dropdown-item"
-                                                    onclick="return confirm('Resend the approval / registration email to this charity?');">
+                                            <button type="button" class="dropdown-item"
+                                                    onclick="openActionModal(this, 'Resend registration email', 'Resend the approval / registration email to this charity?', 'Sending registration email...')">
                                                 Resend registration email
                                             </button>
                                         </form>
                                         <form th:action="@{/admin/charity-applications/{id}/reset-password(id=${app.id})}" method="post">
-                                            <button type="submit" class="dropdown-item danger"
-                                                    onclick="return confirm('Reset the password for this charity contact? A new temporary password will be emailed to them.');">
+                                            <button type="button" class="dropdown-item danger"
+                                                    onclick="openActionModal(this, 'Reset password', 'This sets a new temporary password and emails it to the charity contact. Continue?', 'Resetting password...')">
                                                 Reset password
                                             </button>
                                         </form>
@@ -188,6 +201,25 @@
             </div>
         </div>
     </div>
+
+    <!-- Confirmation + progress modal for row actions -->
+    <div id="actionModal" class="modal-overlay" onclick="if (event.target === this) closeActionModal()">
+        <div class="modal-box">
+            <div id="modalConfirm">
+                <h3 id="modalTitle" class="modal-title">Confirm</h3>
+                <p id="modalMessage" class="modal-message"></p>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn modal-btn-cancel" onclick="closeActionModal()">Cancel</button>
+                    <button type="button" id="modalConfirmBtn" class="modal-btn modal-btn-primary">Confirm</button>
+                </div>
+            </div>
+            <div id="modalProgress" style="display:none; text-align:center;">
+                <div class="spinner"></div>
+                <div id="modalProgressText" class="modal-message" style="font-weight:600;">Working...</div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleDropdown(btn) {
             var dd = btn.parentElement;
@@ -199,6 +231,29 @@
             if (!e.target.closest('.dropdown')) {
                 document.querySelectorAll('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
             }
+        });
+
+        // Row-action confirm + progress modal
+        var pendingActionForm = null;
+        function openActionModal(btn, title, message, progressText) {
+            pendingActionForm = btn.closest('form');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('modalProgressText').textContent = progressText || 'Working...';
+            document.getElementById('modalConfirm').style.display = 'block';
+            document.getElementById('modalProgress').style.display = 'none';
+            document.getElementById('actionModal').style.display = 'flex';
+            document.querySelectorAll('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+        }
+        function closeActionModal() {
+            document.getElementById('actionModal').style.display = 'none';
+            pendingActionForm = null;
+        }
+        document.getElementById('modalConfirmBtn').addEventListener('click', function () {
+            if (!pendingActionForm) return;
+            document.getElementById('modalConfirm').style.display = 'none';
+            document.getElementById('modalProgress').style.display = 'block';
+            pendingActionForm.submit();
         });
     </script>
 </body>
