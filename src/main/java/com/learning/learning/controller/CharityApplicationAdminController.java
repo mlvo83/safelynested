@@ -107,4 +107,16 @@ public class CharityApplicationAdminController {
 
         return "redirect:/admin/charity-applications/" + id;
     }
+
+    @PostMapping("/{id}/resend-email")
+    public String resendEmail(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            CharityApplication application = applicationService.resendApprovalEmail(id);
+            redirectAttributes.addFlashAttribute("success",
+                    "Registration email resent to " + application.getContactEmail() + ".");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/charity-applications";
+    }
 }

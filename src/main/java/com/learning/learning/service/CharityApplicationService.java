@@ -152,6 +152,55 @@ public class CharityApplicationService {
         return application;
     }
 
+    /**
+     * Resend the approval / registration email for an already-approved application.
+     * Reuses the primary-contact registration token (refreshing its expiry so a stale
+     * link works again); mints a fresh token if none is on file. Refuses if the contact
+     * has already registered — a used token or an existing account means there's nothing
+     * to register, so no link is handed out.
+     */
+    @Transactional
+    public CharityApplication resendApprovalEmail(Long id) {
+        CharityApplication application = getApplicationById(id);
+
+        if (application.getStatus() != CharityApplication.ApplicationStatus.APPROVED) {
+            throw new RuntimeException("Only approved applications have a registration email to resend.");
+        }
+
+        RegistrationToken token = registrationTokenRepository
+                .findFirstByCharityApplicationIdAndTokenTypeOrderByCreatedAtDesc(
+                        id, RegistrationToken.TokenType.PRIMARY_CONTACT)
+                .orElse(null);
+
+        if (token != null && Boolean.TRUE.equals(token.getIsUsed())) {
+            throw new RuntimeException("This charity's primary contact has already registered — "
+                    + "they can sign in or reset their password. No email sent.");
+        }
+
+        if (token == null) {
+            if (userRepository.existsByEmail(application.getContactEmail())) {
+                throw new RuntimeException("This charity's primary contact has already registered — "
+                        + "they can sign in. No email sent.");
+            }
+            token = new RegistrationToken();
+            token.setEmail(application.getContactEmail());
+            token.setTokenType(RegistrationToken.TokenType.PRIMARY_CONTACT);
+            token.setCharity(application.getResultCharity());
+            token.setCharityApplication(application);
+            token.setRoleToAssign("ROLE_CHARITY_PARTNER");
+            token.setExpiresAt(LocalDateTime.now().plusDays(7));
+        } else {
+            // Refresh the expiry so the (possibly stale) registration link works again.
+            token.setExpiresAt(LocalDateTime.now().plusDays(7));
+        }
+        token = registrationTokenRepository.save(token);
+
+        sendApprovalEmail(application, token);
+        logger.info("Resent approval/registration email for {} to {}",
+                application.getApplicationNumber(), application.getContactEmail());
+        return application;
+    }
+
     @Transactional
     public CharityApplication rejectApplication(Long id, User adminUser, String rejectionReason) {
         CharityApplication application = getApplicationById(id);
