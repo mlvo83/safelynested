@@ -15,4 +15,8 @@ public interface RegistrationTokenRepository extends JpaRepository<RegistrationT
     Optional<RegistrationToken> findByEmailAndIsUsedFalse(String email);
 
     boolean existsByEmailAndIsUsedFalseAndExpiresAtAfter(String email, LocalDateTime now);
+
+    /** Most recent token minted for a charity application of a given type (e.g. resend the primary-contact link). */
+    Optional<RegistrationToken> findFirstByCharityApplicationIdAndTokenTypeOrderByCreatedAtDesc(
+            Long charityApplicationId, RegistrationToken.TokenType tokenType);
 }

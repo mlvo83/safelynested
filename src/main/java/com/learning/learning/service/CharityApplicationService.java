@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +41,9 @@ public class CharityApplicationService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
@@ -150,6 +154,107 @@ public class CharityApplicationService {
         }
 
         return application;
+    }
+
+    /**
+     * Resend the approval / registration email for an already-approved application.
+     * Reuses the primary-contact registration token (refreshing its expiry so a stale
+     * link works again); mints a fresh token if none is on file. Refuses if the contact
+     * has already registered — a used token or an existing account means there's nothing
+     * to register, so no link is handed out.
+     */
+    @Transactional
+    public CharityApplication resendApprovalEmail(Long id) {
+        CharityApplication application = getApplicationById(id);
+
+        if (application.getStatus() != CharityApplication.ApplicationStatus.APPROVED) {
+            throw new RuntimeException("Only approved applications have a registration email to resend.");
+        }
+
+        RegistrationToken token = registrationTokenRepository
+                .findFirstByCharityApplicationIdAndTokenTypeOrderByCreatedAtDesc(
+                        id, RegistrationToken.TokenType.PRIMARY_CONTACT)
+                .orElse(null);
+
+        if (token != null && Boolean.TRUE.equals(token.getIsUsed())) {
+            throw new RuntimeException("This charity's primary contact has already registered — "
+                    + "they can sign in or reset their password. No email sent.");
+        }
+
+        if (token == null) {
+            if (userRepository.existsByEmail(application.getContactEmail())) {
+                throw new RuntimeException("This charity's primary contact has already registered — "
+                        + "they can sign in. No email sent.");
+            }
+            token = new RegistrationToken();
+            token.setEmail(application.getContactEmail());
+            token.setTokenType(RegistrationToken.TokenType.PRIMARY_CONTACT);
+            token.setCharity(application.getResultCharity());
+            token.setCharityApplication(application);
+            token.setRoleToAssign("ROLE_CHARITY_PARTNER");
+            token.setExpiresAt(LocalDateTime.now().plusDays(7));
+        } else {
+            // Refresh the expiry so the (possibly stale) registration link works again.
+            token.setExpiresAt(LocalDateTime.now().plusDays(7));
+        }
+        token = registrationTokenRepository.save(token);
+
+        sendApprovalEmail(application, token);
+        logger.info("Resent approval/registration email for {} to {}",
+                application.getApplicationNumber(), application.getContactEmail());
+        return application;
+    }
+
+    /**
+     * Admin-initiated password reset for a charity's already-registered primary contact.
+     * Sets a fresh temporary password on their account, emails it to them, and returns the
+     * credentials so the admin can also relay them. Refuses if no account exists yet — use
+     * {@link #resendApprovalEmail(Long)} to send the registration link in that case.
+     */
+    @Transactional
+    public PasswordResetResult resetPrimaryContactPassword(Long id) {
+        CharityApplication application = getApplicationById(id);
+
+        if (application.getStatus() != CharityApplication.ApplicationStatus.APPROVED) {
+            throw new RuntimeException("Only approved applications have an account to reset.");
+        }
+
+        // Prefer the exact user who registered via this application's token; fall back to an
+        // account matching the contact email.
+        RegistrationToken token = registrationTokenRepository
+                .findFirstByCharityApplicationIdAndTokenTypeOrderByCreatedAtDesc(
+                        id, RegistrationToken.TokenType.PRIMARY_CONTACT)
+                .orElse(null);
+        User user = (token != null) ? token.getUsedByUser() : null;
+        if (user == null) {
+            user = userRepository.findByEmail(application.getContactEmail()).orElse(null);
+        }
+        if (user == null) {
+            throw new RuntimeException("This charity's primary contact hasn't registered yet — "
+                    + "use Resend Email to send their registration link instead.");
+        }
+
+        String temporaryPassword = generateTemporaryPassword();
+        user.setPassword(passwordEncoder.encode(temporaryPassword));
+        userRepository.save(user);
+
+        try {
+            sendPasswordResetEmail(application, user, temporaryPassword);
+        } catch (Exception e) {
+            logger.error("Failed to send password-reset email for {}: {}",
+                    application.getApplicationNumber(), e.getMessage());
+        }
+
+        logger.info("Reset password for charity primary contact '{}' (application {})",
+                user.getUsername(), application.getApplicationNumber());
+        return new PasswordResetResult(user.getUsername(), user.getEmail(), temporaryPassword);
+    }
+
+    /** Login details produced by a primary-contact password reset (shown once to the admin). */
+    public record PasswordResetResult(String username, String email, String temporaryPassword) {}
+
+    private String generateTemporaryPassword() {
+        return "TempPass" + (System.currentTimeMillis() % 100000) + "!";
     }
 
     @Transactional
@@ -527,5 +632,59 @@ public class CharityApplicationService {
 
     private static String nullSafe(String s) {
         return (s == null || s.isBlank()) ? "—" : s;
+    }
+
+    private void sendPasswordResetEmail(CharityApplication application, User user, String temporaryPassword) {
+        String subject = "Your SafelyNested Password Was Reset - " + application.getCharityName();
+        String html = buildPasswordResetEmailHtml(application, user, temporaryPassword);
+        emailService.sendHtmlEmail(user.getEmail(), subject, html);
+    }
+
+    private String buildPasswordResetEmailHtml(CharityApplication application, User user, String temporaryPassword) {
+        String loginUrl = baseUrl + "/login";
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: #1B2A4A; color: white; padding: 24px 30px; border-radius: 10px 10px 0 0; }
+                    .header h2 { margin: 0; font-size: 20px; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .creds { background: white; padding: 20px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #2A9D8F; }
+                    .creds p { margin: 6px 0; }
+                    .label { color: #5B6677; font-size: 13px; }
+                    .btn { display: inline-block; background: #2A9D8F; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin-top: 16px; font-weight: bold; }
+                    .footer { text-align: center; margin-top: 24px; color: #888; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header"><h2>Your Password Was Reset</h2></div>
+                    <div class="content">
+                        <p>Hello %s,</p>
+                        <p>An administrator has reset the password for your SafelyNested account.
+                           Use the temporary password below to sign in.</p>
+                        <div class="creds">
+                            <p><span class="label">Username:</span> <strong>%s</strong></p>
+                            <p><span class="label">Temporary password:</span> <strong>%s</strong></p>
+                        </div>
+                        <a href="%s" class="btn">Sign In</a>
+                        <p style="margin-top: 24px;">If you didn't expect this, please contact your SafelyNested administrator.</p>
+                        <p>Warm regards,<br><strong>The SafelyNested Team</strong></p>
+                    </div>
+                    <div class="footer">
+                        <p>SafelyNested - A Safe Place, Every Night<br>Please do not reply directly to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(
+                nullSafe(application.getContactName()),
+                user.getUsername(),
+                temporaryPassword,
+                loginUrl
+        );
     }
 }

@@ -74,6 +74,14 @@
         <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
+        <!-- One-time display of a password-reset temporary login (shown right after a reset). -->
+        <div th:if="${resetPassword}" class="alert" style="background:#e2e3e5; border:1px solid #6c757d; color:#333;">
+            <strong>Temporary login created — share it with the charity:</strong><br>
+            Username: <strong><span th:text="${resetUsername}">user</span></strong> &nbsp;|&nbsp;
+            Temporary password: <strong><span th:text="${resetPassword}">TempPass...</span></strong><br>
+            <span style="font-size:13px; color:#555;">Also emailed to the contact. Shown once here — copy it now (it's stored only as a hash).</span>
+        </div>
+
         <!-- Stats -->
         <div class="stats-row">
             <div class="stat-card">
@@ -132,6 +140,24 @@
                         <td th:text="${#temporals.format(app.createdAt, 'MMM d, yyyy')}"></td>
                         <td>
                             <a th:href="@{'/admin/charity-applications/' + ${app.id}}" class="btn btn-info btn-sm">View</a>
+                            <!-- Resend the approval / registration email (approved applications only). -->
+                            <form th:if="${app.status.name() == 'APPROVED'}"
+                                  th:action="@{/admin/charity-applications/{id}/resend-email(id=${app.id})}"
+                                  method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-primary btn-sm"
+                                        onclick="return confirm('Resend the approval / registration email to this charity?');">
+                                    Resend Email
+                                </button>
+                            </form>
+                            <!-- Reset the registered primary contact's password (approved applications only). -->
+                            <form th:if="${app.status.name() == 'APPROVED'}"
+                                  th:action="@{/admin/charity-applications/{id}/reset-password(id=${app.id})}"
+                                  method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm" style="background:#6c757d; color:white;"
+                                        onclick="return confirm('Reset the password for this charity contact? A new temporary password will be emailed to them.');">
+                                    Reset Password
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 </tbody>
