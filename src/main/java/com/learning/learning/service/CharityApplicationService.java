@@ -236,6 +236,8 @@ public class CharityApplicationService {
 
         String temporaryPassword = generateTemporaryPassword();
         user.setPassword(passwordEncoder.encode(temporaryPassword));
+        // Force the contact to choose a new password on next login — this is a temp credential.
+        user.setMustChangePassword(true);
         userRepository.save(user);
 
         try {
