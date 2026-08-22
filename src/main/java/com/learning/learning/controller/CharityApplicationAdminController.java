@@ -119,4 +119,18 @@ public class CharityApplicationAdminController {
         }
         return "redirect:/admin/charity-applications";
     }
+
+    @PostMapping("/{id}/reset-password")
+    public String resetPassword(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            var result = applicationService.resetPrimaryContactPassword(id);
+            redirectAttributes.addFlashAttribute("success",
+                    "Password reset for '" + result.username() + "' and emailed to " + result.email() + ".");
+            redirectAttributes.addFlashAttribute("resetUsername", result.username());
+            redirectAttributes.addFlashAttribute("resetPassword", result.temporaryPassword());
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/charity-applications";
+    }
 }
