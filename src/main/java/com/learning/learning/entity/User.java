@@ -37,6 +37,11 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    /** Forces the user to set a new password before using the app — set when an admin
+        assigns a temporary password (e.g. a charity primary-contact reset). */
+    @Column(name = "must_change_password", nullable = false)
+    private boolean mustChangePassword = false;
+
     // Additional user information
     @Column(name = "email", unique = true, length = 100)
     private String email;

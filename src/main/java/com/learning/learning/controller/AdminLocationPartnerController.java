@@ -45,6 +45,25 @@ public class AdminLocationPartnerController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.learning.learning.service.LocationPartnerService locationPartnerService;
+
+    @PostMapping("/{id}/reset-password")
+    public String resetPassword(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            var creds = locationPartnerService.resetLocationPartnerPassword(id);
+            boolean emailed = creds.email() != null && !creds.email().isBlank();
+            redirectAttributes.addFlashAttribute("success",
+                    "Password reset for '" + creds.username() + "'. The temporary password is shown below"
+                            + (emailed ? " and was emailed to " + creds.email() : " (no email on file)") + ".");
+            redirectAttributes.addFlashAttribute("resetUsername", creds.username());
+            redirectAttributes.addFlashAttribute("resetPassword", creds.temporaryPassword());
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/admin/location-partners/" + id;
+    }
+
     @GetMapping
     public String list(Model model) {
         List<LocationPartner> partners = locationPartnerRepository.findAllByOrderByCreatedAtDesc();

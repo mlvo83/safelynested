@@ -35,8 +35,39 @@
         .filter-btn.active-warning { background: #ffc107; color: #333; border-color: #ffc107; }
         .filter-btn.active-success { background: #28a745; color: white; border-color: #28a745; }
         .filter-btn.active-danger { background: #dc3545; color: white; border-color: #dc3545; }
-        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        thead th:first-child { border-top-left-radius: 10px; }
+        thead th:last-child { border-top-right-radius: 10px; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
+        tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+        /* Actions dropdown (Bootstrap-style, dependency-free) */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-toggle { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; font-size: 13px; font-weight: 600; border: 1px solid #d9dbe4; border-radius: 6px; cursor: pointer; background: #fff; color: #4b5563; white-space: nowrap; line-height: 1.2; }
+        .dropdown-toggle::after { content: '\25BE'; font-size: 10px; color: #9aa0ac; }
+        .dropdown-toggle:hover { background: #f5f6fa; border-color: #c7cad6; }
+        .dropdown-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 210px; background: white; border: 1px solid #e6e6ec; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); padding: 6px 0; z-index: 50; display: none; }
+        .dropdown.open .dropdown-menu { display: block; }
+        .dropdown-menu form { margin: 0; }
+        .dropdown-item { display: block; width: 100%; text-align: left; padding: 9px 16px; font-size: 14px; color: #333; background: none; border: none; cursor: pointer; text-decoration: none; box-sizing: border-box; white-space: nowrap; }
+        .dropdown-item:hover { background: #f2f3f7; }
+        .dropdown-item.danger { color: #c0392b; }
+        .dropdown-item.danger:hover { background: #fdecea; }
+        .dropdown-divider { height: 1px; background: #eee; margin: 6px 0; }
+        /* Confirmation + progress modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 28px 32px; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); width: 90%; max-width: 420px; }
+        .modal-title { color: #333; margin-bottom: 10px; font-size: 20px; }
+        .modal-message { color: #555; font-size: 15px; line-height: 1.5; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .modal-btn { padding: 9px 18px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .modal-btn-cancel { background: #e9ecef; color: #333; }
+        .modal-btn-cancel:hover { background: #dde1e6; }
+        .modal-btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .modal-btn-primary:hover { filter: brightness(1.06); }
+        .spinner { width: 44px; height: 44px; border: 4px solid #e6e6ec; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         th { background: #f8f9fa; padding: 15px; text-align: left; font-weight: 600; color: #333; border-bottom: 2px solid #dee2e6; }
         td { padding: 15px; border-bottom: 1px solid #dee2e6; }
         tr:hover { background: #f8f9fa; }
@@ -139,25 +170,28 @@
                         </td>
                         <td th:text="${#temporals.format(app.createdAt, 'MMM d, yyyy')}"></td>
                         <td>
-                            <a th:href="@{'/admin/charity-applications/' + ${app.id}}" class="btn btn-info btn-sm">View</a>
-                            <!-- Resend the approval / registration email (approved applications only). -->
-                            <form th:if="${app.status.name() == 'APPROVED'}"
-                                  th:action="@{/admin/charity-applications/{id}/resend-email(id=${app.id})}"
-                                  method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-primary btn-sm"
-                                        onclick="return confirm('Resend the approval / registration email to this charity?');">
-                                    Resend Email
-                                </button>
-                            </form>
-                            <!-- Reset the registered primary contact's password (approved applications only). -->
-                            <form th:if="${app.status.name() == 'APPROVED'}"
-                                  th:action="@{/admin/charity-applications/{id}/reset-password(id=${app.id})}"
-                                  method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-sm" style="background:#6c757d; color:white;"
-                                        onclick="return confirm('Reset the password for this charity contact? A new temporary password will be emailed to them.');">
-                                    Reset Password
-                                </button>
-                            </form>
+                            <div class="dropdown">
+                                <button type="button" class="dropdown-toggle" onclick="toggleDropdown(this)">Actions</button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" th:href="@{'/admin/charity-applications/' + ${app.id}}">View details</a>
+                                    <!-- Approved-only: resend registration link (not-yet-registered) / reset password (registered). -->
+                                    <th:block th:if="${app.status.name() == 'APPROVED'}">
+                                        <div class="dropdown-divider"></div>
+                                        <form th:action="@{/admin/charity-applications/{id}/resend-email(id=${app.id})}" method="post">
+                                            <button type="button" class="dropdown-item"
+                                                    onclick="openActionModal(this, 'Resend registration email', 'Resend the approval / registration email to this charity?', 'Sending registration email...')">
+                                                Resend registration email
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/admin/charity-applications/{id}/reset-password(id=${app.id})}" method="post">
+                                            <button type="button" class="dropdown-item danger"
+                                                    onclick="openActionModal(this, 'Reset password', 'This sets a new temporary password and emails it to the charity contact. Continue?', 'Resetting password...')">
+                                                Reset password
+                                            </button>
+                                        </form>
+                                    </th:block>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
@@ -167,5 +201,60 @@
             </div>
         </div>
     </div>
+
+    <!-- Confirmation + progress modal for row actions -->
+    <div id="actionModal" class="modal-overlay" onclick="if (event.target === this) closeActionModal()">
+        <div class="modal-box">
+            <div id="modalConfirm">
+                <h3 id="modalTitle" class="modal-title">Confirm</h3>
+                <p id="modalMessage" class="modal-message"></p>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn modal-btn-cancel" onclick="closeActionModal()">Cancel</button>
+                    <button type="button" id="modalConfirmBtn" class="modal-btn modal-btn-primary">Confirm</button>
+                </div>
+            </div>
+            <div id="modalProgress" style="display:none; text-align:center;">
+                <div class="spinner"></div>
+                <div id="modalProgressText" class="modal-message" style="font-weight:600;">Working...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown(btn) {
+            var dd = btn.parentElement;
+            var isOpen = dd.classList.contains('open');
+            document.querySelectorAll('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+            if (!isOpen) { dd.classList.add('open'); }
+        }
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+            }
+        });
+
+        // Row-action confirm + progress modal
+        var pendingActionForm = null;
+        function openActionModal(btn, title, message, progressText) {
+            pendingActionForm = btn.closest('form');
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('modalProgressText').textContent = progressText || 'Working...';
+            document.getElementById('modalConfirm').style.display = 'block';
+            document.getElementById('modalProgress').style.display = 'none';
+            document.getElementById('actionModal').style.display = 'flex';
+            document.querySelectorAll('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+        }
+        function closeActionModal() {
+            document.getElementById('actionModal').style.display = 'none';
+            pendingActionForm = null;
+        }
+        document.getElementById('modalConfirmBtn').addEventListener('click', function () {
+            if (!pendingActionForm) return;
+            document.getElementById('modalConfirm').style.display = 'none';
+            document.getElementById('modalProgress').style.display = 'block';
+            pendingActionForm.submit();
+        });
+    </script>
 </body>
 </html>

@@ -44,6 +44,31 @@
         .property-section { padding-top: 8px; }
         .property-name-header { background: linear-gradient(135deg, #eef0ff 0%, #f3edff 100%); padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; }
         .property-name-header h4 { color: #4338ca; font-size: 15px; }
+        /* Actions dropdown (matches the charity applications page) */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-toggle { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px; font-size: 13px; font-weight: 600; border: 1px solid #d9dbe4; border-radius: 6px; cursor: pointer; background: #fff; color: #4b5563; white-space: nowrap; line-height: 1.2; }
+        .dropdown-toggle::after { content: '\25BE'; font-size: 10px; color: #9aa0ac; }
+        .dropdown-toggle:hover { background: #f5f6fa; border-color: #c7cad6; }
+        .dropdown-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 210px; background: white; border: 1px solid #e6e6ec; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); padding: 6px 0; z-index: 50; display: none; }
+        .dropdown.open .dropdown-menu { display: block; }
+        .dropdown-menu form { margin: 0; }
+        .dropdown-item { display: block; width: 100%; text-align: left; padding: 9px 16px; font-size: 14px; color: #333; background: none; border: none; cursor: pointer; text-decoration: none; box-sizing: border-box; white-space: nowrap; }
+        .dropdown-item:hover { background: #f2f3f7; }
+        .dropdown-item.danger { color: #c0392b; }
+        .dropdown-item.danger:hover { background: #fdecea; }
+        /* Confirmation + progress modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 28px 32px; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); width: 90%; max-width: 420px; }
+        .modal-title { color: #333; margin-bottom: 10px; font-size: 20px; }
+        .modal-message { color: #555; font-size: 15px; line-height: 1.5; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+        .modal-btn { padding: 9px 18px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .modal-btn-cancel { background: #e9ecef; color: #333; }
+        .modal-btn-cancel:hover { background: #dde1e6; }
+        .modal-btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .modal-btn-primary:hover { filter: brightness(1.06); }
+        .spinner { width: 44px; height: 44px; border: 4px solid #e6e6ec; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -56,6 +81,15 @@
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
     <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
+    <!-- One-time display of a password-reset temporary login (shown right after a reset). -->
+    <div th:if="${resetPassword}" class="alert" style="background:#e2e3e5; border:1px solid #6c757d; color:#333;">
+        <strong>Temporary login created — share it with the partner:</strong><br>
+        Username: <strong><span th:text="${resetUsername}">user</span></strong> &nbsp;|&nbsp;
+        Temporary password: <strong><span th:text="${resetPassword}">TempPass...</span></strong><br>
+        <span style="font-size:13px; color:#555;">Shown once here — copy it now (it's stored only as a hash).
+            The partner will be asked to set a new password when they sign in.</span>
+    </div>
+
     <div class="header">
         <div>
             <h1>
@@ -66,6 +100,18 @@
                       style="font-size: 12px; vertical-align: middle;">Active</span>
             </h1>
             <p>Manage charity assignments for this Location Partner's properties.</p>
+        </div>
+        <div class="dropdown">
+            <button type="button" class="dropdown-toggle" onclick="toggleDropdown(this)">Actions</button>
+            <div class="dropdown-menu">
+                <form th:action="@{/admin/location-partners/{id}/reset-password(id=${partner.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="button" class="dropdown-item danger"
+                            onclick="openActionModal(this, 'Reset password', 'This sets a new temporary password and emails it to the location partner. Continue?', 'Resetting password...')">
+                        Reset password
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -171,5 +217,59 @@
         </div>
     </div>
 </div>
+
+<!-- Confirmation + progress modal for the reset action -->
+<div id="actionModal" class="modal-overlay" onclick="if (event.target === this) closeActionModal()">
+    <div class="modal-box">
+        <div id="modalConfirm">
+            <h3 id="modalTitle" class="modal-title">Confirm</h3>
+            <p id="modalMessage" class="modal-message"></p>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn modal-btn-cancel" onclick="closeActionModal()">Cancel</button>
+                <button type="button" id="modalConfirmBtn" class="modal-btn modal-btn-primary">Confirm</button>
+            </div>
+        </div>
+        <div id="modalProgress" style="display:none; text-align:center;">
+            <div class="spinner"></div>
+            <div id="modalProgressText" class="modal-message" style="font-weight:600;">Working...</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleDropdown(btn) {
+        var dd = btn.parentElement;
+        var isOpen = dd.classList.contains('open');
+        document.querySelectorAll('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+        if (!isOpen) { dd.classList.add('open'); }
+    }
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.dropdown')) {
+            document.querySelectorAll('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+        }
+    });
+
+    var pendingActionForm = null;
+    function openActionModal(btn, title, message, progressText) {
+        pendingActionForm = btn.closest('form');
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalMessage').textContent = message;
+        document.getElementById('modalProgressText').textContent = progressText || 'Working...';
+        document.getElementById('modalConfirm').style.display = 'block';
+        document.getElementById('modalProgress').style.display = 'none';
+        document.getElementById('actionModal').style.display = 'flex';
+        document.querySelectorAll('.dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+    }
+    function closeActionModal() {
+        document.getElementById('actionModal').style.display = 'none';
+        pendingActionForm = null;
+    }
+    document.getElementById('modalConfirmBtn').addEventListener('click', function () {
+        if (!pendingActionForm) return;
+        document.getElementById('modalConfirm').style.display = 'none';
+        document.getElementById('modalProgress').style.display = 'block';
+        pendingActionForm.submit();
+    });
+</script>
 </body>
 </html>

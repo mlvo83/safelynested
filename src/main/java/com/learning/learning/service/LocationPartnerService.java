@@ -36,6 +36,30 @@ public class LocationPartnerService {
     @Autowired
     private PartnerLocationRepository partnerLocationRepository;
 
+    @Autowired
+    private PasswordResetService passwordResetService;
+
+    /** Credentials produced by an admin password reset (shown once to the admin). */
+    public record ResetCredentials(String username, String email, String temporaryPassword) {}
+
+    /**
+     * Admin-initiated password reset for a location partner. Resolves the account via the
+     * partner's own {@code user} link (no email matching), assigns a temporary password,
+     * forces a change on next login, emails it, and returns the credentials.
+     */
+    @Transactional
+    public ResetCredentials resetLocationPartnerPassword(Long partnerId) {
+        LocationPartner partner = locationPartnerRepository.findById(partnerId)
+                .orElseThrow(() -> new RuntimeException("Location Partner not found: " + partnerId));
+        User user = partner.getUser();
+        if (user == null) {
+            throw new RuntimeException("This location partner hasn't registered an account yet — "
+                    + "there's no password to reset.");
+        }
+        String temporaryPassword = passwordResetService.resetToTemporaryPassword(user, partner.getDisplayName());
+        return new ResetCredentials(user.getUsername(), user.getEmail(), temporaryPassword);
+    }
+
     public LocationPartner getPartnerForUser(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
