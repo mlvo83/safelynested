@@ -46,9 +46,9 @@
         .property-name-header h4 { color: #4338ca; font-size: 15px; }
         /* Actions dropdown (matches the charity applications page) */
         .dropdown { position: relative; display: inline-block; }
-        .dropdown-toggle { padding: 8px 16px; font-size: 13px; font-weight: 600; border: none; border-radius: 5px; cursor: pointer; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .dropdown-toggle::after { content: ' \25BE'; font-size: 11px; }
-        .dropdown-toggle:hover { filter: brightness(1.06); }
+        .dropdown-toggle { display: inline-flex; align-items: center; gap: 5px; padding: 8px 14px; font-size: 13px; font-weight: 600; border: 1px solid #d9dbe4; border-radius: 6px; cursor: pointer; background: #fff; color: #4b5563; white-space: nowrap; line-height: 1.2; }
+        .dropdown-toggle::after { content: '\25BE'; font-size: 10px; color: #9aa0ac; }
+        .dropdown-toggle:hover { background: #f5f6fa; border-color: #c7cad6; }
         .dropdown-menu { position: absolute; right: 0; top: calc(100% + 6px); min-width: 210px; background: white; border: 1px solid #e6e6ec; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); padding: 6px 0; z-index: 50; display: none; }
         .dropdown.open .dropdown-menu { display: block; }
         .dropdown-menu form { margin: 0; }
