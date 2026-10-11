@@ -9,6 +9,7 @@ import com.learning.learning.config.AssistantProperties;
 import com.learning.learning.dto.AssistantChatRequest;
 import com.learning.learning.service.AssistantRateLimiter;
 import com.learning.learning.service.AssistantService;
+import com.learning.learning.service.AssistantTopicGate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,9 @@ public class AssistantController {
 
     @Autowired
     private AssistantRateLimiter rateLimiter;
+
+    @Autowired
+    private AssistantTopicGate topicGate;
 
     @Autowired
     private AssistantProperties properties;
@@ -108,6 +112,15 @@ public class AssistantController {
 
     private void run(SseEmitter emitter, AtomicBoolean open, String user, AssistantChatRequest request, String message) {
         try {
+            // Cheap on-topic check first; off-topic questions never reach the main model.
+            if (topicGate.classify(request.getHistory(), message) == AssistantTopicGate.Verdict.OFF_TOPIC) {
+                log.info("Help assistant: off-topic question declined for user={} ({} chars)", user, message.length());
+                send(emitter, open, "delta", Map.of("text", AssistantTopicGate.OFF_TOPIC_REPLY));
+                send(emitter, open, "done", Map.of("stopReason", "off_topic"));
+                complete(emitter, open);
+                return;
+            }
+
             AssistantService.Result result = assistantService.streamReply(
                     user, request.getHistory(), message,
                     delta -> send(emitter, open, "delta", Map.of("text", delta)));

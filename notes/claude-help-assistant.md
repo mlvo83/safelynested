@@ -45,6 +45,18 @@ loads them from there at startup, so there is one source of truth. If they are m
 (for example a non-Maven build), the assistant logs a warning and continues with the
 curated guide only.
 
+## On-topic gate
+
+Before the main call, `AssistantTopicGate` asks a small, cheap model (Haiku 4.5 by default)
+one question: is the latest message about using SafelyNested? It sees the last two turns
+for context so follow-ups like "and then?" are judged fairly, and answers ON or OFF in a
+single word. OFF means the user gets a fixed reply and the main model is never called, so
+nobody can spend the charity's credits on essays, code or general chat. The gate fails
+open: if the classifier errors or is unclear, the question goes through, and the main
+model's own rules still decline off-topic requests. Each gate call costs a few hundredths
+of a cent and adds well under a second. Blocked questions are logged at INFO with the
+username and message length, never the text.
+
 ## Files
 
 | File | Role |

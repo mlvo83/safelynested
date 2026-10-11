@@ -53,6 +53,12 @@ public class AssistantProperties {
     /** Include the public onboarding guides (served under /help/) in the system prompt. */
     private boolean includeOnboardingDocs = true;
 
+    /** Run the cheap on-topic classifier before the main call (see AssistantTopicGate). */
+    private boolean gateEnabled = true;
+
+    /** Model for the on-topic classifier. Small and cheap; it only answers ON or OFF. */
+    private String gateModel = "claude-haiku-4-5";
+
     public boolean isEnabled() {
         return apiKey != null && !apiKey.isBlank();
     }

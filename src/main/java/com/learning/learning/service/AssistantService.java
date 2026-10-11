@@ -113,6 +113,11 @@ public class AssistantService {
         return client != null;
     }
 
+    /** The shared API client, or null when disabled. Package-private for {@link AssistantTopicGate}. */
+    AnthropicClient client() {
+        return client;
+    }
+
     /** Receives visible answer text as it streams in. May throw to abort the stream. */
     @FunctionalInterface
     public interface TextListener {
