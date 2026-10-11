@@ -107,6 +107,13 @@
             <artifactId>stripe-java</artifactId>
             <version>28.2.0</version>
         </dependency>
+
+        <!-- Anthropic Java SDK: in-app Claude help assistant (AssistantService) -->
+        <dependency>
+            <groupId>com.anthropic</groupId>
+            <artifactId>anthropic-java</artifactId>
+            <version>2.68.0</version>
+        </dependency>
     </dependencies>
 
 

@@ -66,6 +66,8 @@ public class SecurityConfig {
                         // Public donate page disabled — donations are recorded by charity partners
                         // .requestMatchers("/donate/**").permitAll()
                         .requestMatchers("/api/stripe/**").permitAll()
+                        // In-app Claude help assistant: any signed-in user (streams replies over SSE)
+                        .requestMatchers("/assistant/**").authenticated()
                         // Role-based access control
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/facilitator/**").hasRole("FACILITATOR")
